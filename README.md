@@ -80,8 +80,9 @@ uses `sudo` for the steps marked **(sudo)**.
    system-wide.
 5. **Asks about you**: your name and timezone, saved to
    `~/.openclave/openclave.toml`.
-6. **Asks about your manager agent**: its name, personality, and any changes
-   to its job.
+6. **Asks about your manager agent**: its name, personality, any extra jobs,
+   and changes to its job. Nothing is filled in for you; each question lists
+   suggestions you can pick by number.
 7. **Sets up a model**, the one you pick:
    - API key (Anthropic or xAI): checked against the provider, saved to
      `~/.openclave/.env` (only you can read it).
@@ -89,10 +90,12 @@ uses `sudo` for the steps marked **(sudo)**.
    - ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the
      Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox
      works, then lets you sign in **(sudo)**.
-8. **Optional, asks first:** note search (qmd, through npm) **(sudo)**, and a
+8. **Asks which ready-made agents to start with** (none unless you pick
+   some).
+9. **Optional, asks first:** note search (qmd, through npm) **(sudo)**, and a
    systemd service `openclave.service` so it starts with the computer
    **(sudo)**.
-9. **Starts OpenClave** on http://localhost:8777/ and opens your browser.
+10. **Starts OpenClave** on http://localhost:8777/ and opens your browser.
 
 Its only network use is downloading those packages and checking your API key
 with its provider. To read it before running it:
@@ -105,14 +108,17 @@ bash install.sh
 
 ## Your first agents
 
-The installer creates your **manager** under the name you gave it. It keeps
-the other agents tidy, runs a weekly review and collects bugs and ideas. Every
-install has exactly one. Open it first: it interviews you briefly.
+The installer creates your **manager** with the name and personality you
+chose, plus any ready-made agents you picked. The manager keeps the other
+agents tidy, runs a weekly review and collects bugs and ideas. Every install
+has exactly one. Open it first: it interviews you briefly. It starts with its
+initials as a picture: pick one in **Control Panel → Edit → Pick from
+library**, make your own, or ask it to draw one.
 
-1. Click **Create new specialist**. You land on the **New agent** form with a
-   list of **ready-made agents** below it. (Installed by hand? Add the
-   **Manager** from that list first and give it a name.)
-2. Add two to four more for the areas you care about most. Each comes with a
+1. To add more, click **Create new specialist**. You land on the **New
+   agent** form with a list of **ready-made agents** below it. (Installed by
+   hand? Add the **Manager** from that list first and give it a name.)
+2. Add a few for the areas you care about most. Each comes with a
    job and a personality, then interviews you for a few minutes to fit itself
    to you. Answer in your own words; you can always change it later. Prefer
    your own? Fill in **Name** and **What is it for?** at the top of the form

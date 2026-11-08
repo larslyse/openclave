@@ -12,7 +12,7 @@ Thirteen to start from. Pick the few that match your life, not all of them.
 
 | Agent | Area | What it does | Needs |
 |---|---|---|---|
-| **Manager** | OpenClave | You give it its name. Every install needs one: keeps OpenClave tidy, runs the weekly audit, proposes what's worth moving from agent workspaces into your main vault, turns the other agents' bugs and ideas into a buildable backlog. Also evaluates business ideas. | |
+| **Manager** | OpenClave | You choose its name and personality (suggestions offered, no defaults). Every install needs one: keeps OpenClave tidy, runs the weekly audit, proposes what's worth moving from agent workspaces into your main vault, turns the other agents' bugs and ideas into a buildable backlog. Optional extra jobs: business ideas, agent scout. | |
 | **Reba** | Health | A conscientious, Feynman-spirited trainer: rehabs injuries, plans training to prevent new ones, logs progress. | Optional Garmin connection ([garmin-mcp](https://github.com/Sinfjell/garmin-mcp), MIT, pinned) |
 | **Fresh** | Health | A blunt long-horizon steward of how you look and feel: longevity, sleep, diet, hair, skin, grooming. | |
 | **Bolt** | Home | A household droid: Home Assistant, home security, networking and IT support. Acts directly instead of just advising. | Home Assistant token |
@@ -60,6 +60,11 @@ One folder per agent in `catalog/agents/<id>/`:
 | `onboarding.md` | A bullet list of questions that fit the template to a new user |
 | `avatar.svg` | Optional, 64×64 viewBox, plain shapes (sanitized when served) |
 | `skills/` | Optional skills it comes with (`<name>/SKILL.md`) |
+| `personas/`, `extras/` | Optional suggestions to pick from at install (the manager has them): starting personalities, and extra jobs added to the mission when picked. One `.md` each, front matter `Label`, `Summary`, `Order` |
+
+The **avatar library** (`catalog/avatars/*.svg`) holds pictures any agent can
+pick in Control Panel → Edit → Pick from library. Same rules as `avatar.svg`;
+put the label in a `<title>`.
 
 ```json
 "catalog": {
@@ -68,7 +73,9 @@ One folder per agent in `catalog/agents/<id>/`:
   "summary": "One or two sentences shown in the list.",
   "suggested_tools": ["write_note", "web_search"],
   "needs": "Anything to set up first, e.g. a Home Assistant token.",
-  "authors": ["your-github-name"]
+  "authors": ["your-github-name"],
+  "job": ["Optional: the job in plain bullets, shown before install"],
+  "name_ideas": ["Optional: names to suggest, when the user names it"]
 }
 ```
 

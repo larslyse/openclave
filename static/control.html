@@ -189,7 +189,8 @@ async function toggleEdit(row,id){
     <div class="edit-grid">
       <div class="edit-block"><b>Avatar</b><div style="display:flex;gap:12px;align-items:center;margin-top:8px">
         <img class="av" style="width:56px;height:56px" src="/api/agents/${esc(id)}/avatar?v=${Date.now()}" alt="">
-        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start"><button class="link" type="button" data-act="make-avatar">Make avatar…</button><button class="link" type="button" data-act="upload">Upload image as is…</button></div><input type="file" accept="image/*" hidden><span class="muted" data-msg="avatar"></span></div></div>
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start"><button class="link" type="button" data-act="library">Pick from library…</button><button class="link" type="button" data-act="make-avatar">Make avatar…</button><button class="link" type="button" data-act="upload">Upload image as is…</button></div><input type="file" accept="image/*" hidden><span class="muted" data-msg="avatar"></span></div>
+        <div class="avatar-library" hidden style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px"></div></div>
       <div class="edit-block"><b>Name</b>
         <label>Name<input data-field="name" maxlength="24" value="${esc(p.name)}"></label>
         <label>Tagline<input data-field="tagline" maxlength="60" value="${esc(p.tagline)}"></label>
@@ -233,6 +234,21 @@ async function toggleEdit(row,id){
   // paste; crop into the circle; optional cartoon style.
   tr.querySelector('[data-act=make-avatar]').onclick=()=>OpenClaveAvatarMaker.open({agentId:id,agentName:p.name,color:p.color,onSaved:()=>{
     const src=`/api/agents/${id}/avatar?v=${Date.now()}`;row.querySelector('.av').src=src;tr.querySelector('.av').src=src;msg('avatar').textContent='Saved'}});
+  // Avatar library (catalog/avatars): ready pictures on the agent's colour.
+  const lib=tr.querySelector('.avatar-library');
+  tr.querySelector('[data-act=library]').onclick=async()=>{
+    if(!lib.hidden){lib.hidden=true;lib.style.display='none';return}
+    lib.hidden=false;lib.style.display='flex';lib.innerHTML='<span class="muted">Loading…</span>';
+    try{const {avatars}=await (await fetch('/api/avatar-library')).json();
+      lib.innerHTML=avatars.map(a=>`<button type="button" data-avatar="${esc(a.id)}" title="${esc(a.label)}" aria-label="${esc(a.label)}" style="padding:0;border:2px solid transparent;border-radius:50%;background:none;cursor:pointer"><img class="av" style="width:48px;height:48px;background:${esc(p.color)}" src="/api/avatar-library/${encodeURIComponent(a.id)}.svg" alt=""></button>`).join('');
+      lib.querySelectorAll('[data-avatar]').forEach(b=>b.onclick=async()=>{
+        msg('avatar').textContent='Saving…';
+        try{await postJson(`/api/agents/${id}/avatar/library`,{avatar:b.dataset.avatar});
+          const src=`/api/agents/${id}/avatar?v=${Date.now()}`;row.querySelector('.av').src=src;tr.querySelector('.av').src=src;msg('avatar').textContent='Saved';lib.hidden=true;lib.style.display='none'}
+        catch(error){msg('avatar').textContent=error.message}});
+    }catch(error){lib.textContent=error.message}
+  };
+  lib.style.display='none';
   const file=tr.querySelector('input[type=file]');
   tr.querySelector('[data-act=upload]').onclick=()=>file.click();
   file.onchange=async()=>{
@@ -308,24 +324,26 @@ function managerChoices(t){
   return `<div class="mgr-choices" style="margin-top:8px">
     ${t.job.length?`<div class="muted" style="font-size:13px">Its job:</div><ul style="margin:2px 0 6px;padding-left:18px;font-size:13px">${t.job.map(j=>`<li>${esc(j)}</li>`).join('')}</ul>`:''}
     <label style="font-size:13px">Personality <select class="mgr-persona" style="${FIELD}"><option value="">Choose…</option>${t.personas.map(p=>`<option value="${esc(p.id)}">${esc(p.label)}: ${esc(p.summary)}</option>`).join('')}<option value="own">In my own words…</option></select></label>
-    <textarea class="mgr-own" rows="2" maxlength="2000" placeholder="Describe its personality, e.g. dry humour, patient, never uses jargon" style="${FIELD};display:none"></textarea>
-    <textarea class="mgr-job" rows="2" maxlength="2000" placeholder="Change or add to its job, in your own words (optional)" style="${FIELD}"></textarea></div>`;
+    <textarea class="mgr-own" rows="2" maxlength="1000" placeholder="Describe its personality, e.g. dry humour, patient, never uses jargon" style="${FIELD};display:none"></textarea>
+    ${t.extras.length?`<div class="muted" style="font-size:13px;margin-top:6px">Extra jobs (optional):</div>${t.extras.map(x=>`<label class="mgr-extra" style="display:flex;gap:6px;font-size:13px;margin-top:2px"><input type="checkbox" value="${esc(x.id)}"><span><b>${esc(x.label)}</b>: ${esc(x.summary)}</span></label>`).join('')}`:''}
+    <textarea class="mgr-job" rows="2" maxlength="300" placeholder="Change or add to its job, in your own words (optional)" style="${FIELD}"></textarea></div>`;
 }
 function managerFields(row){
   const sel=row.querySelector('.mgr-persona');
   if(!sel)return {};
   const persona=sel.value==='own'?row.querySelector('.mgr-own').value:sel.value;
-  return {persona,mission_extra:row.querySelector('.mgr-job').value};
+  return {persona,mission_extra:row.querySelector('.mgr-job').value,extras:[...row.querySelectorAll('.mgr-extra input:checked')].map(c=>c.value)};
 }
 async function loadCatalog(){
   const body=document.querySelector('#catalog-list');
   try{
     const {templates}=await (await fetch('/api/catalog')).json();
-    body.innerHTML=templates.length?templates.map(t=>`<tr data-id="${esc(t.id)}"><td style="white-space:nowrap"><b>${t.manager?'Manager':esc(t.name)}</b>${t.installed.length?' <span class="muted">· added</span>':''}<div class="muted" style="font-size:12px">${esc(t.category)}</div></td><td>${esc(t.summary||t.tagline)}${t.needs?`<div style="color:#E0B25B;font-size:13px">Needs: ${esc(t.needs)}</div>`:''}${t.manager?managerChoices(t):''}<div class="catalog-err" style="color:#E8877A"></div></td><td><input value="${t.manager?'':esc(t.name)}" placeholder="${t.manager?'Its name':''}" maxlength="24" aria-label="Name" style="background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:5px 8px;font:inherit;width:9em"></td><td><button class="link" type="button">Add</button></td></tr>`).join(''):'<tr><td colspan="4" class="muted">No ready-made agents found.</td></tr>';
+    body.innerHTML=templates.length?templates.map(t=>`<tr data-id="${esc(t.id)}"><td style="white-space:nowrap"><b>${t.manager?'Manager':esc(t.name)}</b>${t.installed.length?' <span class="muted">· added</span>':''}<div class="muted" style="font-size:12px">${esc(t.category)}</div></td><td>${esc(t.summary||t.tagline)}${t.needs?`<div style="color:#E0B25B;font-size:13px">Needs: ${esc(t.needs)}</div>`:''}${t.manager?managerChoices(t):''}<div class="catalog-err" style="color:#E8877A"></div></td><td><input class="cat-name" value="${t.manager?'':esc(t.name)}" placeholder="${t.manager?'Its name':''}" maxlength="24" aria-label="Name" style="background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:5px 8px;font:inherit;width:9em">${t.manager&&t.name_ideas.length?`<div class="muted mgr-ideas" style="font-size:12px;margin-top:4px">Ideas: ${t.name_ideas.map(n=>`<button class="link" type="button" data-name="${esc(n)}">${esc(n)}</button>`).join(' ')}</div>`:''}</td><td><button class="link" type="button">Add</button></td></tr>`).join(''):'<tr><td colspan="4" class="muted">No ready-made agents found.</td></tr>';
     body.querySelectorAll('.mgr-persona').forEach(sel=>sel.onchange=()=>{const own=sel.closest('tr').querySelector('.mgr-own');own.style.display=sel.value==='own'?'':'none';if(sel.value==='own')own.focus()});
-    body.querySelectorAll('tr[data-id] button').forEach(b=>b.onclick=async()=>{
+    body.querySelectorAll('.mgr-ideas [data-name]').forEach(b=>b.onclick=()=>{b.closest('tr').querySelector('.cat-name').value=b.dataset.name});
+    body.querySelectorAll('tr[data-id] button:not([data-name])').forEach(b=>b.onclick=async()=>{
       const row=b.closest('tr'),err=row.querySelector('.catalog-err');err.textContent='';b.disabled=true;b.textContent='Adding…';
-      try{const d=await postJson(`/api/catalog/${encodeURIComponent(row.dataset.id)}/install`,{model_id:document.querySelector('#new-agent-model').value,name:row.querySelector('input').value,...managerFields(row),...(newAgentClave?{clave:newAgentClave}:{})});location.href=`/${d.id}`}
+      try{const d=await postJson(`/api/catalog/${encodeURIComponent(row.dataset.id)}/install`,{model_id:document.querySelector('#new-agent-model').value,name:row.querySelector('.cat-name').value,...managerFields(row),...(newAgentClave?{clave:newAgentClave}:{})});location.href=`/${d.id}`}
       catch(x){err.textContent=x.message;b.disabled=false;b.textContent='Add'}
     });
   }catch(error){body.innerHTML=`<tr><td colspan="4">${esc(error.message)}</td></tr>`}

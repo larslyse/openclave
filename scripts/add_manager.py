@@ -1,12 +1,15 @@
 """Create the manager agent from the ready-made manager template, with the
-name and personality the user chose and any changes to its job (install.sh
-asks for all three; there are no defaults).
+name and personality the user chose, any extra jobs they picked and any
+changes to its job (install.sh asks; nothing has a default, the lists are
+suggestions).
 
     python3 scripts/add_manager.py --status        existing manager's name, if any
     python3 scripts/add_manager.py --check NAME    can this name be used?
+    python3 scripts/add_manager.py --names         name ideas, one per line
     python3 scripts/add_manager.py --personas      starting personalities: id<TAB>label<TAB>summary
     python3 scripts/add_manager.py --job           the job, one line each
-    python3 scripts/add_manager.py NAME --persona ID_OR_OWN_WORDS [--mission-extra TEXT]
+    python3 scripts/add_manager.py --extras        optional extra jobs: id<TAB>label<TAB>summary
+    python3 scripts/add_manager.py NAME --persona ID_OR_OWN_WORDS [--extra ID ...] [--mission-extra TEXT]
 
 Exit codes: 0 done (prints the name), 2 can't be used (prints why),
 3 a manager already exists (prints its name), 4 --status: no manager yet.
@@ -51,13 +54,19 @@ def main(argv: list[str]) -> int:
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--personas", action="store_true")
     ap.add_argument("--job", action="store_true")
+    ap.add_argument("--names", action="store_true")
+    ap.add_argument("--extras", action="store_true")
+    ap.add_argument("--extra", action="append", default=[])
     ap.add_argument("--persona", default="")
     ap.add_argument("--mission-extra", default="")
     a = ap.parse_args(argv)
     t = catalog.get(TEMPLATE)
-    if a.personas:
-        for p in t["personas"]:
+    if a.personas or a.extras:
+        for p in t["personas" if a.personas else "extras"]:
             print(f"{p['id']}\t{p['label']}\t{p['summary']}")
+        return 0
+    if a.names:
+        print("\n".join(t["name_ideas"]))
         return 0
     if a.job:
         print("\n".join(t["job"]))
@@ -76,7 +85,8 @@ def main(argv: list[str]) -> int:
         agent_factory._check_new_name(name)
         if a.check:
             return 0
-        catalog.install(TEMPLATE, pick_model(), name, persona=a.persona, mission_extra=a.mission_extra)
+        catalog.install(TEMPLATE, pick_model(), name, persona=a.persona,
+                        mission_extra=a.mission_extra, extras=a.extra)
     except ValueError as e:
         print(e)
         return 2

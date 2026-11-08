@@ -321,6 +321,12 @@ button { color:inherit; }
 .mgr-choices label { display:block; margin-top:8px; font-size:14px; color:var(--muted); }
 .mgr-choices select, .mgr-choices textarea { display:block; width:100%; box-sizing:border-box; margin-top:4px; min-height:42px; border:1px solid var(--line); border-radius:10px; background:var(--bg, #121517); color:var(--text); padding:8px 10px; font:inherit; font-size:16px; }
 .mgr-choices textarea[hidden] { display:none; }
+.mgr-choices label.mgr-extra { display:flex; flex-direction:row; gap:10px; align-items:flex-start; margin-top:8px; color:var(--text); }
+.mgr-choices .mgr-extra input { display:inline-block; margin:2px 0 0; width:20px; height:20px; min-height:0; flex:none; }
+.mgr-choices .mgr-extra span { display:block; flex:1; margin:0; }
+.mgr-extra b { display:block; }
+.mgr-ideas { display:flex; flex-wrap:wrap; gap:6px; align-items:center; }
+.mgr-ideas .chip { border:1px solid var(--line); border-radius:999px; background:none; color:var(--text); padding:6px 12px; font:inherit; font-size:14px; }
 .mgr-job-list { margin:4px 0 0; padding-left:18px; font-size:14px; line-height:1.4; color:var(--muted); }
 .template .form-error:empty { display:none; }
 

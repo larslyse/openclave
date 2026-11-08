@@ -16,6 +16,7 @@ import catalog
 import chat_service
 import llm_client
 import llm_models
+import svg_avatar
 import vault
 import config
 from config import CONFIG
@@ -114,7 +115,7 @@ class CatalogInstallTests(unittest.TestCase):
             catalog.install("rick", MODEL, name="Morty")
         with self.assertRaisesRegex(ValueError, "few more words"):
             catalog.install("rick", MODEL, name="Morty", persona="nice")
-        catalog.install("rick", MODEL, name="Morty", persona="calm", mission_extra="Skip business ideas.\nAlso watch my subscriptions.")
+        catalog.install("rick", MODEL, name="Morty", persona="calm", mission_extra="Skip the vault suggestions.\nAlso watch my subscriptions.")
         persona = (self.root / "Morty" / "persona.md").read_text()
         self.assertIn("Morty keeps OpenClave itself working: a calm", persona)
         self.assertNotIn("Rick", persona)
@@ -151,6 +152,62 @@ class CatalogInstallTests(unittest.TestCase):
             self.assertEqual(add_manager.main(["--status"]), 0)
         self.assertEqual(out.getvalue().split()[-1], "Zed")
         self.assertIn("manager", agents.AGENTS["zed"].roles)
+
+    def test_manager_starts_blank_with_suggestions(self):
+        t = catalog.get("rick")
+        self.assertFalse(t["has_avatar"], "initials until the user picks a picture")
+        self.assertTrue(t["name_ideas"])
+        self.assertNotIn("Rick", t["name_ideas"])
+        self.assertEqual([x["id"] for x in t["extras"]], ["business-ideas", "agent-scout"])
+        with self.assertRaisesRegex(ValueError, "extra job"):
+            catalog.install("rick", MODEL, name="Ada", persona="calm", extras=["nope"])
+        catalog.install("rick", MODEL, name="Ada", persona="calm")
+        mission = (self.root / "Ada" / "mission.md").read_text()
+        self.assertNotIn("usiness ideas", mission, "extra jobs only when picked")
+        self.assertFalse((self.root / "Ada" / "avatar.svg").exists())
+
+    def test_picked_extra_jobs_join_the_mission(self):
+        catalog.install("rick", MODEL, name="Ada", persona="warm", extras=["business-ideas", "business-ideas"])
+        mission = (self.root / "Ada" / "mission.md").read_text()
+        self.assertEqual(mission.count("## Business ideas"), 1)
+        self.assertNotIn("Label:", mission)
+
+    def test_the_longest_manager_setup_fits_the_self_edit_limits(self):
+        t = catalog.get("rick")
+        with self.assertRaisesRegex(ValueError, "300"):
+            catalog.install("rick", MODEL, name="Other", persona="calm", mission_extra="y" * 301)
+        catalog.install("rick", MODEL, name="Maximilian-Alexander-Lon", persona="x" * catalog.PERSONA_MAX,
+                        extras=[x["id"] for x in t["extras"]], mission_extra="y" * catalog.MISSION_EXTRA_MAX)
+        for kind in ("mission", "persona"):
+            size = len((self.root / "Maximilian-Alexander-Lon" / f"{kind}.md").read_text())
+            self.assertLessEqual(size, vault.IDENTITY_CHAR_LIMITS[kind], kind)
+
+    def test_avatar_library(self):
+        library = catalog.avatar_library()
+        ids = [a["id"] for a in library]
+        self.assertIn("keeper", ids)
+        self.assertIn("scientist", ids)
+        for a in library:
+            svg_avatar.sanitize(catalog.library_avatar(a["id"]))  # every picture survives the sanitizer
+            self.assertTrue(a["label"])
+        with self.assertRaises(ValueError):
+            catalog.library_avatar("../agents/rick/persona")
+
+    def test_add_agents_script(self):
+        import add_agents
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(add_agents.main(["--list"]), 0)
+            listed = [line.split("\t")[0] for line in out.getvalue().splitlines()]
+            self.assertNotIn("rick", listed, "the manager is its own step")
+            self.assertIn("spice", listed)
+            self.assertEqual(add_agents.main(["spice", "nope"]), 2)
+        self.assertIn("spice", agents.AGENTS)
+        self.assertIn("Couldn't add nope", out.getvalue())
+        out = io.StringIO()
+        with redirect_stdout(out):
+            add_agents.main(["--list"])
+        self.assertNotIn("spice\t", out.getvalue(), "added ones drop off the list")
 
     def test_null_suggestions_mean_every_optional_tool(self):
         catalog.install("spice", MODEL)

@@ -174,6 +174,36 @@ async def set_agent_avatar(agent_id: str, request: Request, tint: bool = False):
     return {"ok": True}
 
 
+# Avatar library (catalog/avatars): ready pictures to pick instead of the initials.
+_SVG_HEADERS = {"X-Content-Type-Options": "nosniff", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'"}
+
+
+@app.get("/api/avatar-library")
+def api_avatar_library():
+    return {"avatars": catalog.avatar_library()}
+
+
+@app.get("/api/avatar-library/{avatar_id}.svg")
+def api_avatar_library_svg(avatar_id: str):
+    try:
+        svg = svg_avatar.sanitize(catalog.library_avatar(avatar_id))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
+    return Response(svg, media_type="image/svg+xml", headers={**_SVG_HEADERS, "Cache-Control": "public, max-age=3600"})
+
+
+@app.post("/api/agents/{agent_id}/avatar/library")
+def api_pick_library_avatar(agent_id: str, req: dict):
+    """{avatar: id} -> that library picture becomes the agent's avatar."""
+    if agent_id not in AGENTS:
+        raise HTTPException(status_code=404, detail="Agent not found")
+    try:
+        agent_factory.save_svg_avatar(agent_id, catalog.library_avatar(str(req.get("avatar") or "")))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"ok": True}
+
+
 # Avatar maker (Control Panel → Edit → Make avatar…, static/avatar_maker.js):
 # the browser crops; the server fetches remote pictures and cartoonifies.
 @app.post("/api/avatar/fetch")
@@ -1090,10 +1120,14 @@ def api_catalog_avatar(template_id: str):
 
 @app.post("/api/catalog/{template_id}/install")
 def api_catalog_install(template_id: str, req: dict):
-    """{model_id, name?, persona?, mission_extra?} -> the new agent, in onboarding."""
+    """{model_id, name?, persona?, extras?, mission_extra?} -> the new agent, in onboarding."""
+    extras = req.get("extras") or []
     try:
+        if not isinstance(extras, list) or not all(isinstance(x, str) for x in extras):
+            raise ValueError("extras must be a list of extra job ids")
         created = catalog.install(template_id, str(req.get("model_id") or ""), req.get("name") or None,
-                                  persona=req.get("persona") or None, mission_extra=req.get("mission_extra") or None)
+                                  persona=req.get("persona") or None, mission_extra=req.get("mission_extra") or None,
+                                  extras=extras)
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     _register_agent_routes(created["id"])

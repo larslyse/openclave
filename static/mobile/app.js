@@ -402,14 +402,20 @@ function managerChoices(t) {
     ${t.job.length ? `<p class="intro">Its job:</p><ul class="mgr-job-list">${t.job.map(j => `<li>${escapeHtml(j)}</li>`).join('')}</ul>` : ''}
     <label>Personality<select class="mgr-persona"><option value="">Choose…</option>${t.personas.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}</option>`).join('')}<option value="own">In my own words…</option></select></label>
     <p class="intro mgr-persona-hint"></p>
-    <textarea class="mgr-own" rows="2" maxlength="2000" placeholder="Describe its personality, e.g. dry humour, patient, never uses jargon" hidden></textarea>
-    <label>Change or add to its job (optional)<textarea class="mgr-job" rows="2" maxlength="2000" placeholder="In your own words"></textarea></label></div>`;
+    <textarea class="mgr-own" rows="2" maxlength="1000" placeholder="Describe its personality, e.g. dry humour, patient, never uses jargon" hidden></textarea>
+    ${t.extras.length ? `<p class="intro">Extra jobs (optional):</p>${t.extras.map(x => `<label class="mgr-extra"><input type="checkbox" value="${escapeHtml(x.id)}"><span><b>${escapeHtml(x.label)}</b> ${escapeHtml(x.summary)}</span></label>`).join('')}` : ''}
+    <label>Change or add to its job (optional)<textarea class="mgr-job" rows="2" maxlength="300" placeholder="In your own words"></textarea></label></div>`;
+}
+// Name ideas for the manager: tapping one fills the name box (no default name).
+function nameIdeas(t) {
+  return t.name_ideas.length ? `<p class="intro mgr-ideas">Name ideas: ${t.name_ideas.map(n => `<button type="button" class="chip" data-name="${escapeHtml(n)}">${escapeHtml(n)}</button>`).join(' ')}</p>` : '';
 }
 function managerFields(el) {
   const sel = el.querySelector('.mgr-persona');
   if (!sel) return {};
   return {persona: sel.value === 'own' ? el.querySelector('.mgr-own').value : sel.value,
-          mission_extra: el.querySelector('.mgr-job').value};
+          mission_extra: el.querySelector('.mgr-job').value,
+          extras: [...el.querySelectorAll('.mgr-extra input:checked')].map(c => c.value)};
 }
 
 async function renderCreateAgent(token) {
@@ -427,11 +433,11 @@ async function renderCreateAgent(token) {
   try { ({templates} = await api('/api/catalog')); } catch { /* the blank form still works */ }
   if (token !== renderToken) return;
   const card = t => `<div class="template" data-id="${escapeHtml(t.id)}">
-    <div class="template-head">${t.has_avatar ? `<img class="template-av" src="/api/catalog/${encodeURIComponent(t.id)}/avatar" alt="">` : `<span class="template-av" style="background:${escapeHtml(t.color)}">${escapeHtml(t.name.slice(0, 2).toUpperCase())}</span>`}
+    <div class="template-head">${t.has_avatar ? `<img class="template-av" src="/api/catalog/${encodeURIComponent(t.id)}/avatar" alt="">` : `<span class="template-av" style="background:${escapeHtml(t.color)}">${t.manager ? 'M' : escapeHtml(t.name.slice(0, 2).toUpperCase())}</span>`}
       <span><b>${t.manager ? 'Manager' : escapeHtml(t.name)}</b>${t.installed.length ? '<span class="draft-tag">added</span>' : ''}<small>${escapeHtml(t.tagline)}</small></span></div>
     <p>${escapeHtml(t.summary)}</p>${t.needs ? `<p class="warn">Needs: ${escapeHtml(t.needs)}</p>` : ''}
-    ${t.manager ? managerChoices(t) : ''}
-    <div class="template-add"><input value="${t.manager ? '' : escapeHtml(t.name)}" placeholder="${t.manager ? 'Its name' : ''}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>
+    ${t.manager ? `<div class="template-add"><input value="" placeholder="Its name" maxlength="24" aria-label="Name"></div>${nameIdeas(t)}${managerChoices(t)}<div class="template-add"><button type="button">Add</button></div>`
+      : `<div class="template-add"><input value="${escapeHtml(t.name)}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>`}
     <p class="form-error"></p></div>`;
   const categories = [...new Set(templates.map(t => t.category))];
   // Past about ROSTER_WARN agents, lanes overlap and routing gets harder (Rick's backlog).
@@ -455,6 +461,7 @@ async function renderCreateAgent(token) {
   document.querySelectorAll('.template').forEach(el => {
     const button = el.querySelector('.template-add button'), error = el.querySelector('.form-error');
     const persona = el.querySelector('.mgr-persona');
+    el.querySelectorAll('.mgr-ideas [data-name]').forEach(chip => chip.onclick = () => { el.querySelector('.template-add input').value = chip.dataset.name; });
     if (persona) {
       const t = templates.find(x => x.id === el.dataset.id);
       persona.onchange = () => {

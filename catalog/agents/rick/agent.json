@@ -21,8 +21,15 @@
     "job": [
       "Keeps OpenClave tidy: a weekly cleanup and review of all agents.",
       "Collects the other agents' bugs and ideas into one to-do list for OpenClave.",
-      "Suggests what's worth moving from agents' notes into your own notes. You decide.",
-      "Researches and tracks business ideas, if you want that."
+      "Suggests what's worth moving from agents' notes into your own notes. You decide."
+    ],
+    "name_ideas": [
+      "Sage",
+      "Atlas",
+      "Juno",
+      "Otto",
+      "Nova",
+      "Ivy"
     ]
   }
 }

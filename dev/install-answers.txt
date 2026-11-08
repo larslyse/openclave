@@ -1,18 +1,23 @@
 # What a new user types (see dev/install_driver.py). Default run: Enter for the
-# name, a timezone; manager: no name (asked again), a bad one, then a good
-# one; personality: nothing, then "own words" with too few, then enough; a job
-# change; Anthropic key: a wrong one, then skip; no search.
+# name, a timezone; manager: no name (asked again), a bad one, then a name
+# idea by number; personality: nothing, then "own words" with too few, then
+# enough; extra jobs: a wrong number, then 1; a job change; Anthropic key: a
+# wrong one, then skip; starter agents: a wrong number, then two; no search.
 call you? =>
 timezone =>Europe/Oslo
-call your manager? =>
-call your manager? =>Max/2
-call your manager? =>Max
+number from the ideas: =>
+number from the ideas: =>Max/2
+number from the ideas: =>3
 Personality: =>
 Personality: =>4
 personality in a sentence =>nice
 personality in a sentence =>Dry humour, very patient, never uses jargon.
-Anything to change or add =>Skip business ideas. Also keep an eye on what my subscriptions cost.
+e.g. "1 2" =>9
+e.g. "1 2" =>1
+Anything to change or add =>Also keep an eye on what my subscriptions cost.
 Your choice: =>1
 Paste your Anthropic key =>sk-ant-not-a-real-key
 Paste your Anthropic key =>
+e.g. "2 5" =>99
+e.g. "2 5" =>2, 5
 note search =>n

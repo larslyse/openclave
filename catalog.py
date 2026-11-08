@@ -45,11 +45,12 @@ def _questions(folder: Path) -> list[str]:
     return [m.group(1).strip() for m in re.finditer(r"(?m)^\s*-\s+(.+)$", f.read_text(encoding="utf-8"))]
 
 
-def _personas(folder: Path) -> list[dict]:
-    """Starting personalities to choose from (personas/*.md, front matter
-    Label, Summary, Order); the manager template has them."""
+def _options(folder: Path, sub: str = "personas") -> list[dict]:
+    """Suggestions to choose from, one .md each with front matter Label,
+    Summary, Order: personas/ (starting personalities) and extras/ (optional
+    extra jobs, added to the mission when picked). The manager template has both."""
     out = []
-    for f in sorted((folder / "personas").glob("*.md")) if (folder / "personas").is_dir() else []:
+    for f in sorted((folder / sub).glob("*.md")) if (folder / sub).is_dir() else []:
         text = f.read_text(encoding="utf-8")
         meta = dict(re.findall(r"(?m)^(\w+):\s*(.+)$", text[:text.find("\n---", 3)])) if text.startswith("---") else {}
         out.append({"id": f.stem, "label": meta.get("Label", f.stem), "summary": meta.get("Summary", ""),
@@ -73,8 +74,10 @@ def _read(folder: Path, source: str) -> dict | None:
         "needs": meta.get("needs", ""), "suggested_tools": meta.get("suggested_tools"),
         "version": meta.get("version", 1), "authors": meta.get("authors", []),
         "has_avatar": (folder / "avatar.svg").is_file(),
-        "personas": _personas(folder),
+        "personas": _options(folder, "personas"),
+        "extras": _options(folder, "extras"),
         "job": [x for x in meta.get("job", []) if isinstance(x, str)],
+        "name_ideas": [x for x in meta.get("name_ideas", []) if isinstance(x, str)],
         # The manager has no default name: the user names it (install.sh, or the name box).
         "manager": agents.MANAGER in (data.get("roles") or []) or agents.LEGACY_MANAGER in (data.get("roles") or []),
         "skills": sorted(p.name for p in (folder / "skills").iterdir() if (p / "SKILL.md").is_file())
@@ -119,7 +122,8 @@ def installed_from() -> dict[str, list[str]]:
 
 def public(t: dict) -> dict:
     out = {k: v for k, v in t.items() if k not in ("folder", "data")}
-    out["personas"] = [{k: p[k] for k in ("id", "label", "summary")} for p in t["personas"]]
+    for key in ("personas", "extras"):
+        out[key] = [{k: p[k] for k in ("id", "label", "summary")} for p in t[key]]
     return out
 
 
@@ -128,13 +132,17 @@ def listing() -> list[dict]:
     return [{**public(t), "installed": used.get(t["id"], [])} for t in templates()]
 
 
-PERSONA_MAX = MISSION_EXTRA_MAX = 2000
+# The user's own words: short enough that the files stay within the
+# self-edit limits (vault.IDENTITY_CHAR_LIMITS) with every extra job picked.
+PERSONA_MAX, MISSION_EXTRA_MAX = 1000, 300
 
 
 def install(template_id: str, model_id: str, name: str | None = None,
-            persona: str | None = None, mission_extra: str | None = None) -> dict:
+            persona: str | None = None, mission_extra: str | None = None,
+            extras: list[str] | None = None) -> dict:
     """persona: a starting personality's id (template's personas/), or the
-    user's own description. mission_extra: the user's changes to the job.
+    user's own description. extras: ids of optional extra jobs (extras/),
+    none unless picked. mission_extra: the user's changes to the job.
     The manager needs a name and a persona from the user: no defaults."""
     t = get(template_id)
     persona, mission_extra = (persona or "").strip(), (mission_extra or "").strip()
@@ -148,8 +156,17 @@ def install(template_id: str, model_id: str, name: str | None = None,
     chosen = next((p for p in t["personas"] if p["id"] == persona), None)
     if persona and not chosen and len(persona) < 10:
         raise ValueError("Describe the personality in a few more words.")
-    if len(persona) > PERSONA_MAX or len(mission_extra) > MISSION_EXTRA_MAX:
-        raise ValueError(f"Keep the personality and the job changes under {PERSONA_MAX} characters each.")
+    if len(persona) > PERSONA_MAX:
+        raise ValueError(f"Keep the personality under {PERSONA_MAX} characters.")
+    if len(mission_extra) > MISSION_EXTRA_MAX:
+        raise ValueError(f"Keep the job changes under {MISSION_EXTRA_MAX} characters.")
+    picked = []
+    for x in extras or []:
+        extra = next((e for e in t["extras"] if e["id"] == x), None)
+        if extra is None:
+            raise ValueError(f"No extra job called {x!r}.")
+        if extra not in picked:
+            picked.append(extra)
     name = (name or t["name"]).strip()
     agent_id = agent_factory._check_new_name(name)
     llm_models.get(model_id)  # raises on an unknown model
@@ -163,7 +180,9 @@ def install(template_id: str, model_id: str, name: str | None = None,
     first = questions[0] if questions else "What do you want from me, and what does a good outcome look like?"
     created = agent_factory._scaffold(
         name, agent_id, color=color, tagline=t["tagline"],
-        mission=_body(t["folder"] / "mission.md", t["name"], name) + _mission_changes(mission_extra),
+        mission=("\n\n".join([_body(t["folder"] / "mission.md", t["name"], name).strip()]
+                             + [_body(e["path"], t["name"], name).strip() for e in picked]) + "\n"
+                 + _mission_changes(mission_extra)),
         persona=(_body(chosen["path"], t["name"], name) if chosen
                  else _own_persona(name, persona) if persona
                  else _body(t["folder"] / "persona.md", t["name"], name)),
@@ -199,10 +218,30 @@ def _own_persona(name: str, description: str) -> str:
 def _mission_changes(text: str) -> str:
     if not text:
         return ""
-    return ("\n\n## The user's changes\n\nThe user changed or added to this job, in their own words. Where it "
-            "conflicts with anything above, this wins. In the onboarding interview, fold it into the mission "
-            "above with update_mission.\n\n" + "\n".join(f"> {line}" for line in text.splitlines()) + "\n")
+    return ("\n\n## The user's changes\n\nIn their own words; this wins over anything above. Fold it in "
+            "during onboarding (update_mission).\n\n" + "\n".join(f"> {line}" for line in text.splitlines()) + "\n")
 
 
 def _renamed(text: str, template_name: str, name: str) -> str:
     return re.sub(rf"\b{re.escape(template_name)}\b", name, text) if name != template_name else text
+
+
+# ── Avatar library: pictures any agent can pick (catalog/avatars/*.svg) ──
+AVATARS = Path(__file__).parent / "catalog" / "avatars"
+
+
+def avatar_library() -> list[dict]:
+    """[{id, label}]; the label is the SVG's <title> or aria-label, else the file name."""
+    out = []
+    for f in sorted(AVATARS.glob("*.svg")):
+        head = f.read_text(encoding="utf-8")[:600]
+        m = re.search(r"<title>([^<]+)</title>", head) or re.search(r'aria-label="([^"]+)"', head)
+        out.append({"id": f.stem, "label": m.group(1).strip() if m else f.stem.replace("-", " ").capitalize()})
+    return out
+
+
+def library_avatar(avatar_id: str) -> str:
+    """The SVG text of one library picture."""
+    if avatar_id not in {a["id"] for a in avatar_library()}:
+        raise ValueError(f"No picture called {avatar_id!r} in the avatar library.")
+    return (AVATARS / f"{avatar_id}.svg").read_text(encoding="utf-8")

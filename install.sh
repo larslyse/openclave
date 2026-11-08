@@ -151,17 +151,23 @@ fi
 # user names it, picks or describes its personality and can change its job;
 # none of it has a default. Created after the model step.
 step "Your manager"
-MANAGER="" PERSONA="" MISSION_EXTRA=""
+MANAGER="" PERSONA="" MISSION_EXTRA="" EXTRAS=()
 if MGR_NAME="$(.venv/bin/python scripts/add_manager.py --status 2>/dev/null)"; then
   ok "Your manager is $MGR_NAME"
 else
   MGR_NAME=""
   say "Every OpenClave has one manager agent. It keeps OpenClave tidy, runs a weekly"
   say "review, and turns the other agents' bugs and ideas into a to-do list."
-  say "Give it any name you like; it will introduce itself by it."
+  say "Give it any name you like; it will introduce itself by it. Some ideas:"
+  names=(); while IFS= read -r n; do [ -n "$n" ] && names+=("$n"); done < <(.venv/bin/python scripts/add_manager.py --names)
+  line=""; for i in "${!names[@]}"; do line+="${B}$((i + 1))${N} ${names[$i]}   "; done
+  [ -n "$line" ] && say "  $line"
   while :; do
-    ask MANAGER "What do you want to call your manager?" ""
+    ask MANAGER "Type a name, or a number from the ideas:" ""
     MANAGER="$(printf '%s' "$MANAGER" | sed 's/^ *//; s/ *$//')"
+    if [[ "$MANAGER" =~ ^[0-9]+$ ]] && [ "$MANAGER" -ge 1 ] && [ "$MANAGER" -le "${#names[@]}" ]; then
+      MANAGER="${names[$((MANAGER - 1))]}"
+    fi
     if [ -z "$MANAGER" ]; then
       if [ -z "$TTY" ]; then MANAGER=Manager; break; fi
       warn "Your manager needs a name: letters, digits, spaces or dashes."
@@ -188,6 +194,7 @@ else
         [ -n "$TTY" ] || { PCHOICE="${ids[0]}"; break; }
         ask PCHOICE "Describe $MANAGER's personality in a sentence or two:" ""
         [ ${#PCHOICE} -ge 10 ] || warn "A few more words, please, e.g. \"dry humour, patient, never uses jargon\"."
+        if [ ${#PCHOICE} -gt 1000 ]; then warn "Shorter, please: up to 1000 characters."; PCHOICE=""; fi
       done
       PERSONA="$PCHOICE"; break
     elif [ -z "$TTY" ]; then
@@ -200,7 +207,28 @@ else
   say ""
   say "$MANAGER's job:"
   while IFS= read -r line; do say "  - $line"; done < <(.venv/bin/python scripts/add_manager.py --job)
-  ask MISSION_EXTRA "Anything to change or add, in your own words? (Enter keeps it as it is)" ""
+
+  EXTRAS=(); xids=(); i=0
+  while IFS=$'\t' read -r xid xlabel xsum; do
+    [ $i -eq 0 ] && { say ""; say "Extra jobs $MANAGER can take on (none unless you pick them):"; }
+    i=$((i + 1)); xids+=("$xid"); say "  ${B}$i${N}  $xlabel: $xsum"
+  done < <(.venv/bin/python scripts/add_manager.py --extras)
+  while [ $i -gt 0 ]; do
+    ask XCHOICE "Numbers of the ones you want, e.g. \"1 2\" (Enter for none):" ""
+    EXTRAS=(); bad=""
+    for n in ${XCHOICE//,/ }; do
+      if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le $i ]; then EXTRAS+=(--extra "${xids[$((n - 1))]}"); else bad=1; fi
+    done
+    [ -z "$bad" ] && break
+    [ -n "$TTY" ] || { EXTRAS=(); break; }
+    warn "Type numbers from 1 to $i, separated by spaces, or just press Enter."
+  done
+  say ""
+  while :; do
+    ask MISSION_EXTRA "Anything to change or add to $MANAGER's job, in your own words? (Enter: nothing)" ""
+    [ ${#MISSION_EXTRA} -le 300 ] && break
+    warn "Shorter, please: up to 300 characters. You can tell $MANAGER more in its first chat."
+  done
 fi
 
 # ── A model ──────────────────────────────────────────────────────────────
@@ -308,11 +336,36 @@ if [ "$pick" = 1 ]; then
 fi
 
 if [ -n "$MANAGER" ]; then
-  if out="$(.venv/bin/python scripts/add_manager.py "$MANAGER" --persona "$PERSONA" --mission-extra "$MISSION_EXTRA" 2>&1)"; then
+  if out="$(.venv/bin/python scripts/add_manager.py "$MANAGER" --persona "$PERSONA" "${EXTRAS[@]}" --mission-extra "$MISSION_EXTRA" 2>&1)"; then
     MGR_NAME="$MANAGER"; ok "Created $MGR_NAME, your manager. It interviews you briefly the first time you open it."
   else
     warn "Couldn't create the manager ($out). Add it later: Control Panel → New agent → ready-made agents."
   fi
+
+  # ── Agents to start with (first run only; later: Control Panel → New agent) ──
+  step "Agents to start with"
+  tids=(); i=0
+  say "Ready-made agents you can add now, or any time later (none unless you pick them):"
+  while IFS=$'\t' read -r tid tname ttag; do
+    i=$((i + 1)); tids+=("$tid"); say "  ${B}$i${N}  $tname: $ttag"
+  done < <(.venv/bin/python scripts/add_agents.py --list)
+  say "You can also make your own from scratch in the app (New agent)."
+  while [ $i -gt 0 ]; do
+    ask ACHOICE "Numbers of the ones you want, e.g. \"2 5\" (Enter for none):" ""
+    picked=(); bad=""
+    for n in ${ACHOICE//,/ }; do
+      if [[ "$n" =~ ^[0-9]+$ ]] && [ "$n" -ge 1 ] && [ "$n" -le $i ]; then picked+=("${tids[$((n - 1))]}"); else bad=1; fi
+    done
+    if [ -z "$bad" ]; then
+      if [ ${#picked[@]} -gt 0 ]; then
+        while IFS= read -r line; do case "$line" in "Couldn't "*) warn "$line" ;; *) ok "Added $line" ;; esac; done < <(.venv/bin/python scripts/add_agents.py "${picked[@]}" 2>&1 || true)
+        say "Each one asks you a few questions in its first chat."
+      fi
+      break
+    fi
+    [ -n "$TTY" ] || break
+    warn "Type numbers from 1 to $i, separated by spaces, or just press Enter."
+  done
 fi
 
 # ── Extras ───────────────────────────────────────────────────────────────
