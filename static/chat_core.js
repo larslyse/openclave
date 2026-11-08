@@ -15,6 +15,9 @@
 (function () {
   'use strict';
 
+  // The Keeper (brand/svg): small mascot poses for working and failed replies.
+  const KEEPER = pose => `<img class="keeper keeper-${pose}" src="/static/mobile/icons/keeper-${pose}.svg" alt="" width="28" height="28">`;
+
   // Coarse phase labels — see request_phase.py. Unknown activity falls back to "Working".
   const PHASE_LABELS = {
     retrieving: 'Looking things up', thinking: 'Thinking', 'using tools': 'Using tools',
@@ -717,7 +720,7 @@
       bubble.setAttribute('aria-live', 'off');
       // Durable requests can be stopped; voice turns (no requestId) can't.
       // .stream-text: the reply so far while an API route streams it.
-      bubble.innerHTML = `<div class="stream-text" hidden></div><span class="pending-label"></span>${request.requestId ? ' <button type="button" class="stop-btn" title="Stop this reply">Stop</button>' : ''}`;
+      bubble.innerHTML = `<div class="stream-text" hidden></div>${KEEPER('thinking')}<span class="pending-label"></span>${request.requestId ? ' <button type="button" class="stop-btn" title="Stop this reply">Stop</button>' : ''}`;
       const streamEl = bubble.querySelector('.stream-text');
       let shown = '';
       const showText = text => {
@@ -922,7 +925,7 @@
     // sends the same message (and photos) again into this conversation.
     function renderFailed() {
       for (const f of failed) {
-        messages.insertAdjacentHTML('beforeend', `<div class="bubble assistant error">${escapeHtml(f.error)}<div class="retry-row"><button type="button" class="retry-btn" data-retry="${escapeHtml(f.request.requestId)}">Retry</button></div></div>`);
+        messages.insertAdjacentHTML('beforeend', `<div class="bubble assistant error">${KEEPER('error')}${escapeHtml(f.error)}<div class="retry-row"><button type="button" class="retry-btn" data-retry="${escapeHtml(f.request.requestId)}">Retry</button></div></div>`);
       }
       messages.querySelectorAll('[data-retry]').forEach(btn => btn.onclick = () => retry(btn.dataset.retry));
     }

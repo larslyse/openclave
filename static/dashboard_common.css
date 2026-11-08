@@ -491,3 +491,11 @@ body.picking-agent .agent-tab:not(.current):hover .agent-tab-dot{ box-shadow:0 0
 #embed-pane{ flex:1; min-height:0; margin: 0 -16px -18px; }
 .purge-summary{ width:100%; box-sizing:border-box; background:var(--bg); color:var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:8px; font:inherit; margin-bottom:10px; }
 .purged-banner{ font-size:12.5px; color:var(--text-muted); border:1px dashed var(--panel-border); border-radius:8px; padding:6px 10px; margin:6px 0 10px; }
+
+/* The Keeper (brand/): thinking pose in the working bubble, error pose on a failed reply */
+.keeper{ display:inline-block; width:22px; height:22px; vertical-align:-6px; margin-right:8px; }
+.bubble .keeper{ width:28px; height:28px; vertical-align:-8px; }
+.bubble.pending .keeper-thinking, .room-pending .keeper-thinking{ animation: keeper-bob 1.6s ease-in-out infinite; }
+.bubble.pending.streaming .keeper{ display:none; }
+@keyframes keeper-bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+@media (prefers-reduced-motion: reduce){ .bubble.pending .keeper-thinking, .room-pending .keeper-thinking{ animation:none; } }

@@ -432,3 +432,11 @@ button { color:inherit; }
 .clave-chip[aria-pressed="true"], .clave-chip[aria-expanded="true"] { border-color:var(--accent); color:var(--text); background:rgba(127,209,176,.12); }
 .clave-note { flex-basis:100%; margin:2px 2px 0; font-size:14px; color:var(--muted); }
 .row[hidden] { display:none; }
+
+/* The Keeper (brand/): thinking pose in the working bubble, error pose on a failed reply */
+.keeper{ display:inline-block; width:22px; height:22px; vertical-align:-6px; margin-right:8px; }
+.bubble .keeper{ width:28px; height:28px; vertical-align:-8px; }
+.bubble.pending .keeper-thinking, .room-pending .keeper-thinking{ animation: keeper-bob 1.6s ease-in-out infinite; }
+.bubble.pending.streaming .keeper{ display:none; }
+@keyframes keeper-bob{ 0%,100%{ transform:translateY(0) } 50%{ transform:translateY(-3px) } }
+@media (prefers-reduced-motion: reduce){ .bubble.pending .keeper-thinking, .room-pending .keeper-thinking{ animation:none; } }

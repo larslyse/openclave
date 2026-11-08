@@ -686,8 +686,9 @@ async function loadSetup(){
     const d=await (await fetch('/api/setup')).json(),sec=document.querySelector('#setup');
     const row=(x,opt)=>`<tr><td style="width:28px;color:${x.ready?'#9dd6b9':(opt?'#7d8484':'#E8A33D')}">${x.ready?'✓':'–'}</td><td>${esc(x.name)}<div class="muted" style="font-size:12px">${esc(x.detail)}</div></td><td class="muted" style="font-size:13px">${x.ready?'':esc(x.fix)}</td></tr>`;
     document.querySelector('#setup-rows').innerHTML=`<tr class="group-row"><td colspan="3">Models: at least one</td></tr>${d.routes.map(x=>row(x,false)).join('')}<tr class="group-row"><td colspan="3">Optional</td></tr>${d.extras.map(x=>row(x,true)).join('')}`;
-    document.querySelector('#setup-intro').innerHTML=d.ready?`Data folder <code>${esc(d.home)}</code>, keys file <code>${esc(d.env_file)}</code>.`
-      :`<b style="color:#E8A33D">No model is set up yet, so agents can't answer.</b> The quickest start is an API key: put it in <code>${esc(d.env_file)}</code> and restart OpenClave.`;
+    const keeper=`<img src="/static/mobile/icons/keeper-${d.ready?'done':'error'}.svg" alt="" width="36" height="36" style="vertical-align:middle;margin-right:10px">`;
+    document.querySelector('#setup-intro').innerHTML=keeper+(d.ready?`Data folder <code>${esc(d.home)}</code>, keys file <code>${esc(d.env_file)}</code>.`
+      :`<b style="color:#E8A33D">No model is set up yet, so agents can't answer.</b> The quickest start is an API key: put it in <code>${esc(d.env_file)}</code> and restart OpenClave.`);
     if(d.ready)document.querySelector('#access').after(sec);
     sec.hidden=false;
     // No Claude CLI on this computer: nothing to sign in to.

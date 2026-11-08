@@ -74,7 +74,7 @@
       const names = [...new Set(pending.map(p => byId[p.agent_id]?.name || p.agent_id))];
       if (!names.length) return '';
       const verb = names.length === 1 ? 'is' : 'are';
-      return `<div class="room-pending">${names.map(escapeHtml).join(', ')} ${verb} answering…</div>`;
+      return `<div class="room-pending"><img class="keeper keeper-thinking" src="/static/mobile/icons/keeper-thinking.svg" alt="" width="22" height="22">${names.map(escapeHtml).join(', ')} ${verb} answering…</div>`;
     }
     function render() {
       const atBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;

@@ -20,7 +20,7 @@ icons=$repo/static/mobile/icons
 for s in 180 192 512; do png app-icon.svg $s "$icons/app-icon-$s.png"; done
 cp svg/app-icon.svg "$icons/app-icon.svg"
 cp svg/favicon.svg "$icons/favicon.svg"
-cp svg/keeper.svg "$icons/keeper.svg"
+for f in keeper keeper-thinking keeper-done keeper-error; do cp "svg/$f.svg" "$icons/$f.svg"; done
 
 cp svg/favicon.svg "$repo/site/favicon.svg"
 cp svg/keeper.svg "$repo/site/keeper.svg"
