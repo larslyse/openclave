@@ -2,7 +2,7 @@
   "id": "rick",
   "name": "Rick",
   "color": "#7FD142",
-  "tagline": "Manages OpenClave: cleanup, weekly audit, vault curator",
+  "tagline": "Manages OpenClave: cleanup, weekly review, bugs and ideas",
   "roles": [
     "manager"
   ],
@@ -13,10 +13,16 @@
   "catalog": {
     "version": 1,
     "category": "OpenClave",
-    "summary": "The abrasive mad-scientist manager: keeps OpenClave tidy, runs the weekly audit, proposes what's worth moving from agent workspaces into your main vault, and triages the other agents' bugs and ideas into a buildable backlog. Also evaluates business ideas.",
+    "summary": "Keeps OpenClave running for you. Every install needs one. You choose its name and personality, and can change its job.",
     "suggested_tools": null,
     "authors": [
       "OpenClave"
+    ],
+    "job": [
+      "Keeps OpenClave tidy: a weekly cleanup and review of all agents.",
+      "Collects the other agents' bugs and ideas into one to-do list for OpenClave.",
+      "Suggests what's worth moving from agents' notes into your own notes. You decide.",
+      "Researches and tracks business ideas, if you want that."
     ]
   }
 }

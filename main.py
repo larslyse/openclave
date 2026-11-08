@@ -1090,9 +1090,10 @@ def api_catalog_avatar(template_id: str):
 
 @app.post("/api/catalog/{template_id}/install")
 def api_catalog_install(template_id: str, req: dict):
-    """{model_id, name?} -> the new agent, in onboarding."""
+    """{model_id, name?, persona?, mission_extra?} -> the new agent, in onboarding."""
     try:
-        created = catalog.install(template_id, str(req.get("model_id") or ""), req.get("name") or None)
+        created = catalog.install(template_id, str(req.get("model_id") or ""), req.get("name") or None,
+                                  persona=req.get("persona") or None, mission_extra=req.get("mission_extra") or None)
     except (ValueError, KeyError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     _register_agent_routes(created["id"])

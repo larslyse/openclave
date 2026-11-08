@@ -1,15 +1,19 @@
-"""Create the manager agent from the ready-made manager template, under the
-name the user chose (install.sh asks for it; there is no default name).
+"""Create the manager agent from the ready-made manager template, with the
+name and personality the user chose and any changes to its job (install.sh
+asks for all three; there are no defaults).
 
-    python3 scripts/add_manager.py --status       existing manager's name, if any
-    python3 scripts/add_manager.py --check "Name" can this name be used?
-    python3 scripts/add_manager.py "Name"         create it
+    python3 scripts/add_manager.py --status        existing manager's name, if any
+    python3 scripts/add_manager.py --check NAME    can this name be used?
+    python3 scripts/add_manager.py --personas      starting personalities: id<TAB>label<TAB>summary
+    python3 scripts/add_manager.py --job           the job, one line each
+    python3 scripts/add_manager.py NAME --persona ID_OR_OWN_WORDS [--mission-extra TEXT]
 
-Exit codes: 0 done (prints the name), 2 the name can't be used (prints why),
+Exit codes: 0 done (prints the name), 2 can't be used (prints why),
 3 a manager already exists (prints its name), 4 --status: no manager yet.
 The model is the default model when its route is set up, else the first
 model that is; the user can change it on the agent's page.
 """
+import argparse
 import sys
 from pathlib import Path
 
@@ -41,8 +45,25 @@ def pick_model() -> str:
 
 
 def main(argv: list[str]) -> int:
+    ap = argparse.ArgumentParser(description="Create the manager agent.")
+    ap.add_argument("name", nargs="*")
+    ap.add_argument("--status", action="store_true")
+    ap.add_argument("--check", action="store_true")
+    ap.add_argument("--personas", action="store_true")
+    ap.add_argument("--job", action="store_true")
+    ap.add_argument("--persona", default="")
+    ap.add_argument("--mission-extra", default="")
+    a = ap.parse_args(argv)
+    t = catalog.get(TEMPLATE)
+    if a.personas:
+        for p in t["personas"]:
+            print(f"{p['id']}\t{p['label']}\t{p['summary']}")
+        return 0
+    if a.job:
+        print("\n".join(t["job"]))
+        return 0
     current = existing_manager()
-    if argv[:1] == ["--status"]:
+    if a.status:
         if current:
             print(current)
             return 0
@@ -50,16 +71,15 @@ def main(argv: list[str]) -> int:
     if current:
         print(current)
         return 3
-    check = argv[:1] == ["--check"]
-    name = " ".join(argv[1:] if check else argv).strip()
+    name = " ".join(a.name).strip()
     try:
         agent_factory._check_new_name(name)
+        if a.check:
+            return 0
+        catalog.install(TEMPLATE, pick_model(), name, persona=a.persona, mission_extra=a.mission_extra)
     except ValueError as e:
         print(e)
         return 2
-    if check:
-        return 0
-    catalog.install(TEMPLATE, pick_model(), name)
     print(name)
     return 0
 

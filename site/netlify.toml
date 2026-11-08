@@ -1,0 +1,32 @@
+# getopenclave.com: the static site in this folder. No build step.
+# Netlify site settings: Base directory = site (so this file is read and
+# the Python app in the repo root is ignored).
+[build]
+  publish = "."
+  command = ""
+  # Only deploy when something in site/ changed.
+  ignore = "git diff --quiet $CACHED_COMMIT_REF $COMMIT_REF -- ."
+
+# The one-line installer: serve install.sh straight from the main branch,
+# so the site never holds an outdated copy.
+[[redirects]]
+  from = "/install.sh"
+  to = "https://raw.githubusercontent.com/larslyse/openclave/main/install.sh"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/github"
+  to = "https://github.com/larslyse/openclave"
+  status = 302
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+
+[[headers]]
+  for = "/img/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"

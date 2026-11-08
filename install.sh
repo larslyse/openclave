@@ -148,9 +148,10 @@ fi
 
 # ── Your manager ─────────────────────────────────────────────────────────
 # Every install has one manager agent (the ready-made manager template). The
-# user names it; there is no default name. Created after the model step.
+# user names it, picks or describes its personality and can change its job;
+# none of it has a default. Created after the model step.
 step "Your manager"
-MANAGER=""
+MANAGER="" PERSONA="" MISSION_EXTRA=""
 if MGR_NAME="$(.venv/bin/python scripts/add_manager.py --status 2>/dev/null)"; then
   ok "Your manager is $MGR_NAME"
 else
@@ -169,6 +170,37 @@ else
     if why="$(.venv/bin/python scripts/add_manager.py --check "$MANAGER" 2>&1)"; then break; fi
     warn "$why"
   done
+
+  say ""
+  say "How should $MANAGER come across? Pick one, or describe it in your own words:"
+  ids=(); i=0
+  while IFS=$'\t' read -r pid plabel psum; do
+    i=$((i + 1)); ids+=("$pid"); say "  ${B}$i${N}  $plabel: $psum"
+  done < <(.venv/bin/python scripts/add_manager.py --personas)
+  own=$((i + 1)); say "  ${B}$own${N}  In my own words"
+  PERSONA=""
+  while :; do
+    ask PCHOICE "Personality:" ""
+    if [[ "$PCHOICE" =~ ^[0-9]+$ ]] && [ "$PCHOICE" -ge 1 ] && [ "$PCHOICE" -le "$i" ]; then
+      PERSONA="${ids[$((PCHOICE - 1))]}"; break
+    elif [ "$PCHOICE" = "$own" ] || [ ${#PCHOICE} -ge 10 ]; then
+      while [ ${#PCHOICE} -lt 10 ]; do
+        [ -n "$TTY" ] || { PCHOICE="${ids[0]}"; break; }
+        ask PCHOICE "Describe $MANAGER's personality in a sentence or two:" ""
+        [ ${#PCHOICE} -ge 10 ] || warn "A few more words, please, e.g. \"dry humour, patient, never uses jargon\"."
+      done
+      PERSONA="$PCHOICE"; break
+    elif [ -z "$TTY" ]; then
+      PERSONA="${ids[0]}"; break
+    else
+      warn "Type a number from 1 to $own."
+    fi
+  done
+
+  say ""
+  say "$MANAGER's job:"
+  while IFS= read -r line; do say "  - $line"; done < <(.venv/bin/python scripts/add_manager.py --job)
+  ask MISSION_EXTRA "Anything to change or add, in your own words? (Enter keeps it as it is)" ""
 fi
 
 # ── A model ──────────────────────────────────────────────────────────────
@@ -276,7 +308,7 @@ if [ "$pick" = 1 ]; then
 fi
 
 if [ -n "$MANAGER" ]; then
-  if out="$(.venv/bin/python scripts/add_manager.py "$MANAGER" 2>&1)"; then
+  if out="$(.venv/bin/python scripts/add_manager.py "$MANAGER" --persona "$PERSONA" --mission-extra "$MISSION_EXTRA" 2>&1)"; then
     MGR_NAME="$MANAGER"; ok "Created $MGR_NAME, your manager. It interviews you briefly the first time you open it."
   else
     warn "Couldn't create the manager ($out). Add it later: Control Panel → New agent → ready-made agents."

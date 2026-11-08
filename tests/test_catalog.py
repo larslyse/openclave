@@ -102,19 +102,40 @@ class CatalogInstallTests(unittest.TestCase):
         catalog.install("bolt", MODEL, name="Sparky")
         self.assertIn("sparky", agents.AGENTS)
 
-    def test_the_manager_has_no_default_name(self):
-        self.assertTrue(catalog.get("rick")["manager"])
+    def test_the_manager_has_no_default_name_or_persona(self):
+        t = catalog.get("rick")
+        self.assertTrue(t["manager"])
+        self.assertEqual([p["id"] for p in t["personas"]], ["calm", "warm", "blunt"])
+        self.assertTrue(t["job"])
         for name in (None, "", "  "):
             with self.assertRaisesRegex(ValueError, "name"):
-                catalog.install("rick", MODEL, name=name)
-        catalog.install("rick", MODEL, name="Morty")
+                catalog.install("rick", MODEL, name=name, persona="calm")
+        with self.assertRaisesRegex(ValueError, "personality"):
+            catalog.install("rick", MODEL, name="Morty")
+        with self.assertRaisesRegex(ValueError, "few more words"):
+            catalog.install("rick", MODEL, name="Morty", persona="nice")
+        catalog.install("rick", MODEL, name="Morty", persona="calm", mission_extra="Skip business ideas.\nAlso watch my subscriptions.")
         persona = (self.root / "Morty" / "persona.md").read_text()
-        self.assertIn("Morty keeps OpenClave itself working", persona)
+        self.assertIn("Morty keeps OpenClave itself working: a calm", persona)
         self.assertNotIn("Rick", persona)
+        self.assertNotIn("Label:", persona)
+        mission = (self.root / "Morty" / "mission.md").read_text()
+        self.assertIn("## The user's changes", mission)
+        self.assertIn("> Also watch my subscriptions.", mission)
         questions = json.loads((self.root / "Morty" / "agent.json").read_text())["template"]["questions"]
         self.assertFalse([q for q in questions if "Rick" in q])
         self.assertEqual(set(agents.AGENTS["morty"].roles), {"manager", "maintainer"})
         self.assertEqual(agents.AGENTS["morty"].cli_tools, ("WebSearch", "WebFetch"))
+
+    def test_manager_in_the_users_own_words(self):
+        catalog.install("rick", MODEL, name="Sage", persona="Dry humour, very patient, never uses jargon.")
+        persona = (self.root / "Sage" / "persona.md").read_text()
+        self.assertIn("> Dry humour, very patient, never uses jargon.", persona)
+        self.assertIn("update_persona", persona)
+        self.assertNotIn("The user's changes", (self.root / "Sage" / "mission.md").read_text())
+        public = [x for x in catalog.listing() if x["id"] == "rick"][0]
+        json.dumps(public)  # no file paths leak into the API
+        self.assertEqual(set(public["personas"][0]), {"id", "label", "summary"})
 
     def test_add_manager_script(self):
         import add_manager
@@ -124,8 +145,9 @@ class CatalogInstallTests(unittest.TestCase):
             self.assertEqual(add_manager.main(["--check", "Bad/name"]), 2)
             self.assertEqual(add_manager.main(["--check", "Zed"]), 0)
             self.assertNotIn("zed", agents.AGENTS)
-            self.assertEqual(add_manager.main(["Zed"]), 0)
-            self.assertEqual(add_manager.main(["Other"]), 3, "only one manager")
+            self.assertEqual(add_manager.main(["Zed"]), 2, "needs a personality")
+            self.assertEqual(add_manager.main(["Zed", "--persona", "warm", "--mission-extra", "Also my budget."]), 0)
+            self.assertEqual(add_manager.main(["Other", "--persona", "calm"]), 3, "only one manager")
             self.assertEqual(add_manager.main(["--status"]), 0)
         self.assertEqual(out.getvalue().split()[-1], "Zed")
         self.assertIn("manager", agents.AGENTS["zed"].roles)

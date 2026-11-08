@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenClave: your own team of AI agents</title>
+<meta name="description" content="A small team of AI agents, each with one area of your life. Runs on your own computer, keeps everything as Markdown files you can read. Free and open source.">
+<meta property="og:title" content="OpenClave">
+<meta property="og:description" content="Your own team of AI agents. Runs on your computer, remembers in plain Markdown.">
+<meta property="og:image" content="https://getopenclave.com/img/home.webp">
+<meta property="og:url" content="https://getopenclave.com/">
+<link rel="icon" href="/favicon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+
+<header class="top wrap">
+  <a class="brand" href="/"><img src="/favicon.svg" alt="" width="28" height="28"> OpenClave</a>
+  <nav>
+    <a href="#examples">Examples</a>
+    <a href="#how">How it works</a>
+    <a href="#install">Install</a>
+    <a href="https://github.com/larslyse/openclave">GitHub</a>
+  </nav>
+</header>
+
+<main>
+<section class="hero wrap">
+  <h1>Your own team of AI agents.</h1>
+  <p class="lead">Each agent has one area of your life: training, the house, the car, money, writing.
+    You talk to them from a browser or your phone. They run on your own computer and keep their notes,
+    plans and chats as plain Markdown files, so they remember what you told them last month and you can
+    read everything they know.</p>
+  <div class="cmd" data-copy>
+    <code>curl -fsSL https://getopenclave.com/install.sh | bash</code>
+    <button type="button" aria-label="Copy install command">Copy</button>
+  </div>
+  <p class="small">Ubuntu, Debian or Windows with WSL. Free and open source (AGPL-3.0).
+    <a href="#install">What you need</a></p>
+</section>
+
+<section class="wrap shot-main">
+  <img src="/img/home.webp" width="2800" height="1800" alt="OpenClave home page: six agents in boxes, each with its latest chat">
+</section>
+
+<section id="examples" class="wrap">
+  <h2>What people use it for</h2>
+  <p class="sub">Start from ready-made agents, or describe your own. Each one interviews you for a few minutes to fit itself to you.</p>
+  <div class="cards">
+    <article>
+      <h3><span class="dot" style="--c:#E8A33D"></span>Training and rehab</h3>
+      <p class="you">"Knee ached on the last 3 km of Sunday's run."</p>
+      <p>Asks where it hurts, cuts next week's runs, adds exercises with a stop rule, and moves the long run in your plan.</p>
+    </article>
+    <article>
+      <h3><span class="dot" style="--c:#5B8DEF"></span>Home Assistant</h3>
+      <p class="you">"Warn me if the garage door is open after 22:00."</p>
+      <p>Writes the automation in your Home Assistant, tests it, and tells you which sensor batteries are running low. Asks before anything risky.</p>
+    </article>
+    <article>
+      <h3><span class="dot" style="--c:#6FC43D"></span>Fixing an old house</h3>
+      <p class="you">"Floor feels soft by the shower."</p>
+      <p>Tells you what to check first, reads your photos, and walks you through the repair step by step.</p>
+    </article>
+    <article>
+      <h3><span class="dot" style="--c:#C9A43A"></span>Money</h3>
+      <p class="you">"Quote for 8 kW solar: is it worth it?"</p>
+      <p>Builds a model with every assumption written out and saves it to its files, so you can change a number and ask again.</p>
+    </article>
+    <article>
+      <h3><span class="dot" style="--c:#A23FC2"></span>Writing and notes</h3>
+      <p class="you">"Turn my notes into a short post. Keep my words."</p>
+      <p>Orders and joins your notes without rewriting them, and marks where they contradict each other. Can write into your Obsidian vault.</p>
+    </article>
+    <article>
+      <h3><span class="dot" style="--c:#2E9E5B"></span>A manager for the rest</h3>
+      <p class="you">Once a week, on its own.</p>
+      <p>Archives old chats, spots agents that overlap, and collects bugs and ideas. You give it its name.</p>
+    </article>
+  </div>
+</section>
+
+<section class="wrap">
+  <h2>On your phone too</h2>
+  <p class="sub">Same agents, same chats. Reach it from anywhere with Tailscale (free), and use voice if you like.</p>
+  <div class="phones">
+    <img src="/img/phone-home.webp" width="780" height="1688" alt="Phone: list of agents" loading="lazy">
+    <img src="/img/phone-reba.webp" width="780" height="1688" alt="Phone: chat with the training agent" loading="lazy">
+    <img src="/img/phone-chat.webp" width="780" height="1688" alt="Phone: chat with the Home Assistant agent" loading="lazy">
+  </div>
+</section>
+
+<section id="how" class="wrap">
+  <h2>How it works</h2>
+  <div class="how">
+    <div><h3>Runs at home</h3><p>On your laptop, an old PC or a small home server. No account with us, no cloud of ours. Your data stays on your disk.</p></div>
+    <div><h3>Plain files</h3><p>Every agent is a folder: mission, plan, backlog, files and chats as Markdown. Open them in any editor or Obsidian, back them up like anything else.</p></div>
+    <div><h3>Your choice of model</h3><p>An Anthropic or xAI API key (pay per use, a few dollars a month for light use), or the Claude or ChatGPT subscription you already pay for.</p></div>
+    <div><h3>Agents that work together</h3><p>Agents can message each other, share a group chat, run scheduled tasks and remind you. Group them into claves: home, work, hobbies.</p></div>
+  </div>
+</section>
+
+<section id="install" class="wrap">
+  <h2>Install</h2>
+  <p>Open a terminal and paste:</p>
+  <div class="cmd" data-copy>
+    <code>curl -fsSL https://getopenclave.com/install.sh | bash</code>
+    <button type="button" aria-label="Copy install command">Copy</button>
+  </div>
+  <p>Or the same thing with git:</p>
+  <div class="cmd" data-copy>
+    <code>git clone https://github.com/larslyse/openclave.git &amp;&amp; cd openclave &amp;&amp; ./install.sh</code>
+    <button type="button" aria-label="Copy git install command">Copy</button>
+  </div>
+  <p>The installer asks a few questions (what to call you, your timezone, which model), then opens
+    <code>http://localhost:8777</code>. Run it again any time; it keeps your settings and agents.</p>
+  <ul class="needs">
+    <li><b>You need:</b> Ubuntu or Debian, or Windows with <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a>.</li>
+    <li><b>And one of:</b> an <a href="https://console.anthropic.com/">Anthropic API key</a>, an xAI key, Claude Pro/Max, or ChatGPT Plus/Pro.</li>
+    <li><b>Early software:</b> it runs every day for its author, but you are among the first to install it. If something fails or confuses you, <a href="https://github.com/larslyse/openclave/issues">please report it</a>.</li>
+  </ul>
+  <p><a class="btn" href="https://github.com/larslyse/openclave#readme">Full setup guide on GitHub</a></p>
+</section>
+</main>
+
+<footer class="wrap">
+  <p>OpenClave is free software under the <a href="https://github.com/larslyse/openclave/blob/main/LICENSE">AGPL-3.0</a>.
+    Source, issues and ideas on <a href="https://github.com/larslyse/openclave">GitHub</a>.</p>
+</footer>
+
+<script>
+document.querySelectorAll('[data-copy]').forEach(box => {
+  const btn = box.querySelector('button');
+  btn.addEventListener('click', async () => {
+    try { await navigator.clipboard.writeText(box.querySelector('code').textContent); btn.textContent = 'Copied'; }
+    catch { btn.textContent = 'Select and copy'; }
+    setTimeout(() => { btn.textContent = 'Copy'; }, 1800);
+  });
+});
+</script>
+</body>
+</html>

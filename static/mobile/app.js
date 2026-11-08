@@ -394,6 +394,24 @@ async function renderModelPicker(agent, token) {
 // backlog, 2026-10-02): name, purpose, model. The agent then runs its setup
 // interview (mission, persona, tools, avatar) in its Onboarding chat, driven
 // by its system prompt, so the phone gets every onboarding option desktop has.
+// The manager has no default personality or job: the user picks or describes
+// one and can change the job (catalog.install persona / mission_extra), the
+// same choices as Control Panel → New agent.
+function managerChoices(t) {
+  return `<div class="mgr-choices">
+    ${t.job.length ? `<p class="intro">Its job:</p><ul class="mgr-job-list">${t.job.map(j => `<li>${escapeHtml(j)}</li>`).join('')}</ul>` : ''}
+    <label>Personality<select class="mgr-persona"><option value="">Choose…</option>${t.personas.map(p => `<option value="${escapeHtml(p.id)}">${escapeHtml(p.label)}</option>`).join('')}<option value="own">In my own words…</option></select></label>
+    <p class="intro mgr-persona-hint"></p>
+    <textarea class="mgr-own" rows="2" maxlength="2000" placeholder="Describe its personality, e.g. dry humour, patient, never uses jargon" hidden></textarea>
+    <label>Change or add to its job (optional)<textarea class="mgr-job" rows="2" maxlength="2000" placeholder="In your own words"></textarea></label></div>`;
+}
+function managerFields(el) {
+  const sel = el.querySelector('.mgr-persona');
+  if (!sel) return {};
+  return {persona: sel.value === 'own' ? el.querySelector('.mgr-own').value : sel.value,
+          mission_extra: el.querySelector('.mgr-job').value};
+}
+
 async function renderCreateAgent(token) {
   shell('New agent', '#/agents', '<div class="center-state">Loading models…</div>');
   let models;
@@ -412,7 +430,8 @@ async function renderCreateAgent(token) {
     <div class="template-head">${t.has_avatar ? `<img class="template-av" src="/api/catalog/${encodeURIComponent(t.id)}/avatar" alt="">` : `<span class="template-av" style="background:${escapeHtml(t.color)}">${escapeHtml(t.name.slice(0, 2).toUpperCase())}</span>`}
       <span><b>${t.manager ? 'Manager' : escapeHtml(t.name)}</b>${t.installed.length ? '<span class="draft-tag">added</span>' : ''}<small>${escapeHtml(t.tagline)}</small></span></div>
     <p>${escapeHtml(t.summary)}</p>${t.needs ? `<p class="warn">Needs: ${escapeHtml(t.needs)}</p>` : ''}
-    <div class="template-add"><input value="${t.manager ? '' : escapeHtml(t.name)}" placeholder="${t.manager ? 'Name your manager' : ''}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>
+    ${t.manager ? managerChoices(t) : ''}
+    <div class="template-add"><input value="${t.manager ? '' : escapeHtml(t.name)}" placeholder="${t.manager ? 'Its name' : ''}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>
     <p class="form-error"></p></div>`;
   const categories = [...new Set(templates.map(t => t.category))];
   // Past about ROSTER_WARN agents, lanes overlap and routing gets harder (Rick's backlog).
@@ -435,11 +454,19 @@ async function renderCreateAgent(token) {
     ? `#/agents/${created.id}/conversations/${created.conversation_id}` : `#/agents/${created.id}/conversations`);
   document.querySelectorAll('.template').forEach(el => {
     const button = el.querySelector('.template-add button'), error = el.querySelector('.form-error');
+    const persona = el.querySelector('.mgr-persona');
+    if (persona) {
+      const t = templates.find(x => x.id === el.dataset.id);
+      persona.onchange = () => {
+        el.querySelector('.mgr-own').hidden = persona.value !== 'own';
+        el.querySelector('.mgr-persona-hint').textContent = t.personas.find(p => p.id === persona.value)?.summary || '';
+      };
+    }
     button.onclick = async () => {
       button.disabled = true; button.textContent = 'Adding…'; error.textContent = '';
       try {
         const created = await api(`/api/catalog/${encodeURIComponent(el.dataset.id)}/install`, {method: 'POST',
-          body: JSON.stringify({model_id: document.querySelector('#create-agent').model_id.value, name: el.querySelector('.template-add input').value})});
+          body: JSON.stringify({model_id: document.querySelector('#create-agent').model_id.value, name: el.querySelector('.template-add input').value, ...managerFields(el)})});
         setAgents(await api('/api/agents'));
         opened(created);
       } catch (e) {
