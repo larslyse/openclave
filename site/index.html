@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenClave: your own team of AI agents</title>
+<title>OpenClave: organise AI agents like people</title>
 <meta name="description" content="A small team of AI agents, each with one area of your life. Runs on your own computer, keeps everything as Markdown files you can read. Free and open source.">
 <meta property="og:title" content="OpenClave">
-<meta property="og:description" content="Your own team of AI agents. Runs on your computer, remembers in plain Markdown.">
+<meta property="og:description" content="Organise AI agents the way you’d organise people. Runs on your computer, keeps everything in plain Markdown.">
 <meta property="og:image" content="https://getopenclave.com/img/home.webp">
 <meta property="og:url" content="https://getopenclave.com/">
 <meta name="theme-color" content="#111416">
@@ -23,6 +23,7 @@
 <header class="top wrap">
   <a class="brand" href="/"><img src="/keeper.svg" alt="" width="32" height="32"> OpenClave</a>
   <nav>
+    <a href="#features">Features</a>
     <a href="#examples">Examples</a>
     <a href="#how">How it works</a>
     <a href="#install">Install</a>
@@ -32,7 +33,7 @@
 
 <main>
 <section class="hero wrap">
-  <h1>Your own team of AI agents.</h1>
+  <h1>Organise AI agents the way you’d organise people.</h1>
   <p class="lead">Each agent has one area of your life: training, the house, the car, money, writing.
     You talk to them from a browser or your phone. They run on your own computer and keep their notes,
     plans and chats as plain Markdown files, so they remember what you told them last month and you can
@@ -45,8 +46,48 @@
     <a href="#install">What you need</a> · <a href="#what-it-runs">What it runs</a></p>
 </section>
 
+<section id="features" class="wrap">
+  <div class="features">
+    <article>
+      <h3>Organised like a team</h3>
+      <p>Group agents into teams (we call them claves): home, work, hobbies, each with a lead. You give them areas and jobs the way you would people, so you always know who does what and where the info is.</p>
+    </article>
+    <article>
+      <h3>One overview</h3>
+      <p>The home dashboard shows every agent, what it’s working on and its latest chat. It works like a planning board, not a pile of chat tabs.</p>
+    </article>
+    <article>
+      <h3>A manager that keeps it tidy</h3>
+      <p>Once a week your manager archives finished chats (each gets a short recap), spots agents that overlap, and brings you a few yes/no proposals. A weekly review, done for you.</p>
+    </article>
+    <article>
+      <h3>Your data, on your disk</h3>
+      <p>Every agent is a folder of plain Markdown: mission, plan, backlog, notes, chats. Open it in any editor or Obsidian. No account, no cloud of ours; only what you send to the model leaves your computer.</p>
+    </article>
+    <article>
+      <h3>Agents that remember and follow up</h3>
+      <p>Each agent keeps its own plan, backlog and files, and interviews you once to fit itself to you. Agents message each other, run scheduled tasks and remind you.</p>
+    </article>
+    <article>
+      <h3>Plain Python, yours to change</h3>
+      <p>Small, readable Python. Your agents, settings and skills live outside the core, so you can change anything and still update with <code>git pull</code>.</p>
+    </article>
+  </div>
+</section>
+
 <section class="wrap shot-main">
   <img src="/img/home.webp" width="2800" height="1800" alt="OpenClave home page: six agents in boxes, each with its latest chat">
+</section>
+
+<section class="wrap closer">
+  <figure>
+    <img src="/img/claves.webp" width="2120" height="640" alt="Three claves (Health, Home, Money &amp; writing), each with a lead and members, and the manager above them" loading="lazy">
+    <figcaption><b>Teams with a lead.</b> Agents grouped like people: Health, Home, Money &amp; writing. The manager looks after all of them.</figcaption>
+  </figure>
+  <figure>
+    <img src="/img/phone-recaps.webp" width="780" height="880" alt="Phone: an agent's recaps, archived chats marked Concluded, Left open or Dropped" loading="lazy">
+    <figcaption><b>Recaps, not clutter.</b> Finished chats are archived each week with how they ended. Reply and one comes back.</figcaption>
+  </figure>
 </section>
 
 <section id="examples" class="wrap">
@@ -99,10 +140,10 @@
 <section id="how" class="wrap">
   <h2>How it works</h2>
   <div class="how">
-    <div><h3>Runs at home</h3><p>On your laptop, an old PC or a small home server. No account with us, no cloud of ours. Your data stays on your disk.</p></div>
-    <div><h3>Plain files</h3><p>Every agent is a folder: mission, plan, backlog, files and chats as Markdown. Open them in any editor or Obsidian, back them up like anything else.</p></div>
-    <div><h3>Your choice of model</h3><p>An Anthropic or xAI API key (pay per use, a few dollars a month for light use), or the Claude or ChatGPT subscription you already pay for.</p></div>
-    <div><h3>Agents that work together</h3><p>Agents can message each other, share a group chat, run scheduled tasks and remind you. Group them into claves: home, work, hobbies.</p></div>
+    <div><h3>Use what you already pay for</h3><p>Your Claude Pro/Max or ChatGPT Plus/Pro subscription, or an Anthropic or xAI API key (a few dollars a month for light use). Pick the model per agent.</p></div>
+    <div><h3>Asks before anything risky</h3><p>Home Assistant actions wait for your OK, or follow a standing approval you set. Agents only write to the notes you allow.</p></div>
+    <div><h3>Group chat and recaps</h3><p>Each team has a shared room where agents answer in turn. Archived chats become a card with what it was about and any loose ends; reply and it comes back.</p></div>
+    <div><h3>Works with your notes</h3><p>Agents search across your notes and can write into your Obsidian vault. Runs on a laptop, an old PC or a small home server.</p></div>
   </div>
 </section>
 

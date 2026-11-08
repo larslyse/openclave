@@ -6,7 +6,7 @@ the getopenclave.com screenshots. No model is called; nothing personal.
     OPENCLAVE_HOME=/tmp/oc-demo OPENCLAVE_DISABLE_BACKGROUND_JOBS=1 \
         python3 -m uvicorn main:app --port 8795
 """
-import json, shutil, sys
+import json, os, shutil, sys
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -60,6 +60,31 @@ CHATS = {
 }
 
 
+# (id, name, lead, members) for the claves screenshot
+CLAVES = [
+    ("home", "Home", "bolt", ["bolt", "bob"]),
+    ("health", "Health", "reba", ["reba"]),
+    ("money-writing", "Money & writing", "penny", ["penny", "charles"]),
+]
+
+# Archived chats per agent: (days ago, title, status, about, open ends)
+ARCHIVED = {
+    "Reba": [
+        (3, "Shin splints in week 2", "concluded",
+         "Shin pain after adding a third run. Dropped to two runs plus cycling for ten days; pain gone.", ""),
+        (9, "Half marathon pacing plan", "open",
+         "Built a pacing plan for the October half: 5:20/km for the first 15 km, then by feel.",
+         "Test the gel timing on the next long run."),
+        (16, "Gym or home workouts?", "concluded",
+         "Compared gym and home options. Chose two home sessions a week with a kettlebell and bands.", ""),
+        (24, "Calf strap for night cramps", "dropped",
+         "Looked at night cramps and a calf strap. Cramps stopped after more water and magnesium.", ""),
+        (31, "New running shoes", "concluded",
+         "Picked a cushioned daily trainer one size up; old pair kept for short runs.", ""),
+    ],
+}
+
+
 def main():
     if HOME.exists():
         shutil.rmtree(HOME)
@@ -73,6 +98,12 @@ def main():
         meta["name"] = name
         meta["id"] = name.lower()
         (dst / "agent.json").write_text(json.dumps(meta, indent=2))
+        # The agent's own page, as agent_factory.render_dashboard makes it.
+        page = (REPO / "templates" / "agent_dashboard.html").read_text()
+        for key, value in {"NAME": name, "ID": name.lower(), "COLOR": meta.get("color", "#2E9E5B"),
+                           "INITIALS": name[:2].upper()}.items():
+            page = page.replace("{{" + key + "}}", value)
+        (dst / "dashboard.html").write_text(page)
 
     t = datetime.now() - timedelta(hours=3)
     for name, chats in CHATS.items():
@@ -87,6 +118,32 @@ def main():
             cid = f"{t:%Y%m%d-%H%M%S}-demo{i:04d}"
             fm = f"---\nAgent: {name}\nDate: '{t:%Y-%m-%d}'\nTitle: {title}\n---\n\n"
             (conv / f"{cid}.md").write_text(fm + body.strip() + "\n")
+
+    # Three teams (claves) for the claves screenshot. The manager (Juno) is in
+    # every clave by itself, so it isn't listed as a member.
+    for cid, name, lead, members in CLAVES:
+        d = HOME / "Claves" / name
+        d.mkdir(parents=True)
+        (d / "clave.md").write_text(
+            f"---\nId: {cid}\nName: {name}\nLead: {lead}\nMembers: {json.dumps(members)}\n"
+            f"Created: '{datetime.now():%Y-%m-%d}'\n---\n\n# {name}\n")
+    (HOME / "state" / "service_settings.json").write_text(json.dumps(
+        {"multiple_claves": True, "active_clave": ""}))
+
+    # Archived chats with recaps, for the Recaps screenshot.
+    for name, items in ARCHIVED.items():
+        arch = agents_dir / name / "conversations" / "archived"
+        arch.mkdir(parents=True, exist_ok=True)
+        for i, (days, title, status, about, open_ends) in enumerate(items):
+            t = datetime.now() - timedelta(days=days)
+            cid = f"{t:%Y%m%d-%H%M%S}-arch{i:04d}"
+            recap = (f"Recap:\n  about: {json.dumps(about)}\n  status: {status}\n"
+                     f"  open_ends: {json.dumps(open_ends)}\n  made: '{datetime.now():%Y-%m-%d}'\n")
+            f = arch / f"{cid}.md"
+            f.write_text(f"---\nAgent: {name}\nDate: '{t:%Y-%m-%d}'\nTitle: {title}\n{recap}---\n\n"
+                         f"### User ({t:%H:%M})\n{title}\n")
+            ts = t.timestamp()
+            os.utime(f, (ts, ts))
 
     (HOME / "openclave.toml").write_text(
         '[paths]\nvault_root = "."\nagents_root = "agents"\nshared_concept_file = "openclave.md"\n'
