@@ -9,7 +9,7 @@ import agents
 import llm_client
 import skills
 import vault
-from config import CONFIG
+from config import load_config
 
 FIXTURE_ROOT = Path(__file__).parent / "fixtures" / "Agents"
 
@@ -50,9 +50,12 @@ class SkillsTests(unittest.TestCase):
             patch.object(vault, "AGENTS_ROOT", root),
             patch.object(skills, "SELECTION_FILE", tmp / "agent_skills.json"),
             patch.object(skills, "shared_root", lambda: self.shared),
+            patch.dict(agents.AGENTS, clear=True),
         ):
             patcher.start()
             self.addCleanup(patcher.stop)
+        # Only the fixture agents, whatever the local install has.
+        agents._load_created_agents()
         self.agent_dir = root / "R2"
 
     def write_source(self, text: str, extra: dict | None = None) -> Path:
@@ -165,7 +168,9 @@ class SkillsTests(unittest.TestCase):
         self.assertNotIn("https://raw.test/pic.png", fetched)
 
     def test_config_default_and_example(self):
-        self.assertEqual(CONFIG.skills_root.name, "skills")
+        # The built-in default, not this machine's openclave.toml.
+        with tempfile.TemporaryDirectory() as home:
+            self.assertEqual(load_config(environ={"OPENCLAVE_HOME": home}).skills_root.name, "skills")
 
 
 if __name__ == "__main__":

@@ -14,6 +14,7 @@ import asyncio
 import json
 import os
 import shutil
+import site
 import socket
 import subprocess
 import sys
@@ -66,7 +67,10 @@ class UiSmokeTest(unittest.TestCase):
         cls.port = _free_port()
         cls.base = f"http://127.0.0.1:{cls.port}"
         cls.server = subprocess.Popen([sys.executable, str(HERE / "ui_server.py"), str(cls.port)],
+                                      # PYTHONUSERBASE keeps packages installed with pip --user
+                                      # (~/.local) importable once HOME points at the temp dir.
                                       env={**os.environ, "HOME": str(cls.tmp),
+                                           "PYTHONUSERBASE": site.getuserbase(),
                                            "OPENCLAVE_HOME": str(cls.tmp / ".openclave")},
                                       stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         for _ in range(60):
