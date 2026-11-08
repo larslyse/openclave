@@ -901,6 +901,21 @@ def build_agent_router(agent_id: str) -> APIRouter:
         # outside that sandbox.
         return PlainTextResponse(vault.read_dashboard(agent_id))
 
+    @router.get("/avatar-data")
+    def get_avatar_data():
+        # The header icon on the agent page: the same picture as the dashboard
+        # tile, as a data URL because the sandboxed page only reaches
+        # "/<agent>/" through the shell's JSON bridge. None = keep the initials.
+        path = _avatar_file(agent_id)
+        if not path:
+            return {"data_url": None}
+        if path.suffix == ".svg":
+            raw = svg_avatar.sanitize(path.read_text(encoding="utf-8")).encode("utf-8")
+            mime = "image/svg+xml"
+        else:
+            raw, mime = path.read_bytes(), "image/png"
+        return {"data_url": f"data:{mime};base64," + base64.b64encode(raw).decode()}
+
     # Files tab on the agent page: The owner's quick edits to the agent's own
     # workspace files. Agent-scoped so the sandboxed dashboard can reach it.
     @router.get("/files")

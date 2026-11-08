@@ -1342,6 +1342,21 @@ function initFilesTab() {
 // order is saved on the server, the same order as the dashboard tiles. If the
 // tabs don't fit, hovering near the right or left edge scrolls them; the
 // mouse wheel does too.
+// The header circle starts as initials (templates/agent_dashboard.html);
+// swap in the avatar the dashboard tile shows, when the agent has one.
+async function injectHeaderAvatar() {
+  const icon = document.querySelector('header .icon');
+  if (!icon) return;
+  let data;
+  try { data = await api(`/${AGENT_ID}/avatar-data`); } catch (e) { return; }
+  if (!data?.data_url) return;
+  const img = document.createElement('img');
+  img.src = data.data_url;
+  img.alt = '';
+  img.style.cssText = 'width:100%;height:100%;border-radius:50%;display:block';
+  icon.replaceChildren(img);
+}
+
 async function injectAgentTabs() {
   const header = document.querySelector('header');
   const title = header?.querySelector('h1');
@@ -1601,6 +1616,7 @@ async function initDashboardCommon() {
   // asks for top navigation unless something targets it explicitly.
   const back = document.querySelector('.back');
   if (back) back.target = '_top';
+  injectHeaderAvatar();
   injectAgentTabs();
   injectViewMenu();
   injectNotifyButton();
