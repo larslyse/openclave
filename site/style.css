@@ -17,8 +17,8 @@ body {
 a { color: var(--mint); }
 img { max-width: 100%; height: auto; display: block; }
 code { font: 0.92em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
-.wrap { max-width: 1080px; margin: 0 auto; padding: 0 16px; }
-section { padding: 48px 16px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
+section { padding-top: 56px; padding-bottom: 8px; }
 h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.1; margin: 0 0 20px; letter-spacing: -0.02em; }
 h2 { font-size: 1.8rem; margin: 0 0 8px; }
 h3 { font-size: 1.1rem; margin: 0 0 8px; }
