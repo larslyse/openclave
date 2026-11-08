@@ -1,0 +1,33 @@
+name: Bug report
+description: Something doesn't work, or a step in the README is wrong or confusing.
+labels: [bug]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: What you did, what you expected, and what happened instead.
+    validations:
+      required: true
+  - type: textarea
+    id: check
+    attributes:
+      label: Output of `.venv/bin/python run.py --check`
+      description: Remove anything private before posting. It never shows your keys, only whether they are set.
+      render: text
+  - type: textarea
+    id: log
+    attributes:
+      label: Last lines of the OpenClave log
+      description: From the terminal where it runs, or `journalctl -u openclave -n 50`.
+      render: text
+  - type: input
+    id: system
+    attributes:
+      label: System
+      placeholder: "Ubuntu 24.04, Chrome on Android"
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: "`git log -1 --oneline` in your OpenClave folder."

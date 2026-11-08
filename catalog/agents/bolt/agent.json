@@ -1,0 +1,67 @@
+{
+  "id": "bolt",
+  "name": "Bolt",
+  "color": "#5B8DEF",
+  "tagline": "Home Assistant, IT, security and networking",
+  "connections": {
+    "home_assistant": {
+      "label": "Home Assistant",
+      "short": "HA",
+      "routes": [
+        "claude-cli",
+        "codex-cli"
+      ],
+      "mcp_servers": [
+        "ha",
+        "ha-admin"
+      ]
+    }
+  },
+  "mcp_servers": {
+    "ha": {
+      "type": "sse",
+      "url": "${HA_BASE_URL}/mcp_server/sse",
+      "headers": {
+        "Authorization": "Bearer ${HA_API_TOKEN}"
+      }
+    },
+    "ha-admin": {
+      "command": "${OPENCLAVE_PYTHON}",
+      "args": [
+        "${OPENCLAVE_DIR}/mcp_ha_server.py"
+      ],
+      "env": {
+        "HA_API_TOKEN": "${HA_API_TOKEN}",
+        "HA_BASE_URL": "${HA_BASE_URL}"
+      },
+      "codex": {
+        "name": "openclave-ha-admin",
+        "env_vars": [
+          "HA_API_TOKEN",
+          "HA_BASE_URL"
+        ],
+        "default_tools_approval_mode": "auto",
+        "required": true,
+        "read_only_env": "OPENCLAVE_HA_READ_ONLY"
+      }
+    }
+  },
+  "catalog": {
+    "version": 1,
+    "category": "Home",
+    "summary": "A droid attached to the household: runs Home Assistant, home security, networking and IT support, and acts directly instead of just advising.",
+    "suggested_tools": [
+      "write_note",
+      "write_memory",
+      "add_foundation",
+      "log_measurement",
+      "get_measurements",
+      "write_own_dashboard",
+      "schedule_reminder"
+    ],
+    "needs": "Home Assistant: set HA_BASE_URL (e.g. http://homeassistant.local:8123) and HA_API_TOKEN (a long-lived token) in the service environment, and use a Claude CLI or Codex CLI model.",
+    "authors": [
+      "OpenClave"
+    ]
+  }
+}

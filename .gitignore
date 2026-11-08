@@ -1,0 +1,24 @@
+__pycache__/
+*.pyc
+/state/
+openclave.toml
+agent_models.json
+agent_order.json
+usage_log.jsonl
+static/custom_avatars/
+service_settings.json
+agent_tools.json
+cli_quota.json
+model_check.json
+push_keys.json
+push_subscriptions.json
+digest_state.json
+ha_approvals.json
+auto_models.json
+cleanup_state.json
+claude_auth.json
+
+# docker compose data
+/data/
+/vault/
+.env

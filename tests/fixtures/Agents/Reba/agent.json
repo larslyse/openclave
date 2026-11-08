@@ -1,0 +1,21 @@
+{
+  "id": "reba",
+  "name": "Reba",
+  "color": "#E8A33D",
+  "tagline": "Synthetic training test agent",
+  "connections": {
+    "garmin": {
+      "label": "Garmin",
+      "short": "Garmin",
+      "routes": ["claude-cli"],
+      "mcp_servers": ["garmin"],
+      "ready": "garmin_token_dir"
+    }
+  },
+  "mcp_servers": {
+    "garmin": {
+      "command": "uvx",
+      "args": ["--from", "git+https://example.invalid/garmin-mcp", "garmin-mcp"]
+    }
+  }
+}

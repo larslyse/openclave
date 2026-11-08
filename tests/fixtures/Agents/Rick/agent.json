@@ -1,0 +1,9 @@
+{
+  "id": "rick",
+  "name": "Rick",
+  "color": "#7FD142",
+  "tagline": "Synthetic maintainer test agent",
+  "roles": ["maintainer"],
+  "cli_tools": ["WebSearch", "WebFetch"],
+  "voice": {"provider": "fish_audio", "voice_id": "00000000000000000000000000000001"}
+}

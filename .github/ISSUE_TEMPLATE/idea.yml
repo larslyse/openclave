@@ -1,0 +1,24 @@
+name: Idea or feature
+description: Suggest a feature or a change. For anything bigger than a small fix, agree on it here before writing code.
+labels: [idea]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: What do you want to do that you can't today?
+      description: Describe the situation, not the solution yet.
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: Your idea
+      description: How it could work, from the user's side.
+  - type: dropdown
+    id: build
+    attributes:
+      label: Would you like to build it?
+      options:
+        - "Yes, once we agree on the approach"
+        - "Maybe, with some help"
+        - "No, just suggesting"

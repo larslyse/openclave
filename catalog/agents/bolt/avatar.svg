@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <circle cx="32" cy="32" r="32" fill="#5B8DEF"/>
+  <!-- barrel body -->
+  <rect x="20" y="27" width="24" height="24" rx="6" fill="#121517"/>
+  <!-- dome head -->
+  <path d="M20 27 A12 15 0 0 1 44 27 Z" fill="#121517"/>
+  <!-- eye lens -->
+  <circle cx="32" cy="21" r="2.6" fill="#5B8DEF"/>
+  <!-- panel seams -->
+  <g stroke="#5B8DEF" stroke-width="1.6" stroke-linecap="round">
+    <line x1="26" y1="32" x2="26" y2="47"/>
+    <line x1="38" y1="32" x2="38" y2="47"/>
+    <line x1="22" y1="39.5" x2="42" y2="39.5"/>
+  </g>
+  <!-- feet -->
+  <rect x="19" y="49" width="7" height="6" rx="1.5" fill="#121517"/>
+  <rect x="38" y="49" width="7" height="6" rx="1.5" fill="#121517"/>
+</svg>

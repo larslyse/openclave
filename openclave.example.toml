@@ -1,0 +1,73 @@
+# Copy to $OPENCLAVE_HOME/openclave.toml and edit the values for your setup.
+# OPENCLAVE_HOME defaults to ~/.openclave.
+
+[paths]
+# By default, agents and shared files stay inside OPENCLAVE_HOME.
+# To keep agents in an existing notes vault, set these paths explicitly.
+vault_root = "~/Documents/OpenClave"
+agents_root = "~/Documents/OpenClave/Agents"
+# Claves (groups of agents, each with its own group chat). Default: "Claves" beside agents_root.
+# claves_root = "~/Documents/OpenClave/Claves"
+# Optional shared maintainer backlog, relative to vault_root; other agents keep their own.
+project_backlog = ""
+shared_concept_file = "~/Documents/OpenClave/openclave.md"
+tools_doc = "docs/tools.md"
+# Skills shared by every agent (each agent also has its own in <agent>/skills).
+skills_root = "skills"
+# Optional external Markdown-to-PDF script. Leave empty to disable PDF export.
+pdf_tool = ""
+garmin_token_dir = "state/garmin"
+
+[privacy]
+# Vault-relative folder names that search and PDF export must exclude.
+confidential_folders = []
+
+[search]
+# Search is reported as off when this executable is not installed.
+qmd_bin = "qmd"
+qmd_index = "openclave"
+xdg_cache_home = "state/qmd-cache"
+xdg_config_home = "state/qmd-config"
+
+[cli]
+claude = "claude"
+codex = "codex"
+
+[voice]
+# Leave either setting empty to keep voice disabled until configured.
+python = ""
+model_dir = ""
+# A second spoken language beside English (the EN/xx button by the mic).
+# Its ISO code (speech-to-text), its name (replies are asked for in it), and
+# the text-to-speech voice that speaks it, e.g. a Fish Audio voice id.
+second_language = ""
+second_language_name = ""
+second_voice_provider = ""
+second_voice_id = ""
+
+[network]
+bind = "127.0.0.1"
+port = 8777
+# Optional: require this token (asked once, then remembered by the browser)
+# for every request except plain local ones on this computer. Use a long
+# random string, e.g. from `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`.
+access_token = ""
+# Public base URL (scheme and host, optional path; omit trailing slash and /mobile).
+public_url = ""
+# More browser origins allowed to use the API, e.g. a second hostname.
+# localhost, the LAN address (when bind is 0.0.0.0) and public_url are added automatically.
+extra_origins = []
+
+[catalog]
+# Extra folders of ready-made agents, beside the built-in catalog/agents.
+# E.g. a community catalog you cloned with git: one folder per agent.
+sources = []
+
+[time]
+timezone = "UTC"
+
+[owner]
+name = ""
+# Languages your notes are written in. Agents then search the vault in each,
+# e.g. note_languages = ["English", "Norwegian"].
+note_languages = []

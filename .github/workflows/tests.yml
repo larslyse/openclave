@@ -1,0 +1,22 @@
+# Unit tests on every push and pull request. The UI smoke tests skip
+# themselves here (no Chromium); run them locally before a release.
+name: tests
+on:
+  push:
+  pull_request:
+jobs:
+  unit:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: pip install -r requirements.txt
+      - name: Unit tests (empty HOME, no real provider calls)
+        run: |
+          export HOME="$(mktemp -d)"
+          python -m unittest discover -s tests

@@ -1,0 +1,4 @@
+#!/bin/sh
+# Refuses commits containing your personal details (scripts/check_private.py).
+# Enable once per checkout: git config core.hooksPath .githooks
+exec python3 "$(git rev-parse --show-toplevel)/scripts/check_private.py" --staged

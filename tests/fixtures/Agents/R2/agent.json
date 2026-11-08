@@ -1,0 +1,33 @@
+{
+  "id": "r2",
+  "name": "R2",
+  "color": "#5B8DEF",
+  "tagline": "Synthetic home automation test agent",
+  "connections": {
+    "home_assistant": {
+      "label": "Home Assistant",
+      "short": "HA",
+      "routes": ["claude-cli", "codex-cli"],
+      "mcp_servers": ["ha", "ha-admin"]
+    }
+  },
+  "mcp_servers": {
+    "ha": {
+      "type": "sse",
+      "url": "http://ha.invalid/mcp_server/sse",
+      "headers": {"Authorization": "Bearer ${HA_API_TOKEN}"}
+    },
+    "ha-admin": {
+      "command": "python3",
+      "args": ["mcp_ha_server.py"],
+      "env": {"HA_API_TOKEN": "${HA_API_TOKEN}"},
+      "codex": {
+        "name": "openclave-ha-admin",
+        "env_vars": ["HA_API_TOKEN"],
+        "default_tools_approval_mode": "auto",
+        "required": true,
+        "read_only_env": "OPENCLAVE_HA_READ_ONLY"
+      }
+    }
+  }
+}

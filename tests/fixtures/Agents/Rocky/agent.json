@@ -1,0 +1,7 @@
+{
+  "id": "rocky",
+  "name": "Rocky",
+  "color": "#E0663D",
+  "tagline": "Synthetic hardware test agent",
+  "voice": {"provider": "fish_audio", "voice_id": "00000000000000000000000000000002"}
+}

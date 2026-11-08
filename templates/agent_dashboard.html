@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{NAME}}</title>
+<script src="/static/vendor/marked-15.0.12.min.js"></script>
+<script src="/static/vendor/purify-3.2.6.min.js"></script>
+<link rel="stylesheet" href="/static/dashboard_common.css">
+<style>
+  :root{
+    --bg: #10181A;
+    --panel: #16211F;
+    --panel-border: #24322F;
+    --text: #E4EFEA;
+    --text-muted: #85A099;
+    --accent: {{COLOR}};
+    --accent-dark: {{COLOR}};
+    --done: #E8C168;
+    --flagged: {{COLOR}};
+    --danger: #D9695A;
+    --danger-bg: rgba(217,105,90,0.15);
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <a class="back" href="/" title="Back to OpenClave dashboard">← OpenClave</a>
+  <div class="icon">{{INITIALS}}</div>
+  <h1>{{NAME}}</h1>
+  <div class="header-right">
+    <div class="status" id="status-line"><span class="dot"></span>loading…</div>
+  </div>
+</header>
+
+<div class="layout">
+  <div class="col col-left">
+    <button class="new-convo" id="new-convo">+ new conversation</button>
+    <div class="section-title">Conversations</div>
+    <div id="convo-list"><div class="empty">loading…</div></div>
+  </div>
+
+  <div class="resize-handle" id="resize-left"></div>
+
+  <div class="col col-mid">
+    <div id="chat-window"><div class="empty">Say something to {{NAME}}.</div></div>
+    <div class="composer">
+      <input id="msg-input" type="text" placeholder="Message {{NAME}}…" autocomplete="off">
+      <button id="send-btn">Send</button>
+    </div>
+  </div>
+
+  <div class="resize-handle" id="resize-right"></div>
+
+  <div class="col col-right">
+    <div class="section-title">Current Plan</div>
+    <div id="plan-panel"><div class="empty">loading…</div></div>
+    <div class="backlog">
+      <div class="section-title">Backlog</div>
+      <div id="backlog-panel"><div class="empty">loading…</div></div>
+    </div>
+  </div>
+
+  <div class="resize-handle-row" id="resize-kb"></div>
+
+  <div class="kanban-panel">
+    <div class="section-title">Kanban <span class="kanban-hint">— click a backlog item's checkbox to flag it in here.</span></div>
+    <div class="kanban-board" id="kanban-board"></div>
+  </div>
+</div>
+
+<script>window.OPENCLAVE_AGENT_ID = '{{ID}}'; window.OPENCLAVE_AGENT_NAME = '{{NAME}}';</script>
+<script src="/static/dashboard_common.js"></script>
+<script>
+function onAfterSend() { loadPlan(); }
+initDashboardCommon();
+loadPlan();
+</script>
+</body>
+</html>

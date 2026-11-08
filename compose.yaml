@@ -1,0 +1,20 @@
+# docker compose up -d   then open http://localhost:8777/
+# First run: put an openclave.toml in ./data (copy openclave.example.toml) with
+#   [paths] vault_root = "/vault"   and   [network] bind = "0.0.0.0"
+# and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY).
+services:
+  openclave:
+    build: .
+    ports:
+      - "127.0.0.1:8777:8777"
+    env_file:
+      - path: .env
+        required: false
+    environment:
+      OPENCLAVE_DISABLE_BACKGROUND_JOBS: "0"
+    volumes:
+      - ./data:/data
+      - ${OPENCLAVE_VAULT:-./vault}:/vault
+    # Your user, so the files in ./data and your notes stay yours.
+    user: "${UID:-1000}:${GID:-1000}"
+    restart: unless-stopped

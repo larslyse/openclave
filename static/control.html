@@ -1,0 +1,693 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OpenClave Control Panel</title>
+<style>
+  :root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;padding:28px;max-width:1100px;margin-inline:auto;background:#121517;color:#e7e4de;font:14px/1.5 system-ui,sans-serif}
+  a{color:#9dd6b9}h1{margin:.5rem 0 0;font-size:26px}h2{margin:0 0 12px;font-size:19px}p{color:#a4aaa9}section{margin:24px 0;padding:18px;background:#1a1e22;border:1px solid #30373a;border-radius:10px;overflow-x:auto}
+  table{border-collapse:collapse;width:100%;min-width:620px}th,td{text-align:left;padding:9px 11px;border-bottom:1px solid #30373a;vertical-align:top}th{color:#a4aaa9;font-weight:500}tr:last-child td{border-bottom:0}.muted{color:#a4aaa9}
+  td{vertical-align:middle}.group-row td{color:#9dd6b9;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;padding-top:16px}.av{width:32px;height:32px;border-radius:50%;display:block}select{background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:4px 6px;font:inherit}.review-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:4px 28px;margin:10px 0}.review-grid h3{font-size:13px;color:#a4aaa9;font-weight:500;text-transform:uppercase;letter-spacing:.04em;margin:8px 0 4px}.review-grid label{display:flex;gap:9px;align-items:baseline;padding:4px 0;cursor:pointer}.review-grid .saved{color:#9dd6b9;font-size:12px;margin-left:6px}.mp-button{background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:4px 8px;font:inherit}form.new-agent{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end}form.new-agent label{display:flex;flex-direction:column;gap:4px;color:#a4aaa9;font-size:13px}form.new-agent input{background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:6px 8px;font:inherit}form.new-agent label:nth-child(2){flex:1;min-width:220px}form.new-agent button{background:#2A2F34;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:7px 16px;font:inherit;cursor:pointer}.tools-row td,.edit-row td{background:#15191c}.edit-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px;margin:8px 0}.edit-block{margin:10px 0}.edit-block label{display:flex;flex-direction:column;gap:3px;color:#a4aaa9;font-size:13px;margin:8px 0}.edit-block input,.edit-block textarea{background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:6px 8px;font:inherit}.edit-block textarea{width:100%;font:13px/1.45 ui-monospace,Menlo,monospace;resize:vertical;margin:6px 0}.edit-head{display:flex;justify-content:space-between;align-items:baseline}.tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:6px 18px;margin:6px 0 10px}.tools-grid label{display:flex;gap:8px;align-items:baseline;font-size:13px}.tools-grid small{color:#a4aaa9}button.link{background:none;border:0;color:#9dd6b9;cursor:pointer;font:inherit;padding:0}.roster-warn{border:1px solid #E8A33D66;background:#E8A33D14;color:#E8C27A;border-radius:8px;padding:8px 12px;font-size:13px}
+
+  /* Phone layout (2026-10-04: Control Panel on mobile). Tables turn into
+     stacked cards; each cell gets its column name from data-label (set by
+     labelCells below), so nothing scrolls sideways. */
+  @media (max-width:700px){
+    body{padding:12px 12px 40px;font-size:15px}h1{font-size:23px}
+    section{padding:14px;margin:16px 0;overflow-x:visible}
+    table{min-width:0}thead{display:none}
+    table,tbody,tr,td{display:block;width:100%}
+    tr{padding:10px 0;border-bottom:1px solid #30373a}tr:last-child{border-bottom:0}
+    th,td{border:0;padding:3px 0}
+    td[data-label]::before{content:attr(data-label) " ";color:#a4aaa9;font-size:13px}
+    td[data-label]:first-child::before{display:none}
+    td[data-label]:first-child,table:not(:has(thead)) td:first-child{font-weight:600}
+    td:empty{display:none}
+    .group-row td{padding-top:6px}
+    #agents > tr:not(.panel-row){display:flex;flex-wrap:wrap;align-items:center;gap:6px 12px}
+    #agents > tr:not(.panel-row) > td{width:auto}
+    #agents > tr:not(.panel-row) > td[data-label]::before{display:none}
+    #agents > tr:not(.panel-row) > td:nth-child(4){flex-basis:100%;order:5}
+    #agents > tr:not(.panel-row) > td:nth-child(2){font-weight:600;flex:1}
+    select,input,textarea,button{font-size:16px!important}
+    select,input:not([type=checkbox]):not([type=range]){min-height:40px;max-width:100%}
+    #agents select{width:100%}
+    .cost-wrap{display:flex;width:100%}.cost-wrap select{width:0;flex:1 1 auto}
+    form.new-agent{flex-direction:column;align-items:stretch}form.new-agent label:nth-child(2){min-width:0}
+    .edit-grid,.tools-grid{grid-template-columns:1fr}
+  }
+.cost-wrap{display:inline-flex;align-items:center;max-width:100%;min-width:0}.cost-wrap select{min-width:0;flex:1 1 auto}.cost-dot{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle;flex-shrink:0}.cost-dot.unknown{background:transparent;border:1.5px solid #6b7275;box-sizing:border-box}.cost-label{font-size:12px;font-weight:600;margin-left:4px}
+.inbox-status{font-size:11px;text-transform:uppercase;letter-spacing:.03em;padding:1px 6px;border-radius:4px;white-space:nowrap}.inbox-status.open{background:#C4573D33;color:#E8877A}.inbox-status.acknowledged{background:#E8A33D26;color:#E8A33D}.inbox-status.resolved{background:#8B909633;color:#a4aaa9}
+</style>
+</head>
+<body>
+<div id="claude-banner" style="display:none;margin:0 0 18px;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:14px">Claude CLI is signed out: agents on a Claude CLI model can't answer. <a href="#claude-login" style="color:#E8877A;font-weight:600">Sign in again</a></div>
+<div id="stale-banner" style="display:none;margin:0 0 18px;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:13px"></div>
+<a href="/" id="back-link">← Dashboard</a><h1>Control Panel</h1><p>Agents, models and usage across OpenClave.</p>
+<section id="setup" hidden><h2>Setup</h2><p class="muted" id="setup-intro"></p><table><tbody id="setup-rows"></tbody></table><p class="muted">Run <code>.venv/bin/python run.py --check</code> in the OpenClave folder for the same check in a terminal. The README has every step.</p></section>
+<section><h2>Agents</h2><table><thead><tr><th></th><th>Agent</th><th>Last used</th><th>Model</th><th>Edit</th><th>Tools</th></tr></thead><tbody id="agents"><tr><td colspan="6">Loading…</td></tr></tbody></table></section>
+<section id="new-agent"><h2>New agent</h2>
+<p id="roster-warn" class="roster-warn" hidden></p>
+<p id="new-agent-clave" class="roster-warn" hidden></p>
+<form id="new-agent-form" class="new-agent">
+<label>Name<input name="name" maxlength="24" required placeholder="e.g. Chef"></label>
+<label>What is it for?<input name="purpose" maxlength="200" required placeholder="e.g. Weekly meal planning and grocery lists"></label>
+<label>Model<select name="model_id" id="new-agent-model"></select></label>
+<button type="submit">Create</button>
+</form>
+<p>The new agent then interviews you in its first chat to set up its mission, personality and tools.</p><p id="new-agent-error" style="color:#E8877A"></p>
+<h3 style="font-size:15px;margin:18px 0 4px">Ready-made agents</h3><p class="muted">Each comes with a job and a personality, and uses the model picked above. It then asks you a few questions to fit itself to you. Anyone can add to this list: see <code>catalog/README.md</code>.</p>
+<table><thead><tr><th>Agent</th><th>What it does</th><th>Name</th><th></th></tr></thead><tbody id="catalog-list"><tr><td colspan="4">Loading…</td></tr></tbody></table></section>
+<section id="tasks"><h2>Scheduled tasks</h2><p class="muted" id="tasks-now">Agents wake up on the days you pick and do a job. Each task reports in its own conversation with that agent, which is the run log; reply there when it asks you something. Every run also sends a push. Pre-approved Home Assistant actions (e.g. <code>update.install</code>) run without a yes during the task; everything else still asks.</p>
+<table><thead><tr><th>Agent</th><th>Task</th><th>When</th><th>Next run</th><th>Last run</th><th></th></tr></thead><tbody id="tasks-list"><tr><td colspan="6">Loading…</td></tr></tbody></table>
+<p><button class="link" type="button" id="task-new">+ New task</button></p>
+<form id="task-form" class="edit-block" style="display:none">
+<h3 id="task-form-title" style="font-size:15px;margin:10px 0 4px">New task</h3>
+<div class="edit-grid"><label>Agent<select name="agent_id" id="task-agent"></select></label><label>Title<input name="title" maxlength="80" required placeholder="e.g. Weekly Home Assistant update"></label></div>
+<label>What should it do?<textarea name="instructions" rows="7" maxlength="4000" required placeholder="Plain instructions, as you'd write them in a chat."></textarea></label>
+<div style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin:8px 0" id="task-days"></div>
+<div class="edit-grid"><label>Time<input name="time" type="time" required value="10:00"></label><label>Pre-approved HA actions (optional, comma separated)<input name="preapproved" placeholder="update.install, homeassistant.restart — or * for everything"></label></div>
+<label style="flex-direction:row;align-items:center;gap:8px"><input type="checkbox" name="enabled" checked> On</label>
+<p><button type="submit" style="background:#2A2F34;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:7px 16px;font:inherit;cursor:pointer">Save</button> <button class="link" type="button" id="task-cancel">Cancel</button> <span id="task-error" style="color:#E8877A"></span></p>
+</form></section>
+<section><h2>Settings</h2><table><tbody>
+<tr><td style="width:220px">Automatic note lookup</td><td><select id="auto-lookup"><option value="off">Off</option><option value="keywords">Keywords</option><option value="full">Full</option></select> <span id="auto-lookup-saved" class="muted"></span></td></tr>
+<tr><td>Sort conversations</td><td><select id="sort-conversations"><option value="newest">Newest first</option><option value="alphabetical">Alphabetical</option></select> <span id="sort-saved" class="muted"></span></td></tr>
+<tr><td>Sort agent tabs</td><td><select id="sort-agent-tabs"><option value="manual">As dragged (same as the dashboard)</option><option value="recent">Latest message first</option></select></td></tr>
+<tr><td>Fallback when out of credits</td><td><select id="fallback-model"></select> <span id="fallback-saved" class="muted"></span></td></tr>
+<tr><td>Digest push</td><td><select id="digest-mode"><option value="off">Off</option><option value="weekly">Weekly (Mondays)</option><option value="daily">Daily</option></select> at <input id="digest-time" type="time" style="background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:3px 6px;font:inherit"> <button class="link" type="button" id="digest-test">Send a test now</button> <span id="digest-saved" class="muted"></span></td></tr>
+</tbody></table><p id="auto-lookup-help"></p><p class="muted">Fallback: if an agent's model is out of credits or at its usage limit, the reply is retried once on this model and says so. Off by default.</p></section>
+<section id="claude-login"><h2>Claude sign-in</h2><p class="muted">Agents on a Claude CLI model use the Claude subscription you signed in to with <code>claude</code> on this computer. When it expires they can't answer, and this says so. Sign in again: open the link, sign in to Claude, copy the code the page shows and paste it here. No password or token passes through OpenClave.</p><p id="claude-login-status">Loading…</p><div id="claude-login-flow"></div><p><button type="button" class="link" id="claude-login-start">Sign in again</button></p></section>
+<section id="access"><h2>Connections</h2><p class="muted">Where OpenClave can be reached. Local and network addresses are plain HTTP, so the phone app at <code>/mobile/</code> works there only on this computer itself, where localhost counts as secure; other devices need the secure address. <span id="access-tunnel"></span></p><table><tbody id="access-list"><tr><td>Loading…</td></tr></tbody></table></section>
+<section><h2>Needs attention</h2><p class="muted">Checked from each agent's own files, no AI involved. <b>Bold</b> needs you and puts the amber dot on the agent: a measurement log with no entry for 7 days, open items in the maintainer inbox, an agent on a model that can't reach its connection. Grey is upkeep for the agent (a plan or backlog untouched for 14 days while you're using it): the agent is asked to bring it up to date itself. The digest push (Settings) sends only what needs you.</p><table><tbody id="attention"><tr><td>Loading…</td></tr></tbody></table><p class="muted" id="digest-last"></p></section>
+<section id="inbox"><h2>Maintainer inbox</h2><p class="muted">Bugs and ideas the agents flag to the manager (<code>flag_to_maintainer</code>). The manager triages them into the project backlog; close one here when it's dealt with.</p><table><thead><tr><th>Status</th><th>From</th><th>What</th><th>When</th><th></th></tr></thead><tbody id="inbox-list"><tr><td colspan="5">Loading…</td></tr></tbody></table><p><button class="link" type="button" id="inbox-show-closed">Show closed</button></p></section>
+<section id="weekly-review"><h2>Weekly review</h2><p class="muted">Every Monday the manager tidies up and looks through the week. Tick what it should do. Everything here only <b>suggests</b>: the suggestions land on <a data-manager href="/mobile/">the manager's page</a> in the phone app, and nothing changes until you say yes.</p>
+<div class="review-grid" id="review-items"><p class="muted">Loading…</p></div>
+<p><button class="link" type="button" id="review-run">Run the review now</button> <span class="muted" id="review-status"></span></p></section>
+<section><h2>Available models</h2><table><thead><tr><th>Model</th><th>Best suited to</th><th>Measured reply time</th><th>Images</th><th>API $/M input · output</th></tr></thead><tbody id="models"><tr><td colspan="5">Loading…</td></tr></tbody></table><p>API list prices are informational; CLI subscription access follows its own allowance.</p>
+<h3 style="font-size:15px;margin:22px 0 6px">Model updates</h3>
+<p class="muted">Once a day OpenClave checks the providers. A model newer than everything it has from that provider gets a test reply; if it answers, the weekly review suggests adding it (<i>Suggest adding new models</i> above). Old models, and ones the provider dropped, are suggested for removal (<i>Suggest removing old models</i>). Nothing is added or hidden until you say yes, and models an agent uses are never suggested. Nothing is deleted: Restore brings a model back, Remove hides one for good.</p>
+<p><label><input type="checkbox" id="mu-enabled"> Check the providers for new models every day</label> · <button class="link" type="button" id="mu-run">Run now</button> <span class="muted" id="mu-status"></span></p>
+<table><tbody id="mu-log"><tr><td>Loading…</td></tr></tbody></table>
+<div id="mu-hidden"></div>
+<h3 style="font-size:15px;margin:22px 0 6px">Everything the providers offer that isn't in the pickers</h3><div id="model-check" class="muted">Loading…</div>
+<p><button class="link" type="button" id="model-check-now">Check now</button> · Includes older models, which are listed here but not added.</p></section>
+<section><h2>Reminders</h2><p class="muted" id="reminders-now">Agents with the <code>schedule_reminder</code> tool can send you a message later. It arrives as a push notification and in that agent's Reminders conversation. Usually the text is fixed when it's scheduled. A reminder marked 'written when due' runs the agent once at send time to look something up first (e.g. the weather); it can only look things up then, and Home Assistant is read-only.</p><table><thead><tr><th>Agent</th><th>When</th><th>Repeat</th><th>Message</th><th></th></tr></thead><tbody id="reminders"><tr><td colspan="5">Loading…</td></tr></tbody></table>
+<h3 style="font-size:14px;margin:18px 0 6px">Recently sent</h3><table><tbody id="reminders-sent"><tr><td>Loading…</td></tr></tbody></table>
+<h3 style="font-size:14px;margin:18px 0 6px">Devices getting notifications</h3><table><tbody id="push-devices"><tr><td>Loading…</td></tr></tbody></table>
+<p><button class="link" type="button" id="push-test">Send test notification</button> <span class="muted" id="push-test-msg"></span> · Turn a device on with the 🔔 toggle on its OpenClave page. On an iPhone, use the Home Screen app.</p></section>
+<section><h2>Quota &amp; credits</h2><table><tbody id="quota"><tr><td>Loading…</td></tr></tbody></table><p>Subscription limits reset on their own. When a limit is hit, the agent's reply says so.</p></section>
+<section><h2>Token usage</h2><table><thead><tr><th>Agent</th><th>Last 7 days</th><th>Last 30 days</th><th>All time</th></tr></thead><tbody id="usage"><tr><td colspan="4">Loading…</td></tr></tbody></table><p>Cost appears only where the provider reports it. Subscription (CLI) use has no bill; the grey "≈ at API prices" line estimates what the same tokens would cost on that model's API, to compare routes.</p></section>
+<script>
+// Phone layout: give each cell its column header as data-label (tables are
+// re-rendered by load(), so this re-labels on every change). And when opened
+// from the mobile app, "back" goes to the app.
+(function(){
+  function labelCells(){
+    document.querySelectorAll('table').forEach(t=>{
+      const heads=[...t.querySelectorAll('thead th')].map(th=>th.textContent.trim());
+      if(!heads.length)return;
+      t.querySelectorAll('tbody > tr').forEach(tr=>{
+        if(tr.children.length!==heads.length)return;
+        [...tr.children].forEach((td,i)=>{if(heads[i]&&td.dataset.label!==heads[i])td.dataset.label=heads[i];});
+      });
+    });
+  }
+  new MutationObserver(labelCells).observe(document.body,{childList:true,subtree:true});
+  if(new URLSearchParams(location.search).get('from')==='mobile'){
+    const a=document.getElementById('back-link');a.href='/mobile/#/agents';a.textContent='← OpenClave';
+  }
+})();
+</script>
+<script src="/static/avatar_maker.js"></script>
+<script src="/static/model_picker.js"></script>
+<script>
+const esc = value => {const el=document.createElement('div');el.textContent=String(value??'');return el.innerHTML};
+const fmt = window => !window ? '—' : `${(window.tokens_in||0).toLocaleString()} in / ${(window.tokens_out||0).toLocaleString()} out${window.cost_usd == null ? '' : ` · $${window.cost_usd.toFixed(2)}`}${window.api_equiv_usd == null ? '' : `<div class="muted" style="font-size:12px" title="Subscription use priced at the same model's API list price (estimate)">≈ $${window.api_equiv_usd.toFixed(2)} at API prices</div>`}`;
+function renderAgents(agents,models){
+  const body=document.querySelector('#agents');
+  body.innerHTML=agents.map(a=>`<tr data-id="${esc(a.id)}"><td><img class="av" src="/api/agents/${esc(a.id)}/avatar" alt="" style="background:${esc(a.color)}"></td><td>${esc(a.name)}${a.clave?` <span class="muted">(${esc(a.clave)})</span>`:''}</td><td>${lastUsed(a.last_activity_ms)}</td><td><select>${modelOptions(models,a.model_id,a.model_supports)}</select></td><td><button class="link" type="button" data-act="edit">Edit…</button></td><td><button class="link" type="button" data-act="tools">…</button></td></tr>`).join('');
+  for(const row of body.querySelectorAll('tr[data-id]')){
+    const id=row.dataset.id,select=row.querySelector('select');
+    attachCostDot(select);
+    let current=select.value;
+    select.onchange=async()=>{
+      select.disabled=true;
+      try{
+        const r=await fetch(`/api/agents/${id}/model`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model_id:select.value})});
+        if(!r.ok)throw Error(r.status);
+        current=select.value;
+      }
+      catch{select.value=current;OpenClaveModelPicker.refresh(select);alert('Failed to change model.')}
+      finally{select.disabled=false}
+    };
+    row.querySelector('[data-act=edit]').onclick=()=>toggleEdit(row,id);
+    setupTools(row,id);
+  }
+}
+const GROUP_ORDER=['API · fast','API · slow','CLI · fast','CLI · slow'];
+const GROUP_LABELS={'API · fast':'API · fast — pay per use','API · slow':'API · slow — pay per use, strongest','CLI · fast':'CLI · fast — subscription','CLI · slow':'CLI · slow — subscription'};
+function groupModels(models){
+  const groups=new Map(GROUP_ORDER.map(g=>[g,[]]));
+  for(const m of models){if(!groups.has(m.group))groups.set(m.group,[]);groups.get(m.group).push(m)}
+  return [...groups].filter(([,ms])=>ms.length);
+}
+// Cost tier (llm_models.cost_tier, 2026-10-12): a dot in the tier's
+// colour plus $/$$/$$$. Options are plain text, so the label goes in the
+// option and the dot sits left of the select, following the chosen model.
+const MODEL_BY_ID=new Map();
+const costLabel=m=>m?.cost_label?` · ${m.cost_label}`:'';
+const costDot=m=>m?.cost_color?`<span class="cost-dot" style="background:${esc(m.cost_color)}" title="${esc(m.cost_label)} · API $${m.api_output_usd}/M output"></span>`:`<span class="cost-dot unknown" title="${m?'Price unknown':'Off'}"></span>`;
+function attachCostDot(select){
+  if(!select.parentElement.classList.contains('cost-wrap')){const w=document.createElement('span');w.className='cost-wrap';select.before(w);w.append(select)}
+  const draw=()=>{select.previousElementSibling?.classList.contains('cost-dot')&&select.previousElementSibling.remove();if(select.value)select.insertAdjacentHTML('beforebegin',costDot(MODEL_BY_ID.get(select.value)))};
+  draw();select.addEventListener('change',draw);
+  // The table picker (static/model_picker.js) over the select: every model with its columns, sortable.
+  OpenClaveModelPicker.enhance(select,[...MODEL_BY_ID.values()]);
+}
+// supports: model_id → the agent's connections it supports, e.g. ["HA"] (connections.py).
+function modelOptions(models,selected,supports={}){
+  models.forEach(m=>MODEL_BY_ID.set(m.id,m));
+  return groupModels(models).map(([g,ms])=>`<optgroup label="${esc(g)}">${ms.map(m=>`<option value="${esc(m.id)}"${m.id===selected?' selected':''}>${esc(m.display_name)}${costLabel(m)}${supports[m.id]?.length?` — ${esc(supports[m.id].join(', '))} supported`:''}</option>`).join('')}</optgroup>`).join('');
+}
+// One expanded panel (Edit or Tools) per agent row at a time.
+function closePanel(row){
+  const next=row.nextElementSibling;
+  if(!next?.classList.contains('panel-row'))return null;
+  next.remove();
+  return next.classList.contains('tools-row')?'tools-row':'edit-row';
+}
+async function toggleEdit(row,id){
+  if(closePanel(row)==='edit-row')return;
+  const p=await (await fetch(`/api/agents/${id}/profile`)).json();
+  const tr=document.createElement('tr');tr.className='edit-row panel-row';
+  const identity=(kind,label)=>`<div class="edit-block"><div class="edit-head"><b>${label}</b><span class="muted counter" data-counter="${kind}"></span></div>
+    <textarea data-body="${kind}" rows="${kind==='mission'?12:9}">${esc(p[kind].body)}</textarea>
+    <div><button class="link" type="button" data-save="${kind}">Save ${label.toLowerCase()}</button> <span class="muted" data-msg="${kind}"></span></div></div>`;
+  tr.innerHTML=`<td></td><td colspan="5">
+    <div class="edit-grid">
+      <div class="edit-block"><b>Avatar</b><div style="display:flex;gap:12px;align-items:center;margin-top:8px">
+        <img class="av" style="width:56px;height:56px" src="/api/agents/${esc(id)}/avatar?v=${Date.now()}" alt="">
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start"><button class="link" type="button" data-act="make-avatar">Make avatar…</button><button class="link" type="button" data-act="upload">Upload image as is…</button></div><input type="file" accept="image/*" hidden><span class="muted" data-msg="avatar"></span></div></div>
+      <div class="edit-block"><b>Name</b>
+        <label>Name<input data-field="name" maxlength="24" value="${esc(p.name)}"></label>
+        <label>Tagline<input data-field="tagline" maxlength="60" value="${esc(p.tagline)}"></label>
+        <div><button class="link" type="button" data-save="name">Save name</button> <span class="muted" data-msg="name"></span></div>
+        <div class="muted" style="font-size:12px">The address (/${esc(id)}) and vault folder stay the same; old conversations keep working.</div></div>
+    </div>
+    ${identity('mission','Mission')}${identity('persona','Persona')}
+    <div class="edit-block"><b>Vault folders it may write in</b>
+      <div class="muted" style="font-size:12px">Beyond its own folder. One vault folder per line, e.g. a blog folder. It can append to or create notes there with the optional <code>write_vault_note</code> tool (tick it under Tools), never delete. Empty = only its own folder.</div>
+      <textarea data-field="vault-write" rows="3">${esc((p.vault_write||[]).join('\n'))}</textarea>
+      <div><button class="link" type="button" data-save="vault-write">Save folders</button> <span class="muted" data-msg="vault-write"></span></div></div>
+    <p class="muted" style="font-size:12px">The frontmatter at the top of each file is kept as it is; the limit counts it too.</p></td>`;
+  row.after(tr);
+  const msg=k=>tr.querySelector(`[data-msg="${k}"]`);
+  for(const kind of ['mission','persona']){
+    const area=tr.querySelector(`[data-body="${kind}"]`),counter=tr.querySelector(`[data-counter="${kind}"]`);
+    const count=()=>{const n=p[kind].frontmatter_chars+area.value.trim().length+1;counter.textContent=`${n.toLocaleString()} / ${p[kind].limit.toLocaleString()} characters`;counter.style.color=n>p[kind].limit?'#E8877A':''};
+    area.oninput=count;count();
+    tr.querySelector(`[data-save="${kind}"]`).onclick=async()=>{
+      msg(kind).textContent='Saving…';
+      const r=await fetch(`/api/agents/${id}/identity/${kind}`,{method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({body:area.value})});
+      const d=await r.json();
+      if(r.ok){p[kind]=d;count();msg(kind).textContent='Saved'}else msg(kind).textContent=d.detail||'Failed to save';
+    };
+  }
+  tr.querySelector('[data-save="vault-write"]').onclick=async()=>{
+    const folders=tr.querySelector('[data-field="vault-write"]').value.split('\n').map(x=>x.trim()).filter(Boolean);
+    msg('vault-write').textContent='Saving…';
+    const r=await fetch(`/api/agents/${id}/vault-write`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({folders})});
+    const d=await r.json();
+    if(r.ok){tr.querySelector('[data-field="vault-write"]').value=d.folders.join('\n');msg('vault-write').textContent='Saved'}else msg('vault-write').textContent=d.detail||'Failed to save';
+  };
+  tr.querySelector('[data-save="name"]').onclick=async()=>{
+    const name=tr.querySelector('[data-field=name]').value,tagline=tr.querySelector('[data-field=tagline]').value;
+    msg('name').textContent='Saving…';
+    const r=await fetch(`/api/agents/${id}/name`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({name,tagline})});
+    const d=await r.json();
+    if(r.ok){row.children[1].textContent=d.name;msg('name').textContent='Saved'}else msg('name').textContent=d.detail||'Failed to save';
+  };
+  // Avatar maker (static/avatar_maker.js): picture from an address, file or
+  // paste; crop into the circle; optional cartoon style.
+  tr.querySelector('[data-act=make-avatar]').onclick=()=>OpenClaveAvatarMaker.open({agentId:id,agentName:p.name,color:p.color,onSaved:()=>{
+    const src=`/api/agents/${id}/avatar?v=${Date.now()}`;row.querySelector('.av').src=src;tr.querySelector('.av').src=src;msg('avatar').textContent='Saved'}});
+  const file=tr.querySelector('input[type=file]');
+  tr.querySelector('[data-act=upload]').onclick=()=>file.click();
+  file.onchange=async()=>{
+    const f=file.files?.[0];if(!f)return;
+    msg('avatar').textContent='Uploading…';
+    try{const r=await fetch(`/api/agents/${id}/avatar`,{method:'POST',body:f});if(!r.ok)throw Error((await r.json()).detail||'Upload failed');
+      const src=`/api/agents/${id}/avatar?v=${Date.now()}`;row.querySelector('.av').src=src;tr.querySelector('.av').src=src;msg('avatar').textContent='Saved'}
+    catch(error){msg('avatar').textContent=error.message}
+    file.value='';
+  };
+}
+let toolCatalog=null;
+async function setupTools(row,id){
+  const btn=row.querySelector('[data-act=tools]');
+  const refresh=async()=>{
+    const t=await (await fetch(`/api/agents/${id}/tools`)).json();
+    btn.textContent=t.onboarding?'Onboarding…':t.customized?`${t.selected.length} of ${t.available.length} optional`:'All';
+    return t;
+  };
+  let state=await refresh().catch(()=>{btn.textContent='—';return null});
+  btn.onclick=async()=>{
+    if(closePanel(row)==='tools-row')return;
+    toolCatalog??=await (await fetch('/api/tools')).json();
+    state=await refresh();
+    const summaries=Object.fromEntries(toolCatalog.optional.map(o=>[o.name,o.summary]));
+    const tr=document.createElement('tr');tr.className='tools-row panel-row';
+    const conn=(state.connections||[]).map(c=>!c.ready?`<span class="muted">${esc(c.name)}: not set up yet</span>`:c.available?`${esc(c.name)} ✓`:`<span style="color:#E8A33D">${esc(c.name)}: not available on this model; ${esc(state.connection_hint||'')}</span>`).join(' · ');
+    tr.innerHTML=`<td></td><td colspan="5"><div class="muted" style="font-size:13px">Always on: ${toolCatalog.core.map(esc).join(', ')}</div>
+      <div class="muted" style="font-size:13px;margin-top:4px">Writes: ${esc(state.writes||'')}${conn?` · Connections: ${conn}`:''}</div>
+      <div class="tools-grid">${state.available.map(n=>`<label><input type="checkbox" value="${esc(n)}"${state.selected.includes(n)?' checked':''}><span><b>${esc(n)}</b><br><small>${esc(summaries[n]||'')}</small></span></label>`).join('')}</div>
+      <button class="link" type="button">Save</button> <span class="muted"></span></td>`;
+    const [save,msg]=[tr.querySelector('button'),tr.querySelector('span.muted:last-child')];
+    save.onclick=async()=>{
+      const tools=[...tr.querySelectorAll('input:checked')].map(i=>i.value);
+      const r=await fetch(`/api/agents/${id}/tools`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tools})});
+      msg.textContent=r.ok?'Saved':'Failed to save';if(r.ok)state=await refresh();
+    };
+    row.after(tr);
+  };
+}
+// Past about ROSTER_WARN agents, lanes overlap and routing gets harder (Rick's backlog).
+const ROSTER_WARN=10;
+function rosterWarning(count){
+  return count>=ROSTER_WARN?`You already have ${count} agents. Beyond about ${ROSTER_WARN}, their domains start to overlap and it gets harder to know who handles what. Consider extending or merging an existing agent instead.`:'';
+}
+const newAgentClave=new URLSearchParams(location.search).get('clave');
+function setupNewAgent(models){
+  const form=document.querySelector('#new-agent-form'),err=document.querySelector('#new-agent-error');
+  fetch('/api/agents').then(r=>r.json()).then(list=>{const w=document.querySelector('#roster-warn'),t=rosterWarning(list.length);w.textContent=t;w.hidden=!t}).catch(()=>{});
+  // Default: Sonnet 5 if its route is set up, else the first model that can answer here.
+  const firstReady=(models.find(m=>m.id==='claude-sonnet-5'&&m.ready)||models.find(m=>m.ready)||{}).id||'claude-sonnet-5';
+  document.querySelector('#new-agent-model').innerHTML=modelOptions(models,firstReady);
+  attachCostDot(document.querySelector('#new-agent-model'));
+  // From a clave's "+ New agent" box (Claves overview): the new agent joins it.
+  if(newAgentClave)fetch('/api/claves').then(r=>r.json()).then(d=>{const c=d.claves.find(x=>x.id===newAgentClave);if(!c)return;const n=document.querySelector('#new-agent-clave');n.textContent=`The new agent joins the ${c.name} clave.`;n.hidden=false;document.querySelector('#new-agent').scrollIntoView()}).catch(()=>{});
+  form.onsubmit=async e=>{
+    e.preventDefault();err.textContent='';
+    const body=Object.fromEntries(new FormData(form));
+    if(newAgentClave)body.clave=newAgentClave;
+    const button=form.querySelector('button');button.disabled=true;
+    try{
+      const r=await fetch('/api/agents',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      const data=await r.json();
+      if(!r.ok)throw Error(data.detail||'Could not create the agent');
+      location.href=`/${data.id}`;
+    }catch(error){err.textContent=error.message;button.disabled=false}
+  };
+}
+async function loadCatalog(){
+  const body=document.querySelector('#catalog-list');
+  try{
+    const {templates}=await (await fetch('/api/catalog')).json();
+    body.innerHTML=templates.length?templates.map(t=>`<tr data-id="${esc(t.id)}"><td style="white-space:nowrap"><b>${esc(t.name)}</b>${t.installed.length?' <span class="muted">· added</span>':''}<div class="muted" style="font-size:12px">${esc(t.category)}</div></td><td>${esc(t.summary||t.tagline)}${t.needs?`<div style="color:#E0B25B;font-size:13px">Needs: ${esc(t.needs)}</div>`:''}<div class="catalog-err" style="color:#E8877A"></div></td><td><input value="${esc(t.name)}" maxlength="24" aria-label="Name" style="background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:5px 8px;font:inherit;width:9em"></td><td><button class="link" type="button">Add</button></td></tr>`).join(''):'<tr><td colspan="4" class="muted">No ready-made agents found.</td></tr>';
+    body.querySelectorAll('tr[data-id] button').forEach(b=>b.onclick=async()=>{
+      const row=b.closest('tr'),err=row.querySelector('.catalog-err');err.textContent='';b.disabled=true;b.textContent='Adding…';
+      try{const d=await postJson(`/api/catalog/${encodeURIComponent(row.dataset.id)}/install`,{model_id:document.querySelector('#new-agent-model').value,name:row.querySelector('input').value,...(newAgentClave?{clave:newAgentClave}:{})});location.href=`/${d.id}`}
+      catch(x){err.textContent=x.message;b.disabled=false;b.textContent='Add'}
+    });
+  }catch(error){body.innerHTML=`<tr><td colspan="4">${esc(error.message)}</td></tr>`}
+}
+async function load(){
+  try{
+    const [modelsRes,usageRes,agentsRes,timesRes]=await Promise.all([fetch('/api/models'),fetch('/api/usage'),fetch('/api/agents'),fetch('/api/model-response-times')]);
+    const times=timesRes.ok?await timesRes.json():{};
+    if(!modelsRes.ok||!usageRes.ok||!agentsRes.ok) throw Error('Could not load Control Panel data');
+    const [models,usage,agents]=await Promise.all([modelsRes.json(),usageRes.json(),agentsRes.json()]);
+    document.querySelector('#models').innerHTML=groupModels(models).map(([group,ms])=>`<tr class="group-row"><td colspan="5">${esc(GROUP_LABELS[group]||group)}</td></tr>`+ms.map(m=>{const t=times[m.id];return `<tr><td>${esc(m.display_name)}<div class="muted" style="font-size:12px">${esc(m.provider)}</div></td><td>${esc(m.tier)}</td><td>${t?`~${(t.average_ms/1000).toFixed(1)}s <span class="muted">(${t.samples} replies)</span>`:'<span class="muted">not measured yet</span>'}</td><td>${m.supports_vision?'Yes':'Text only'}</td><td>${costDot(m)}${m.cost_label?`<span class="cost-label" style="color:${esc(m.cost_color)}">${esc(m.cost_label)}</span> `:''}${m.api_input_usd==null?'—':`$${m.api_input_usd} / $${m.api_output_usd}`}</td></tr>`}).join('')).join('');
+    renderAgents(agents,models);
+    setupNewAgent(models);
+    loadFallback(models);
+    const names=Object.fromEntries(agents.map(a=>[a.id,a.name]));
+    const rows=[{agent_id:'total',windows:usage.total},...usage.by_agent];
+    document.querySelector('#usage').innerHTML=rows.map(a=>`<tr><td>${esc(a.agent_id==='total'?'All agents':names[a.agent_id]||a.agent_id)}</td><td>${fmt(a.windows['7d'])}</td><td>${fmt(a.windows['30d'])}</td><td>${fmt(a.windows.all)}</td></tr>`).join('');
+  }catch(error){document.querySelector('#models').textContent=error.message;document.querySelector('#usage').textContent=error.message;}
+}
+const LOOKUP_HELP = {
+  off: 'No search before replying. Fastest. The agent still searches the vault itself when it decides it needs to.',
+  keywords: "Searches only the two rarest words in your message (e.g. 'dunes sand'). Fast, usually under half a second.",
+  full: 'Searches with your whole message. Slowest: 5s+ on long or voice messages.',
+};
+// Last conversation activity; 30+ days in orange so unused agents stand out.
+// Maintainer inbox (moved here from the dashboard, 2026-11-03): open and
+// in-progress first, newest first; closed ones on request.
+let inboxShowClosed=false;
+const INBOX_LABEL={open:'Open',acknowledged:'In progress',resolved:'Closed'};
+// Weekly review (cleanup.py + audit.py): each tick saves at once.
+async function loadWeeklyReview(){
+  const box=document.querySelector('#review-items');
+  let d;
+  try{d=await (await fetch('/api/weekly-review')).json()}catch{box.innerHTML='<p class="muted">Could not load.</p>';return}
+  if(d.manager)document.querySelectorAll('#weekly-review [data-manager]').forEach(e=>{e.textContent=`${d.manager}'s page`;e.href=`/mobile/#/agents/${encodeURIComponent(d.manager_id)}/console`});
+  const part=(key,title)=>`<div><h3>${title}</h3>${d.items.filter(i=>i.part===key).map(i=>`<label><input type="checkbox" data-review="${esc(i.key)}"${i.on?' checked':''}> <span>${esc(i.label)}<span class="saved" hidden>Saved</span></span></label>`).join('')}</div>`;
+  box.innerHTML=part('cleanup','Tidy chats')+part('audit',`${esc(d.manager||'Manager')}'s audit`);
+  document.querySelector('#review-status').textContent=d.last_week?`Last run: week ${d.last_week.split('-W')[1]}, ${d.last_week.split('-W')[0]}`:'';
+  box.querySelectorAll('[data-review]').forEach(c=>c.onchange=async()=>{
+    const saved=c.parentElement.querySelector('.saved');saved.textContent='Saved';saved.hidden=true;c.disabled=true;
+    try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({weekly_review:{[c.dataset.review]:c.checked}})});if(!r.ok)throw Error();saved.hidden=false;setTimeout(()=>saved.hidden=true,1500)}
+    catch{c.checked=!c.checked;saved.textContent='Could not save';saved.hidden=false}
+    finally{c.disabled=false}
+  });
+  document.querySelector('#review-run').onclick=async e=>{
+    e.target.disabled=true;
+    try{await fetch('/api/weekly-review/run',{method:'POST'});document.querySelector('#review-status').textContent=`Started: suggestions arrive on ${d.manager||'the manager'}'s page in a minute or two`}
+    catch{document.querySelector('#review-status').textContent='Could not start'}
+  };
+}
+async function loadInbox(){
+  const body=document.getElementById('inbox-list');
+  try{
+    const {items}=await (await fetch('/api/maintainer/inbox')).json();
+    const shown=items.filter(i=>inboxShowClosed||i.status!=='resolved').sort((a,b)=>(a.status==='resolved')-(b.status==='resolved')||(a.created_at<b.created_at?1:-1));
+    body.innerHTML=shown.length?shown.map(i=>`<tr data-id="${esc(i.id)}"><td><span class="inbox-status ${esc(i.status)}">${esc(INBOX_LABEL[i.status]||i.status)}</span></td><td>${esc(i.from_name)}</td><td style="white-space:pre-wrap">${esc(i.summary)}${i.result?`<div class="muted">→ ${esc(i.result)}</div>`:''}</td><td class="muted" style="white-space:nowrap">${esc((i.created_at||'').slice(0,10))}</td><td style="white-space:nowrap">${i.status==='resolved'?'<button class="link" type="button" data-to="open">Reopen</button>':`${i.status==='open'?'<button class="link" type="button" data-to="acknowledged">In progress</button> · ':''}<button class="link" type="button" data-to="resolved">Close</button>`}</td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nothing open.</td></tr>';
+    body.querySelectorAll('[data-to]').forEach(b=>b.onclick=async()=>{
+      b.disabled=true;
+      try{const r=await fetch(`/api/maintainer/inbox/${b.closest('tr').dataset.id}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({status:b.dataset.to})});if(!r.ok)throw Error((await r.json()).detail||'Failed')}
+      catch(e){alert(e.message)}
+      loadInbox();
+    });
+  }catch(e){body.innerHTML='<tr><td colspan="5">Could not load the inbox.</td></tr>'}
+}
+document.getElementById('inbox-show-closed').onclick=e=>{inboxShowClosed=!inboxShowClosed;e.target.textContent=inboxShowClosed?'Hide closed':'Show closed';loadInbox()};
+function lastUsed(ms){
+  if(!ms)return '<span class="muted">never</span>';
+  const days=Math.floor((Date.now()-ms)/86400000);
+  const text=days<1?'today':days===1?'yesterday':`${days} days ago`;
+  return days>=30?`<span style="color:#E8A33D" title="Not used for a month: consider archiving">${text}</span>`:`<span class="muted">${text}</span>`;
+}
+async function loadSorting(){
+  const conv=document.querySelector('#sort-conversations'),tabs=document.querySelector('#sort-agent-tabs'),saved=document.querySelector('#sort-saved');
+  try{const s=await (await fetch('/api/settings')).json();conv.value=s.sort_conversations;tabs.value=s.sort_agent_tabs}catch{saved.textContent='Could not load';return}
+  const save=async change=>{
+    saved.textContent='';
+    try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(change)});if(!r.ok)throw Error();saved.textContent='Saved'}
+    catch{saved.textContent='Failed to save'}
+  };
+  conv.onchange=()=>save({sort_conversations:conv.value});
+  tabs.onchange=()=>save({sort_agent_tabs:tabs.value});
+}
+async function loadSettings(){
+  const select=document.querySelector('#auto-lookup'),saved=document.querySelector('#auto-lookup-saved'),help=document.querySelector('#auto-lookup-help');
+  try{const r=await fetch('/api/settings');if(!r.ok)throw Error(r.status);select.value=(await r.json()).auto_lookup}catch{saved.textContent='Could not load settings';return}
+  help.textContent=LOOKUP_HELP[select.value]+' Conversation logs and archived design notes are always skipped.';
+  select.onchange=async()=>{
+    select.disabled=true;saved.textContent='';
+    try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({auto_lookup:select.value})});if(!r.ok)throw Error(r.status);saved.textContent='Saved'}
+    catch{saved.textContent='Failed to save'}
+    finally{select.disabled=false;help.textContent=LOOKUP_HELP[select.value]+' Conversation logs and archived design notes are always skipped.'}
+  };
+}
+async function loadAttention(){
+  const body=document.querySelector('#attention'),last=document.querySelector('#digest-last');
+  try{
+    const [data,agentList]=await Promise.all([(await fetch('/api/attention')).json(),(await fetch('/api/agents')).json()]);
+    const names=Object.fromEntries(agentList.map(a=>[a.id,a.name]));
+    const rows=Object.entries(data.agents).filter(([,items])=>items.length)
+      .map(([id,items])=>`<tr><td style="width:220px">${esc(names[id]||id)}</td><td>${items.map(i=>i.upkeep?`<span class="muted">${esc(i.text)} · the agent catches up itself</span>`:`<b>${esc(i.text)}</b>`).join('<br>')}</td></tr>`);
+    body.innerHTML=rows.join('')||'<tr><td class="muted">Nothing right now.</td></tr>';
+    const d=data.digest||{};
+    last.textContent=d.last_run?`Digest last ran ${d.last_run} and went to ${d.last_devices||0} device(s).`:'The digest has not run yet.';
+  }catch{body.innerHTML='<tr><td class="muted">Could not load.</td></tr>'}
+}
+async function loadDigest(){
+  const mode=document.querySelector('#digest-mode'),time=document.querySelector('#digest-time'),saved=document.querySelector('#digest-saved'),test=document.querySelector('#digest-test');
+  try{const s=await (await fetch('/api/settings')).json();mode.value=s.digest;time.value=s.digest_time}catch{saved.textContent='Could not load';return}
+  const save=async change=>{
+    saved.textContent='';
+    try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(change)});if(!r.ok)throw Error();saved.textContent='Saved'}
+    catch{saved.textContent='Failed to save'}
+  };
+  mode.onchange=()=>save({digest:mode.value});
+  time.onchange=()=>{if(time.value)save({digest_time:time.value})};
+  test.onclick=async()=>{
+    saved.textContent='Sending…';
+    try{const r=await (await fetch('/api/attention/digest-test',{method:'POST'})).json();saved.textContent=r.sent?`Sent to ${r.sent} device(s)`:'No devices subscribed: turn on notifications in the phone app first';loadAttention()}
+    catch{saved.textContent='Failed to send'}
+  };
+}
+async function loadQuota(){
+  const body=document.querySelector('#quota');
+  const when=ts=>{const d=new Date(ts*1000);return d.toLocaleString(undefined,{weekday:'short',hour:'2-digit',minute:'2-digit'})};
+  const ago=iso=>{const m=Math.round((Date.now()-new Date(iso))/60000);return m<60?`${m} min ago`:m<2880?`${Math.round(m/60)} h ago`:`${Math.round(m/1440)} days ago`};
+  const bar=p=>`<span style="display:inline-block;width:90px;height:8px;border-radius:4px;background:#30373a;vertical-align:middle;margin-right:8px"><span style="display:block;height:100%;width:${Math.min(100,p)}%;border-radius:4px;background:${p>=90?'#E8877A':p>=70?'#E8A33D':'#9dd6b9'}"></span></span>`;
+  try{
+    const q=await (await fetch('/api/quota')).json();
+    const rows=[];
+    const c=q.codex;
+    if(c){
+      for(const [label,w] of [['5-hour window',c.primary],['Weekly window',c.secondary]]) if(w)
+        rows.push(w.resets_at*1000<Date.now()
+          ? `<tr><td>Codex (ChatGPT ${esc(c.plan_type||'')}) · ${label}</td><td>${bar(0)}reset</td><td class="muted">window reset since this reading</td></tr>`
+          : `<tr><td>Codex (ChatGPT ${esc(c.plan_type||'')}) · ${label}</td><td>${bar(w.used_percent)}${Math.round(w.used_percent)}% used</td><td class="muted">resets ${esc(when(w.resets_at))}</td></tr>`);
+      rows.push(`<tr><td colspan="3" class="muted" style="font-size:12px">Codex reading from ${esc(ago(c.observed_at))}; it refreshes with every Codex reply.</td></tr>`);
+    }else rows.push('<tr><td>Codex</td><td colspan="2" class="muted">No reading yet. Appears after the first Codex reply.</td></tr>');
+    rows.push('<tr><td>Claude CLI (Claude subscription)</td><td colspan="2" class="muted">Not reported by the Claude CLI.</td></tr>');
+    body.innerHTML=rows.join('')+'<tr><td colspan="3" class="muted">Checking API balances…</td></tr>';
+    const credits=await (await fetch('/api/credits')).json();
+    const color={ok:'#9dd6b9',active:'#9dd6b9',low:'#E8A33D',empty:'#E8877A',blocked:'#E8877A'};
+    body.innerHTML=rows.join('')+Object.entries(credits).map(([name,c])=>`<tr><td>${esc(name)}</td><td style="color:${color[c.status]||'#a4aaa9'}">${esc(c.status)}</td><td class="muted">${esc(c.detail)}</td></tr>`).join('');
+  }catch{body.innerHTML='<tr><td class="muted">Could not load quota.</td></tr>'}
+}
+async function loadFallback(models){
+  const select=document.querySelector('#fallback-model'),saved=document.querySelector('#fallback-saved');
+  try{
+    const settings=await (await fetch('/api/settings')).json();
+    select.innerHTML='<option value="">Off</option>'+modelOptions(models,settings.fallback_model);
+    attachCostDot(select);
+  }catch{saved.textContent='Could not load';return}
+  select.onchange=async()=>{
+    select.disabled=true;saved.textContent='';
+    try{const r=await fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({fallback_model:select.value})});if(!r.ok)throw Error();saved.textContent='Saved'}
+    catch{saved.textContent='Failed to save'}
+    finally{select.disabled=false}
+  };
+}
+function renderModelCheck(data){
+  const el=document.querySelector('#model-check');
+  const r=data.result;
+  if(!r){el.textContent=data.refreshing?'Checking providers… reload in a moment.':'Not checked yet.';return}
+  const when=new Date(r.checked_at).toLocaleString();
+  el.innerHTML=Object.entries(r.providers).map(([name,p])=>`<div style="margin:4px 0"><b style="color:#e7e4de">${esc(name)}:</b> ${p.error?esc(p.error):p.new.length?p.new.map(m=>`<code>${esc(m)}</code>`).join(', '):'nothing new'}</div>`).join('')+`<div style="font-size:12px;margin-top:6px">Last checked ${esc(when)}${data.refreshing?' · refreshing…':''}</div>`;
+}
+async function loadModelCheck(){
+  try{renderModelCheck(await (await fetch('/api/model-check')).json())}catch{document.querySelector('#model-check').textContent='Could not load.'}
+  document.querySelector('#model-check-now').onclick=async e=>{
+    e.target.disabled=true;document.querySelector('#model-check').textContent='Checking providers…';
+    try{renderModelCheck(await (await fetch('/api/model-check',{method:'POST'})).json())}catch{document.querySelector('#model-check').textContent='Check failed.'}
+    e.target.disabled=false;
+  };
+}
+function renderModelUpdates(d){
+  document.querySelector('#mu-enabled').checked=d.enabled;
+  document.querySelector('#mu-status').textContent=d.running?'running… (test replies take up to a minute each)':d.last_run?`last run ${new Date(d.last_run).toLocaleString()}`:'not run yet';
+  const verb={added:'Added',hidden:'Hidden',removed:'Removed',restored:'Restored',failed:'Not added',error:'Check failed'};
+  const hiddenIds=new Set(d.hidden.map(h=>h.id));
+  const action=e=>e.action==='added'&&!hiddenIds.has(e.id)?`<button class="link" data-mu="remove" data-id="${esc(e.id)}">Remove</button>`:(e.action==='hidden'&&hiddenIds.has(e.id)?`<button class="link" data-mu="restore" data-id="${esc(e.id)}">Restore</button>`:'');
+  document.querySelector('#mu-log').innerHTML=d.log.length?d.log.map(e=>`<tr><td>${esc((e.at||'').slice(0,10))}</td><td><b>${esc(verb[e.action]||e.action)}</b> ${esc(e.name)}</td><td class="muted">${esc(e.detail)}</td><td>${action(e)}</td></tr>`).join(''):'<tr><td class="muted">No changes yet.</td></tr>';
+  document.querySelector('#mu-hidden').innerHTML=d.hidden.length?`<p class="muted" style="margin-top:12px">Hidden now: ${d.hidden.map(h=>`${esc(h.name)} (${esc(h.reason)}) <button class="link" data-mu="restore" data-id="${esc(h.id)}">Restore</button>`).join(' · ')}</p>`:'';
+  document.querySelectorAll('[data-mu]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const r=await fetch(`/api/model-updates/${b.dataset.mu}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:b.dataset.id})});
+    const data=await r.json();
+    if(!r.ok){alert(data.detail||'Failed');b.disabled=false;return}
+    renderModelUpdates(data);
+  });
+}
+async function loadModelUpdates(){
+  const refresh=async()=>{try{const d=await (await fetch('/api/model-updates')).json();renderModelUpdates(d);return d}catch{document.querySelector('#mu-log').innerHTML='<tr><td>Could not load.</td></tr>'}};
+  const d=await refresh();
+  document.querySelector('#mu-enabled').onchange=async e=>{
+    renderModelUpdates(await (await fetch('/api/model-updates/enabled',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({on:e.target.checked})})).json());
+  };
+  document.querySelector('#mu-run').onclick=async e=>{
+    e.target.disabled=true;
+    await fetch('/api/model-updates/run',{method:'POST'});
+    const poll=async()=>{const d=await refresh();if(d?.running)setTimeout(poll,4000);else e.target.disabled=false};
+    setTimeout(poll,1000);
+  };
+  if(d?.running)setTimeout(loadModelUpdates,4000);
+}
+async function loadReminders(){
+  const body=document.querySelector('#reminders'),sent=document.querySelector('#reminders-sent'),devices=document.querySelector('#push-devices');
+  const when=t=>esc(String(t||'').replace('T',' '));
+  try{
+    const [data,push]=await Promise.all([(await fetch('/api/reminders')).json(),(await fetch('/api/push/status')).json()]);
+    const upcoming=data.agents.flatMap(a=>a.upcoming.map(r=>({...r,agent_id:a.agent_id,agent_name:a.agent_name}))).sort((a,b)=>a.next_at.localeCompare(b.next_at));
+    body.innerHTML=upcoming.length?upcoming.map(r=>`<tr><td>${esc(r.agent_name)}</td><td style="white-space:nowrap">${when(r.next_at)}</td><td>${esc(r.repeat||'once')}</td><td>${r.compose?'<span class="muted">Written when due, from: </span>':''}${esc(r.message)}</td><td><button class="link" type="button" data-cancel="${esc(r.agent_id)}/${esc(r.id)}">Cancel</button></td></tr>`).join(''):'<tr><td colspan="5" class="muted">Nothing scheduled.</td></tr>';
+    const recent=data.agents.flatMap(a=>a.sent.map(h=>({...h,agent_name:a.agent_name}))).sort((a,b)=>b.sent_at.localeCompare(a.sent_at)).slice(0,10);
+    sent.innerHTML=recent.length?recent.map(h=>`<tr><td>${esc(h.agent_name)}</td><td style="white-space:nowrap">${when(h.sent_at)}</td><td>${esc(h.message)}</td></tr>`).join(''):'<tr><td class="muted">Nothing sent yet.</td></tr>';
+    devices.innerHTML=push.devices.length?push.devices.map(d=>`<tr><td>${esc(d.label||'Device')}</td><td class="muted">since ${esc(new Date(d.added).toLocaleDateString())}</td></tr>`).join(''):'<tr><td class="muted">None yet. Turn on 🔔 on your phone.</td></tr>';
+    body.querySelectorAll('[data-cancel]').forEach(btn=>btn.onclick=async()=>{
+      if(!confirm('Cancel this reminder?'))return;
+      const r=await fetch(`/api/reminders/${btn.dataset.cancel}`,{method:'DELETE'});
+      if(!r.ok)alert('Could not cancel it.');
+      loadReminders();
+    });
+  }catch(error){body.innerHTML=`<tr><td colspan="5">${esc(error.message)}</td></tr>`}
+}
+document.querySelector('#push-test').onclick=async()=>{
+  const msg=document.querySelector('#push-test-msg');msg.textContent='Sending…';
+  try{const d=await (await fetch('/api/push/test',{method:'POST'})).json();msg.textContent=d.devices?`Sent to ${d.delivered} of ${d.devices} device${d.devices===1?'':'s'}.`:'No devices yet.'}
+  catch{msg.textContent='Failed to send.'}
+};
+async function postJson(path,body){
+  const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+  if(!r.ok){let m='Failed';try{m=(await r.json()).detail||m}catch{}throw Error(m)}
+  return r.json();
+}
+// Scheduled tasks (scheduled_tasks.py).
+const TASK_DAYS=[['mon','Mon'],['tue','Tue'],['wed','Wed'],['thu','Thu'],['fri','Fri'],['sat','Sat'],['sun','Sun']];
+const TASK_STATUS={ok:['#9dd6b9','OK'],needs_you:['#E0B25B','Needs you'],failed:['#E8877A','Failed'],missed:['#a4aaa9','Missed']};
+let taskData=null,taskEditing=null,taskTimer=null;
+function taskChat(t){return `/mobile/#/agents/${encodeURIComponent(t.agent_id)}/conversations/${encodeURIComponent(t.conversation_id)}`}
+function taskLast(t){
+  if(t.running)return '<span style="color:#9dd6b9">Running…</span>';
+  const r=t.last_run;if(!r)return '<span class="muted">Not run yet</span>';
+  const [c,label]=TASK_STATUS[r.status]||['#a4aaa9',r.status];
+  return `<b style="color:${c}">${esc(label)}</b> <span class="muted">${esc(String(r.started||r.scheduled_for||'').replace('T',' '))}</span>${r.summary?`<div class="muted" style="font-size:13px">${esc(r.summary)}</div>`:''}`;
+}
+async function loadTasks(){
+  const body=document.querySelector('#tasks-list');
+  try{
+    taskData=await (await fetch('/api/tasks')).json();
+    body.innerHTML=taskData.tasks.length?taskData.tasks.map(t=>`<tr><td>${esc(t.agent_name)}</td><td><a href="${taskChat(t)}">${esc(t.title)}</a>${t.preapproved.length?`<div class="muted" style="font-size:12px">Pre-approved: ${esc(t.preapproved.join(', '))}</div>`:''}</td><td>${esc(t.schedule)}</td><td style="white-space:nowrap">${t.enabled?esc(String(t.next_at||'').replace('T',' ')):'<span class="muted">Paused</span>'}</td><td>${taskLast(t)}</td><td style="white-space:nowrap"><button class="link" type="button" data-task-run="${esc(t.agent_id)}/${esc(t.id)}"${t.running?' disabled':''}>Run now</button> · <button class="link" type="button" data-task-toggle="${esc(t.agent_id)}/${esc(t.id)}">${t.enabled?'Pause':'Resume'}</button> · <button class="link" type="button" data-task-edit="${esc(t.agent_id)}/${esc(t.id)}">Edit</button> · <button class="link" type="button" data-task-delete="${esc(t.agent_id)}/${esc(t.id)}">Delete</button></td></tr>`).join(''):'<tr><td colspan="6" class="muted">No scheduled tasks yet.</td></tr>';
+    const find=key=>taskData.tasks.find(t=>`${t.agent_id}/${t.id}`===key);
+    body.querySelectorAll('[data-task-run]').forEach(b=>b.onclick=async()=>{
+      const t=find(b.dataset.taskRun);if(!confirm(`Run "${t.title}" now? ${t.agent_name} reports in the task's chat.`))return;
+      b.disabled=true;try{await postJson(`/api/tasks/${b.dataset.taskRun}/run`,{})}catch(e){alert(e.message)}loadTasks();
+    });
+    body.querySelectorAll('[data-task-toggle]').forEach(b=>b.onclick=async()=>{
+      const t=find(b.dataset.taskToggle);try{await postJson(`/api/tasks/${b.dataset.taskToggle}`,{enabled:!t.enabled})}catch(e){alert(e.message)}loadTasks();
+    });
+    body.querySelectorAll('[data-task-edit]').forEach(b=>b.onclick=()=>openTaskForm(find(b.dataset.taskEdit)));
+    body.querySelectorAll('[data-task-delete]').forEach(b=>b.onclick=async()=>{
+      const t=find(b.dataset.taskDelete);if(!confirm(`Delete "${t.title}"? Its conversation stays.`))return;
+      const r=await fetch(`/api/tasks/${b.dataset.taskDelete}`,{method:'DELETE'});if(!r.ok)alert('Could not delete it.');loadTasks();
+    });
+    clearTimeout(taskTimer);
+    if(taskData.tasks.some(t=>t.running))taskTimer=setTimeout(loadTasks,5000);
+  }catch(error){body.innerHTML=`<tr><td colspan="6">${esc(error.message)}</td></tr>`}
+}
+async function openTaskForm(task){
+  const form=document.querySelector('#task-form');taskEditing=task||null;
+  const agents=await (await fetch('/api/agents')).json();
+  const sel=document.querySelector('#task-agent');
+  sel.innerHTML=agents.map(a=>`<option value="${esc(a.id)}">${esc(a.name)}${a.clave?` (${esc(a.clave)})`:''}</option>`).join('');
+  sel.disabled=!!task;
+  document.querySelector('#task-days').innerHTML=TASK_DAYS.map(([d,l])=>`<label style="flex-direction:row;align-items:center;gap:5px;margin:0"><input type="checkbox" name="day" value="${d}"${(task?task.days:['sun']).includes(d)?' checked':''}> ${l}</label>`).join('');
+  document.querySelector('#task-form-title').textContent=task?`Edit: ${task.title}`:'New task';
+  form.elements.title.value=task?.title||'';form.elements.instructions.value=task?.instructions||'';
+  form.elements.time.value=task?.time||'10:00';form.elements.preapproved.value=(task?.preapproved||[]).join(', ');
+  form.elements.enabled.checked=task?task.enabled:true;
+  if(task)sel.value=task.agent_id;
+  document.querySelector('#task-error').textContent='';
+  form.style.display='';form.scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+document.querySelector('#task-new').onclick=()=>openTaskForm(null);
+document.querySelector('#task-cancel').onclick=()=>{document.querySelector('#task-form').style.display='none'};
+document.querySelector('#task-form').onsubmit=async e=>{
+  e.preventDefault();const f=e.target,err=document.querySelector('#task-error');err.textContent='';
+  const body={title:f.elements.title.value,instructions:f.elements.instructions.value,time:f.elements.time.value,preapproved:f.elements.preapproved.value,
+    enabled:f.elements.enabled.checked,days:[...f.querySelectorAll('input[name=day]:checked')].map(i=>i.value)};
+  const path=taskEditing?`/api/tasks/${taskEditing.agent_id}/${taskEditing.id}`:`/api/tasks/${document.querySelector('#task-agent').value}`;
+  try{await postJson(path,body);f.style.display='none';loadTasks()}catch(x){err.textContent=x.message}
+};
+// Connections: the addresses this instance answers on (/api/access).
+async function loadAccess(){
+  const tb=document.querySelector('#access-list');
+  try{
+    const d=await (await fetch('/api/access')).json();
+    tb.innerHTML=d.rows.map((r,i)=>`<tr><td>${esc(r.name)} <span class="muted">${esc(r.kind)}</span></td><td><a href="${esc(r.url)}" target="_blank" rel="noopener" style="color:#9dd6b9">${esc(r.url)}</a> <button type="button" class="link" data-copy="${i}">Copy</button></td></tr>`).join('');
+    document.querySelector('#access-tunnel').innerHTML=d.tunnel?`From a computer that can only reach this one over SSH, tunnel first (add <code>-p</code> for a non-standard SSH port): <code>${esc(d.tunnel)}</code>, then open the localhost address.`:'';
+    tb.onclick=async e=>{const b=e.target.closest('[data-copy]');if(!b)return;
+      try{await navigator.clipboard.writeText(d.rows[b.dataset.copy].url);b.textContent='Copied ✓'}catch{b.textContent='Select and copy'}
+      setTimeout(()=>b.textContent='Copy',1500)};
+  }catch{tb.innerHTML='<tr><td>Could not load.</td></tr>'}
+}
+// Claude CLI sign-in (claude_auth.py, Rick's backlog 2026-10-14).
+let claudeTimer=null;
+function renderClaudeAuth(d){
+  const st=document.querySelector('#claude-login-status'),flow=document.querySelector('#claude-login-flow'),start=document.querySelector('#claude-login-start');
+  document.querySelector('#claude-banner').style.display=d.signed_out&&d.login.state!=='done'?'':'none';
+  st.innerHTML=d.signed_out?`<b style="color:#E8877A">Signed out</b> <span class="muted">since ${esc(claudeWhen(d.since))}</span>`
+    :`No sign-in problem seen${d.restored?` <span class="muted">· restored ${esc(claudeWhen(d.restored))}</span>`:''}`;
+  const L=d.login||{};
+  clearTimeout(claudeTimer);
+  start.style.display=L.state==='waiting_code'||L.state==='checking'?'none':'';
+  if(L.state==='waiting_code'){
+    flow.innerHTML=`<ol style="margin:8px 0;padding-left:20px;line-height:1.7"><li><a href="${esc(L.url)}" target="_blank" rel="noopener noreferrer" style="color:#9dd6b9;font-weight:600">Open the Claude sign-in page</a></li><li>Sign in and copy the code it shows</li><li><form id="claude-code-form" style="display:flex;gap:8px;flex-wrap:wrap;margin:4px 0"><input id="claude-code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Paste the code" style="flex:1;min-width:200px;background:#121517;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:6px 8px;font:inherit"><button type="submit" style="background:#2A2F34;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:6px 14px;font:inherit;cursor:pointer">Sign in</button></form></li></ol><p><button type="button" class="link" id="claude-cancel">Cancel</button> <span class="muted" id="claude-msg"></span></p>`;
+    document.querySelector('#claude-code-form').onsubmit=async e=>{
+      e.preventDefault();const b=e.target.querySelector('button');b.disabled=true;
+      try{renderClaudeAuth({...d,login:(await postJson('/api/claude-auth/code',{code:document.querySelector('#claude-code').value})).login})}
+      catch(err){document.querySelector('#claude-msg').textContent=err.message;b.disabled=false}
+    };
+    document.querySelector('#claude-cancel').onclick=async()=>renderClaudeAuth(await postJson('/api/claude-auth/cancel',{}));
+  }else if(L.state==='checking'){
+    flow.innerHTML=`<p>${esc(L.message||'Checking…')}</p>`;
+    claudeTimer=setTimeout(loadClaudeAuth,2000);
+  }else if(L.state==='done'||L.state==='failed'){
+    flow.innerHTML=`<p style="color:${L.state==='done'?'#9dd6b9':'#E8877A'}">${L.state==='done'?'✓ ':''}${esc(L.message||'')}</p>`;
+  }else flow.innerHTML='';
+}
+function claudeWhen(iso){if(!iso)return'';const t=new Date(iso);return isNaN(t)?iso:t.toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}
+async function loadClaudeAuth(){
+  try{renderClaudeAuth(await (await fetch('/api/claude-auth')).json())}
+  catch{document.querySelector('#claude-login-status').textContent='Could not load.'}
+}
+document.querySelector('#claude-login-start').onclick=async e=>{
+  e.target.disabled=true;document.querySelector('#claude-login-flow').innerHTML='<p class="muted">Getting a sign-in link…</p>';
+  try{renderClaudeAuth(await postJson('/api/claude-auth/login',{}))}
+  catch(err){document.querySelector('#claude-login-flow').innerHTML=`<p style="color:#E8877A">${esc(err.message)}</p>`}
+  e.target.disabled=false;
+};
+// Setup (setup_check.py): which model routes can answer on this computer.
+async function loadSetup(){
+  try{
+    const d=await (await fetch('/api/setup')).json(),sec=document.querySelector('#setup');
+    const row=(x,opt)=>`<tr><td style="width:28px;color:${x.ready?'#9dd6b9':(opt?'#7d8484':'#E8A33D')}">${x.ready?'✓':'–'}</td><td>${esc(x.name)}<div class="muted" style="font-size:12px">${esc(x.detail)}</div></td><td class="muted" style="font-size:13px">${x.ready?'':esc(x.fix)}</td></tr>`;
+    document.querySelector('#setup-rows').innerHTML=`<tr class="group-row"><td colspan="3">Models: at least one</td></tr>${d.routes.map(x=>row(x,false)).join('')}<tr class="group-row"><td colspan="3">Optional</td></tr>${d.extras.map(x=>row(x,true)).join('')}`;
+    document.querySelector('#setup-intro').innerHTML=d.ready?`Data folder <code>${esc(d.home)}</code>, keys file <code>${esc(d.env_file)}</code>.`
+      :`<b style="color:#E8A33D">No model is set up yet, so agents can't answer.</b> The quickest start is an API key: put it in <code>${esc(d.env_file)}</code> and restart OpenClave.`;
+    if(d.ready)document.querySelector('#access').after(sec);
+    sec.hidden=false;
+    // No Claude CLI on this computer: nothing to sign in to.
+    const claudeCli=d.routes.find(x=>x.id==='claude-cli');
+    if(claudeCli&&!claudeCli.ready)document.querySelector('#claude-login').hidden=true;
+  }catch{}
+}
+loadSetup();
+loadClaudeAuth();
+load();
+loadReminders();
+loadTasks();
+loadCatalog();
+loadAccess();
+loadSettings();
+loadSorting();
+loadModelCheck();
+loadModelUpdates();
+loadQuota();
+loadAttention();
+loadInbox();
+loadWeeklyReview();
+loadDigest();
+// Stale-deploy banner: backend code changed on disk but openclave.service
+// wasn't restarted (see deploy_state.py). Hidden unless /api/version says stale.
+async function checkDeployState() {
+  try {
+    const res = await fetch('/api/version');
+    if (!res.ok) return;
+    const v = await res.json();
+    if (!v.stale) return;
+    const el = document.getElementById('stale-banner');
+    el.textContent = `Backend code changed since the service started (${v.changed_files.join(', ')}). Run: sudo systemctl restart openclave`;
+    el.style.display = '';
+  } catch (e) { /* non-critical */ }
+}
+checkDeployState();
+</script>
+</body></html>

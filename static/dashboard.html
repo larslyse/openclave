@@ -1,0 +1,1075 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenClave</title>
+<link rel="icon" type="image/svg+xml" href="/static/mobile/icons/app-icon.svg">
+<link rel="icon" type="image/png" href="/static/mobile/icons/app-icon-192.png">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600&family=Inter:wght@400;500;600&display=swap');
+
+  :root{
+    --bg: #121517;
+    --panel: #1A1E22;
+    --panel-border: #2A2F34;
+    --text: #E7E4DE;
+    --text-muted: #8B9096;
+  }
+  *{ box-sizing: border-box; }
+  html, body{ height:100%; margin:0; }
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', sans-serif;
+    padding: 40px 32px;
+    max-width: 1100px;  /* same as the Control Panel, so it doesn't spread across a wide screen */
+    margin-inline: auto;
+  }
+  header{ margin-bottom: 32px; }
+  h1{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size: 26px; margin: 0 0 6px; }
+  .sub{ color: var(--text-muted); font-size: 14px; }
+
+
+  .grid{
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));  /* 3 per row at full width */
+    gap: 16px;
+  }
+  .tile{
+    display: flex;
+    flex-direction: column;
+    background: var(--panel);
+    border: 1px solid var(--panel-border);
+    border-radius: 12px;
+    padding: 20px;
+    transition: border-color .15s;
+  }
+  .tile-link{ display:flex; align-items:center; gap: 12px; text-decoration:none; color:inherit; min-width:0; }
+  .tile-top{ display:flex; align-items:center; gap: 12px; margin-bottom: 12px; }
+  .tile-tagline-link{ display:block; text-decoration:none; }
+  /* Conversations menu right of the name (chat_core.js conversationMenu). */
+  .convo-menu{ position:relative; flex-shrink:0; }
+  .convo-menu-btn{ background: var(--bg); color: var(--text-muted); border:1px solid var(--panel-border); border-radius:6px; font-size:12px; padding:3px 9px; font-family:inherit; cursor:pointer; white-space:nowrap; }
+  .convo-menu-btn:hover, .convo-menu-btn[aria-expanded="true"]{ color: var(--text); border-color: var(--text-muted); }
+  .convo-pop{ position:absolute; left:0; top:calc(100% + 6px); z-index:60; width:280px; max-height:300px; overflow-y:auto; background: var(--panel); border:1px solid var(--panel-border); border-radius:8px; padding:6px; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+  .convo-pop[hidden]{ display:none; }
+  .convo-pick{ display:flex; flex-direction:column; align-items:flex-start; gap:2px; width:100%; text-align:left; background:none; color: var(--text); border:0; border-left:2px solid transparent; border-radius:5px; padding:6px 8px; font-family:inherit; cursor:pointer; }
+  .convo-pick .t{ font-size:13px; max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .convo-pick .d{ font-size:11px; color: var(--text-muted); }
+  .convo-pick:hover, .convo-pick:focus-visible{ background: rgba(255,255,255,.06); outline:none; }
+  .convo-pick.current{ background: rgba(255,255,255,.04); border-left-color: var(--accent, #7FD1AE); }
+  .convo-pop-state{ padding:8px; font-size:13px; color: var(--text-muted); }
+  .draft-tag{ font-size:10.5px; color: var(--text-muted); border:1px solid var(--panel-border); border-radius:4px; padding:0 4px; margin-left:6px; }
+  .tile.dragging{ opacity:.4; }
+  .drag-handle{
+    cursor: grab; color: var(--text-muted); font-size: 16px; line-height:1;
+    padding: 2px 4px; margin-right: -6px; flex-shrink:0; user-select:none;
+  }
+  .drag-handle:active{ cursor: grabbing; }
+  .tile-icon{
+    width: 38px; height: 38px; border-radius: 50%;
+    display:flex; align-items:center; justify-content:center;
+    font-family: 'Space Grotesk', sans-serif; font-weight:600; font-size:14px;
+    color: var(--bg); flex-shrink:0;
+    overflow: hidden;
+  }
+  .tile-icon img{ width:100%; height:100%; display:block; }
+  button.tile-icon{ border:0; padding:0; cursor:pointer; }
+  button.tile-icon:hover, button.tile-icon:focus-visible{ outline:2px solid var(--text-muted); outline-offset:2px; }
+  .tile-tagline{ margin-left: 50px; }
+  /* Quick edit (click an agent's round icon): name, colour, icon. */
+  .qe{ position:absolute; z-index:80; width:270px; background: var(--panel); border:1px solid var(--panel-border); border-radius:10px; padding:14px; box-shadow:0 10px 30px rgba(0,0,0,.5); display:flex; flex-direction:column; gap:10px; font-size:13px; }
+  .qe-row{ display:flex; align-items:center; gap:10px; }
+  .qe label{ color: var(--text-muted); font-size:12px; display:flex; flex-direction:column; gap:4px; }
+  .qe input[type=text]{ background: var(--bg); color: var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:6px 8px; font:inherit; }
+  .qe input[type=color]{ width:44px; height:32px; border:1px solid var(--panel-border); border-radius:6px; background: var(--bg); padding:2px; cursor:pointer; }
+  .qe-av{ width:48px; height:48px; border-radius:50%; overflow:hidden; flex-shrink:0; }
+  .qe-av img{ width:100%; height:100%; display:block; }
+  .qe button{ background: var(--bg); color: var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:6px 12px; font:inherit; cursor:pointer; }
+  .qe button:hover{ border-color: var(--text-muted); }
+  .qe button.qe-save{ background: var(--qe-color, #7FD1AE); color: #121517; border-color: transparent; font-weight:600; }
+  .qe-actions{ display:flex; gap:8px; justify-content:flex-end; }
+  .qe-msg{ color:#E8877A; font-size:12px; min-height:1em; }
+  .tile-name{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size: 17px; }
+  /* "Needs you" (attention.py): one small dot, details on hover. Kept to a
+     dot so the tiles stay avatar, name, tagline, chat. */
+  .attn-dot{ display:inline-block; width:8px; height:8px; border-radius:50%; background:#E8A33D; margin-left:8px; vertical-align:middle; }
+  .tile-tagline{ color: var(--text-muted); font-size: 12.5px; margin: -8px 0 14px 50px; }
+
+  .tile-chat{
+    display:flex; flex-direction:column;
+    height: 230px;
+    border: 1px solid var(--panel-border);
+    border-radius: 8px;
+    background: var(--bg);
+    overflow: hidden;
+  }
+  .tile-chat-msgs{
+    flex:1; overflow-y:auto; overflow-x:hidden; padding: 10px 10px;
+    display:flex; flex-direction:column; gap:7px;
+    scrollbar-width: thin;
+    scrollbar-color: #3A3F44 var(--bg);
+  }
+  .tile-chat-msgs::-webkit-scrollbar{ width: 8px; }
+  .tile-chat-msgs::-webkit-scrollbar-track{ background: var(--bg); }
+  .tile-chat-msgs::-webkit-scrollbar-thumb{ background: #3A3F44; border-radius: 4px; }
+  .tile-chat-msgs::-webkit-scrollbar-thumb:hover{ background: #4A4F54; }
+  /* Tile chat markup comes from /static/chat_core.js (shared chat). */
+  .tile-chat-msgs .bubble, .tile-chat-msgs .msg-empty{
+    font-size:12.5px; line-height:1.4; max-width: 92%;
+    overflow-wrap: break-word; word-break: break-word;
+  }
+  .tile-chat-msgs .bubble p{ margin:0; white-space:pre-wrap; }
+  .tile-chat-msgs .bubble.user{ align-self:flex-end; background:#2A2F34; padding:6px 9px; border-radius:9px 9px 2px 9px; white-space:pre-wrap; }
+  .tile-chat-msgs .bubble.assistant{ align-self:flex-start; color: var(--text); }
+  .tile-chat-msgs .bubble.from-agent{ align-self:flex-start; border:1px dashed #E8A33D88; padding:6px 9px; border-radius:9px 9px 9px 2px; }
+  .tile-chat-msgs .from-label{ font-size:11px; font-weight:600; color:#E8A33D; margin-bottom:2px; }
+  .tile-chat-msgs .bubble.pending{ color: var(--text-muted); font-style:italic; }
+  .tile-chat-msgs .bubble.pending.streaming{ color: var(--text); font-style:normal; }
+  .tile-chat-msgs .bubble.pending.streaming .pending-label{ color: var(--text-muted); font-style:italic; font-size:11px; }
+  .tile-chat-msgs .stream-text{ margin-bottom:4px; }
+  .tile-chat-msgs .bubble.error{ color:#E8877A; }
+  .tile-chat-msgs .work-time, .tile-chat-msgs .reply-meta{ color: var(--text-muted); font-size:11px; margin-top:3px; }
+  .tile-chat-msgs .msg-empty{ color: var(--text-muted); font-style:italic; align-self:flex-start; }
+  .tile-chat-msgs details.summary{ font-size:11.5px; color: var(--text-muted); }
+  .tile-chat-msgs .retry-btn{ margin-top:4px; background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:2px 10px; font-size:11.5px; cursor:pointer; }
+  .tile-chat-msgs .stop-btn, .tile-chat-msgs .link-btn{ border:0; background:none; color: var(--text); text-decoration:underline; font:inherit; font-style:normal; padding:0 2px; cursor:pointer; }
+  .msg-menu{ color-scheme:dark; position:fixed; z-index:50; display:flex; flex-direction:column; min-width:200px; max-height:250px; overflow-y:auto; padding:4px; border-radius:8px; background:var(--panel); border:1px solid var(--panel-border); box-shadow:0 4px 16px rgba(0,0,0,.45); }
+  .msg-menu button{ text-align:left; background:none; border:0; color:var(--text); padding:7px 10px; border-radius:6px; font:inherit; font-size:13px; cursor:pointer; }
+  .msg-menu button:hover{ background:rgba(255,255,255,.06); }
+  .tile-chat .chat-status{ font-size:11px; color: var(--text-muted); padding:3px 9px 0; }
+  .tile-chat-input{ padding:7px; border-top:1px solid var(--panel-border); flex-shrink:0; }
+  .tile-chat-input .attach-preview:empty{ display:none; }
+  .tile-chat-input .composer-row{ display:flex; gap:6px; align-items:flex-end; }
+  .tile-chat-input .input-col{ flex:1; min-width:0; display:flex; }
+  .tile-chat-input textarea{
+    flex:1; width:100%; resize:none; min-height:32px; max-height:64px; box-sizing:border-box; background: var(--panel); color: var(--text);
+    border:1px solid var(--panel-border); border-radius:6px; padding:6px 8px;
+    font-family:inherit; font-size:12.5px;
+  }
+  .tile-chat-input .send{
+    height:32px; background: var(--panel); color: var(--text); border:1px solid var(--panel-border);
+    border-radius:6px; padding:0 12px; font-size:12.5px; cursor:pointer;
+  }
+  .tile-chat-input .send:hover{ border-color: var(--text-muted); }
+  .tile-chat-input .send:disabled, .tile-chat-input textarea:disabled{ opacity:.5; cursor:default; }
+  .tile-chat-input button:disabled{ opacity:.5; cursor:default; }
+
+  .add-tile{
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:10px;
+    min-height: 200px; border: 1px dashed var(--panel-border); border-radius: 12px;
+    color: var(--text-muted); font-size: 14px; text-decoration: none;
+    transition: border-color .15s, color .15s;
+  }
+  .add-tile:hover{ border-color: var(--text-muted); color: var(--text); }
+  .add-tile .plus{ font-size: 34px; line-height: 1; font-weight: 300; }
+
+  .empty{ color: var(--text-muted); font-size: 14px; }
+
+  /* View switch (2026-10-31): tiles per agent, or a chat layout with
+     the agent list left and the group chat or a direct chat right. */
+  /* Dashboard (a different place: an agent's full page) big on the left;
+     the two overview switches on the right (2026-11-04). */
+  .view-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; }
+  .open-dashboard{ background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:12px; font:inherit; font-size:15px; font-weight:600; padding:10px 20px; cursor:pointer; }
+  .open-dashboard:hover{ border-color: var(--text-muted); }
+  .open-dashboard:disabled{ opacity:.6; cursor:default; }
+  .view-switch{ display:inline-flex; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden; }
+  .view-switch button{ background:none; border:0; color: var(--text-muted); font:inherit; font-size:13px; padding:6px 14px; cursor:pointer; }
+  .view-switch button[aria-pressed="true"]{ background: var(--panel); color: var(--text); }
+  /* Claves (2026-11-04): a labelled box on the right holding Organize (the
+     overview) and the active-clave picker (2026-11-05). */
+  /* View and Claves sit in labelled boxes (2026-11-05). */
+  .hbox{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0; border:1px solid var(--panel-border); border-radius:12px; padding:4px 12px 10px; min-inline-size:0; }
+  .hbox legend{ padding:0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-muted); }
+  .claves-btn{ background:none; border:1px solid var(--panel-border); border-radius:8px; color: var(--text-muted); font:inherit; font-size:13px; padding:6px 14px; cursor:pointer; }
+  .claves-btn:hover{ color: var(--text); border-color: var(--text-muted); }
+  .claves-btn[aria-pressed="true"]{ background: var(--panel); color: var(--text); }
+  .clave-pick{ display:inline-flex; gap:6px; flex-wrap:wrap; }
+  .clave-pick:empty{ display:none; }
+  .clave-chip{ background:none; border:1px solid var(--panel-border); border-radius:999px; color: var(--text-muted); font:inherit; font-size:12.5px; padding:4px 12px; cursor:pointer; }
+  .clave-chip:hover{ color: var(--text); }
+  .clave-chip[aria-pressed="true"]{ border-color:#7FD1AE; color: var(--text); background: rgba(127,209,174,.12); }
+  body.chat-mode{ padding-bottom: 16px; }
+  body.chat-mode header{ margin-bottom: 16px; }
+  .chatview{ display:flex; border:1px solid var(--panel-border); border-radius:12px; overflow:hidden; background: var(--panel); height: calc(100vh - var(--chat-top, 200px) - 16px); min-height: 460px; }
+  .chatview[hidden], .grid[hidden]{ display:none; }
+  .cv-side{ width: 250px; flex-shrink:0; border-right:1px solid var(--panel-border); overflow-y:auto; padding:12px 8px; display:flex; flex-direction:column; gap:2px; }
+  .cv-section{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color: var(--text-muted); padding:12px 10px 6px; }
+  .cv-section:first-child{ padding-top:2px; }
+  .cv-item{ display:flex; align-items:center; gap:9px; width:100%; background:none; border:0; border-radius:7px; color: var(--text); font:inherit; font-size:14px; padding:6px 8px; cursor:pointer; text-align:left; text-decoration:none; min-width:0; }
+  .cv-item:hover{ background: rgba(255,255,255,.05); }
+  .cv-item.active{ background: rgba(255,255,255,.09); }
+  .cv-item .cv-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cv-item.unread .cv-name{ font-weight:600; }
+  .cv-hash{ width:26px; text-align:center; color: var(--text-muted); font-weight:600; flex-shrink:0; }
+  .cv-av{ width:26px; height:26px; border-radius:50%; overflow:hidden; flex-shrink:0; }
+  .cv-av img{ width:100%; height:100%; display:block; }
+  .cv-dot{ width:8px; height:8px; border-radius:50%; background:#7FD1AE; flex-shrink:0; }
+  .cv-open{ color: var(--text-muted); text-decoration:none; font-size:13px; padding:0 4px; border-radius:4px; opacity:0; }
+  .cv-row:hover .cv-open, .cv-open:focus-visible{ opacity:1; }
+  .cv-open:hover{ color: var(--text); }
+  .cv-row{ display:flex; align-items:center; }
+  .cv-thread{ font-size:13px; color: var(--text-muted); }
+  .cv-thread.unread{ color: var(--text); }
+  .cv-empty{ font-size:12.5px; color: var(--text-muted); padding:2px 10px; }
+  .cv-main{ flex:1; min-width:0; display:flex; flex-direction:column; background: var(--bg); }
+  .cv-head{ display:flex; align-items:center; gap:12px; padding:12px 18px; border-bottom:1px solid var(--panel-border); background: var(--panel); min-height:58px; }
+  .cv-head .cv-title{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:17px; }
+  .cv-head .cv-sub{ color: var(--text-muted); font-size:12.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; flex:1; }
+  .cv-head .cv-btn{ background: var(--bg); color: var(--text-muted); border:1px solid var(--panel-border); border-radius:6px; font:inherit; font-size:12px; padding:4px 10px; cursor:pointer; text-decoration:none; white-space:nowrap; }
+  .cv-head .cv-btn:hover{ color: var(--text); border-color: var(--text-muted); }
+  .cv-head .convo-pop{ left:auto; right:0; }
+  .cv-msgs{ flex:1; overflow-y:auto; padding:16px 20px; display:flex; flex-direction:column; gap:10px; scrollbar-width:thin; scrollbar-color:#3A3F44 var(--bg); }
+  .cv-input{ padding:10px 14px 14px; border-top:1px solid var(--panel-border); position:relative; }
+  .cv-input .attach-preview:empty{ display:none; }
+  .cv-input .composer-row{ display:flex; gap:8px; align-items:flex-end; }
+  .cv-input .input-col{ flex:1; min-width:0; display:flex; }
+  .cv-input textarea{ flex:1; width:100%; resize:none; min-height:40px; max-height:160px; box-sizing:border-box; background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:8px; padding:9px 11px; font-family:inherit; font-size:14px; }
+  .cv-input .send{ height:40px; background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:8px; padding:0 16px; font-size:14px; cursor:pointer; }
+  .cv-input .send:hover{ border-color: var(--text-muted); }
+  .cv-input button:disabled, .cv-input textarea:disabled{ opacity:.5; cursor:default; }
+  /* Direct chat (chat_core.js markup) */
+  .cv-msgs .bubble, .cv-msgs .msg-empty{ font-size:14px; line-height:1.45; max-width: 80%; overflow-wrap:break-word; word-break:break-word; }
+  .cv-msgs .bubble p{ margin:0 0 6px; } .cv-msgs .bubble p:last-child{ margin:0; }
+  .cv-msgs .bubble.user{ align-self:flex-end; background:#2A2F34; padding:8px 12px; border-radius:11px 11px 3px 11px; white-space:pre-wrap; }
+  .cv-msgs .bubble.assistant{ align-self:flex-start; }
+  .cv-msgs .bubble.from-agent{ align-self:flex-start; border:1px dashed #E8A33D88; padding:8px 12px; border-radius:11px 11px 11px 3px; }
+  .cv-msgs .from-label{ font-size:11.5px; font-weight:600; color:#E8A33D; margin-bottom:3px; }
+  .cv-msgs .bubble.pending{ color: var(--text-muted); font-style:italic; }
+  .cv-msgs .bubble.pending.streaming{ color: var(--text); font-style:normal; }
+  .cv-msgs .bubble.error{ color:#E8877A; }
+  .cv-msgs .work-time, .cv-msgs .reply-meta{ color: var(--text-muted); font-size:11.5px; margin-top:3px; }
+  .cv-msgs .msg-empty{ color: var(--text-muted); font-style:italic; align-self:flex-start; }
+  .cv-msgs details.summary{ font-size:12px; color: var(--text-muted); }
+  .cv-msgs .retry-btn{ margin-top:4px; background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:2px 10px; font-size:12px; cursor:pointer; }
+  .cv-msgs .stop-btn, .cv-msgs .link-btn{ border:0; background:none; color: var(--text); text-decoration:underline; font:inherit; font-style:normal; padding:0 2px; cursor:pointer; }
+  .cv-msgs pre{ background: rgba(255,255,255,.06); border:1px solid var(--panel-border); border-radius:6px; padding:8px 10px; overflow-x:auto; }
+  .cv-msgs table{ border-collapse:collapse; font-size:13px; } .cv-msgs td, .cv-msgs th{ border:1px solid var(--panel-border); padding:3px 7px; }
+  .chatview .chat-status{ font-size:11.5px; color: var(--text-muted); padding:4px 20px 0; }
+  /* Channel dialog (room_core.js editChannel), same look as the handover dialog */
+  .handover-overlay{ position:fixed; inset:0; z-index:100; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; padding:16px; }
+  .handover-dialog{ color-scheme:dark; width:min(440px, 100%); max-height:calc(100vh - 32px); overflow-y:auto; background:var(--panel); border:1px solid var(--panel-border); border-radius:10px; padding:18px 20px; box-shadow:0 12px 40px rgba(0,0,0,.5); font-size:13.5px; }
+  .handover-dialog h2{ font-size:16px; font-weight:600; margin:0 0 14px; }
+  .handover-hint{ font-size:12.5px; color:var(--text-muted); }
+  .handover-to{ display:flex; align-items:center; gap:10px; margin-bottom:14px; }
+  .handover-to input{ flex:1; background:var(--bg); color:var(--text); border:1px solid var(--panel-border); border-radius:6px; padding:6px 8px; font:inherit; }
+  .handover-label{ font-size:11.5px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-muted); margin-bottom:6px; }
+  .handover-file{ display:flex; align-items:center; gap:8px; padding:4px 0; cursor:pointer; }
+  .handover-error{ color:#E8877A; font-size:12.5px; margin-bottom:8px; } .handover-error:empty{ display:none; }
+  .handover-actions{ display:flex; justify-content:flex-end; gap:8px; }
+  .handover-actions button{ border:1px solid var(--panel-border); background:transparent; color:var(--text); border-radius:6px; padding:6px 14px; font:inherit; cursor:pointer; }
+  .handover-go{ background:#E7E4DE !important; color:var(--bg) !important; font-weight:600; }
+  .channel-delete{ margin-right:auto; color:#E8877A !important; }
+  .purged-banner{ font-size:12.5px; color:var(--text-muted); border:1px dashed var(--panel-border); border-radius:8px; padding:6px 10px; margin:6px 0 10px; }
+  /* Group chat (room_core.js markup) */
+  .room-msg{ display:flex; gap:11px; align-items:flex-start; padding:4px 0; }
+  .room-avatar{ width:34px; height:34px; border-radius:50%; overflow:hidden; flex-shrink:0; border:0; padding:0; cursor:pointer; display:flex; align-items:center; justify-content:center; }
+  .room-avatar img{ width:100%; height:100%; display:block; }
+  .room-avatar.you{ background:#3A4148; color: var(--text); font-weight:600; font-size:14px; cursor:default; }
+  .room-main{ min-width:0; flex:1; }
+  .room-head{ display:flex; align-items:baseline; gap:8px; }
+  .room-name{ font-weight:600; font-size:14px; color: var(--text); }
+  .room-name.link{ background:none; border:0; padding:0; font:inherit; font-weight:600; cursor:pointer; }
+  .room-name.link:hover{ text-decoration:underline; }
+  .room-time{ font-size:11.5px; color: var(--text-muted); }
+  .room-text{ font-size:14px; line-height:1.45; overflow-wrap:anywhere; }
+  .room-text p{ margin:2px 0 6px; } .room-text p:last-child{ margin-bottom:0; }
+  .room-msg.error .room-text{ color:#E8877A; }
+  .room-note{ font-size:11.5px; color: var(--text-muted); margin-top:2px; }
+  .room-pending{ font-size:12.5px; color: var(--text-muted); font-style:italic; padding-left:45px; }
+  .room-empty{ color: var(--text-muted); font-size:14px; margin:auto; max-width:420px; text-align:center; line-height:1.5; }
+  .room-hint:empty{ display:none; }
+  .room-hint{ font-size:12px; color:#E8877A; margin-bottom:6px; }
+  .room-picker{ position:absolute; left:14px; bottom:calc(100% - 4px); z-index:40; min-width:220px; max-height:260px; overflow-y:auto; background: var(--panel); border:1px solid var(--panel-border); border-radius:8px; padding:4px; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+  .room-picker[hidden]{ display:none; }
+  .room-pick{ display:flex; justify-content:space-between; gap:14px; width:100%; background:none; border:0; color: var(--text); font:inherit; font-size:13.5px; padding:6px 9px; border-radius:5px; cursor:pointer; text-align:left; }
+  .room-pick span{ color: var(--text-muted); font-size:12px; }
+  .room-pick.active, .room-pick:hover{ background: rgba(255,255,255,.07); }
+
+  /* Claves overview (claves.py, 2026-11-04): one card per clave, lead on top,
+     members below; drag to move, Ctrl/Alt-drag to also add, ⋯ for more. */
+  .claves[hidden]{ display:none; }
+  .cl-top{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
+  .cl-switch{ display:inline-flex; align-items:center; gap:9px; font-size:14px; cursor:pointer; }
+  .cl-switch input{ width:18px; height:18px; accent-color:#7FD1AE; }
+  .cl-hint{ color: var(--text-muted); font-size:12.5px; }
+  .cl-off{ color: var(--text-muted); font-size:14px; line-height:1.55; max-width:620px; }
+  .cl-manager{ display:flex; align-items:center; gap:10px; border:1px solid var(--panel-border); border-radius:10px; padding:8px 12px; margin-bottom:16px; background: var(--panel); font-size:13.5px; }
+  .cl-manager .cl-label{ color: var(--text-muted); font-size:12px; text-transform:uppercase; letter-spacing:.05em; }
+  .cl-grid{ display:grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap:14px; align-items:start; }
+  .cl-card{ background: var(--panel); border:1px solid var(--panel-border); border-radius:12px; padding:12px; display:flex; flex-direction:column; gap:8px; min-height:160px; }
+  .cl-card.pool{ border-style:dashed; background:none; }
+  .cl-head{ display:flex; align-items:center; gap:8px; }
+  .cl-name{ font-family:'Space Grotesk',sans-serif; font-weight:600; font-size:16px; flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cl-count{ color: var(--text-muted); font-size:12px; }
+  .cl-zone{ border-radius:8px; padding:4px; display:flex; flex-direction:column; gap:4px; min-height:40px; transition: background .1s; }
+  .cl-zone.lead{ border:1px dashed var(--panel-border); min-height:46px; }
+  .cl-zone.lead:empty::before{ content:'Drop an agent here to make it the lead'; color: var(--text-muted); font-size:12px; padding:10px 6px; }
+  .cl-zone.members:empty::before{ content:'Drag agents here'; color: var(--text-muted); font-size:12px; padding:10px 6px; }
+  .cl-zone.over{ background: rgba(127,209,174,.12); }
+  .cl-sub{ font-size:11px; text-transform:uppercase; letter-spacing:.05em; color: var(--text-muted); padding:2px 4px 0; }
+  .cl-agent{ display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:7px; background: rgba(255,255,255,.03); cursor:grab; font-size:13.5px; user-select:none; }
+  .cl-agent:hover{ background: rgba(255,255,255,.07); }
+  .cl-agent.dragging{ opacity:.4; }
+  .cl-agent .cv-av{ width:24px; height:24px; }
+  .cl-agent .cl-aname{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .cl-agent .cl-lead-tag{ font-size:11px; color:#7FD1AE; }
+  .cl-more{ background:none; border:0; color: var(--text-muted); font:inherit; font-size:16px; padding:0 4px; cursor:pointer; border-radius:4px; line-height:1; }
+  .cl-more:hover{ color: var(--text); background: rgba(255,255,255,.07); }
+  .cl-menu{ position:fixed; z-index:60; min-width:190px; background: var(--panel); border:1px solid var(--panel-border); border-radius:8px; padding:4px; box-shadow:0 8px 24px rgba(0,0,0,.45); }
+  .cl-menu button{ display:block; width:100%; text-align:left; background:none; border:0; color: var(--text); font:inherit; font-size:13.5px; padding:6px 10px; border-radius:5px; cursor:pointer; }
+  .cl-menu button:hover{ background: rgba(255,255,255,.07); }
+  .cl-menu button.danger{ color:#E8877A; }
+  .cl-add{ display:flex; align-items:center; justify-content:center; gap:6px; padding:7px; border:1px dashed var(--panel-border); border-radius:7px; color: var(--text-muted); font-size:13px; text-decoration:none; }
+  .cl-add:hover{ color: var(--text); border-color: var(--text-muted); }
+  .cl-add .plus{ font-size:17px; line-height:1; font-weight:300; }
+  .cl-new{ display:flex; align-items:center; justify-content:center; gap:8px; min-height:160px; border:1px dashed var(--panel-border); border-radius:12px; background:none; color: var(--text-muted); font:inherit; font-size:14px; cursor:pointer; }
+  .cl-new:hover{ color: var(--text); border-color: var(--text-muted); }
+  .cl-status{ color:#E8877A; font-size:12.5px; min-height:1em; }
+  @media (max-width: 760px){
+    body{ padding: 20px 12px; }
+    .cv-side{ width: 64px; padding: 10px 4px; }
+    .cv-side .cv-name, .cv-side .cv-section, .cv-side .cv-open, .cv-side .cv-thread, .cv-side .cv-empty{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="stale-banner" style="display:none;margin:0 130px 18px 0;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:13px"></div>
+<header>
+  <h1>OpenClave</h1>
+  <div class="sub">A gathering of specialists. Chat below, or click through for full history and settings.</div>
+  <div class="sub" style="margin-top:10px"><a href="/mobile/" style="color:inherit">Open mobile chat</a> · <a href="/control/" style="color:inherit">Control Panel</a></div>
+  <div class="view-row">
+    <button type="button" class="open-dashboard" data-open-dashboard title="The full page of the agent you used last; switch agents with the tabs at the top">Dashboard →</button>
+    <fieldset class="hbox view-box">
+      <legend>View</legend>
+      <div class="view-switch" role="group" aria-label="Overview">
+        <button type="button" data-view="tiles" aria-pressed="true">Boxes</button>
+        <button type="button" data-view="chat" aria-pressed="false">Group chat</button>
+      </div>
+    </fieldset>
+    <fieldset class="hbox clave-row">
+      <legend>Claves</legend>
+      <button type="button" class="claves-btn" data-view="claves" aria-pressed="false" title="Set up claves: groups of agents, each with its own group chat">Organize</button>
+      <div class="clave-pick" id="clave-pick" role="group" aria-label="Active clave"></div>
+    </fieldset>
+  </div>
+</header>
+
+<div class="grid" id="grid">
+  <div class="empty">loading…</div>
+</div>
+
+<section class="claves" id="claves" hidden aria-label="Claves"></section>
+
+<div class="chatview" id="chatview" hidden>
+  <aside class="cv-side" id="cv-side" aria-label="Channels and agents"></aside>
+  <section class="cv-main">
+    <div class="cv-head" id="cv-head"></div>
+    <div class="cv-msgs" id="cv-msgs"></div>
+    <div class="cv-input" id="cv-input"></div>
+  </section>
+</div>
+
+<script src="/static/vendor/marked-15.0.12.min.js"></script>
+<script src="/static/vendor/purify-3.2.6.min.js"></script>
+<script src="/static/chat_core.js"></script>
+<script src="/static/room_core.js"></script>
+<script src="/static/avatar_maker.js"></script>
+<script>
+function escapeHtml(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// Amber dot after the name of any agent with something that needs the owner
+// (attention.needs_you: quiet measurement log, open inbox, connection).
+async function markAttention(grid) {
+  try {
+    const data = await (await fetch('/api/attention')).json();
+    for (const [id, items] of Object.entries(data.needs_you || data.agents || {})) {
+      if (!items.length) continue;
+      const name = grid.querySelector(`.tile[data-agent-id="${CSS.escape(id)}"] .tile-name`);
+      if (name && !name.querySelector('.attn-dot')) {
+        name.insertAdjacentHTML('beforeend', `<span class="attn-dot" title="${escapeHtml(items.map(i => i.text).join('\n')).replace(/"/g, '&quot;')}"></span>`);
+      }
+    }
+  } catch (e) { /* optional */ }
+}
+
+function tileIcon(a) {
+  // The avatar endpoint always answers: custom upload, built-in SVG, or generated initials.
+  return `<img src="/api/agents/${a.id}/avatar" alt="${escapeHtml(a.name)}">`;
+}
+
+// Each tile's chat is the shared chat (/static/chat_core.js), the same code
+// as the agent pages and mobile, so sending, queueing and reply info behave
+// identically everywhere. Tiles are text-only: no photos or voice here.
+async function mountTileChat(a, tile) {
+  const messages = tile.querySelector('.tile-chat-msgs');
+  let conversationId = null;
+  try {
+    const res = await fetch(`/${a.id}/conversations`);
+    if (!res.ok) throw new Error(res.status);
+    conversationId = (await res.json())[0]?.id || null;
+  } catch (e) {
+    messages.innerHTML = `<div class="msg-empty">Couldn't load conversation.</div>`;
+    return;
+  }
+  let chat = null;
+  const mount = id => {
+    chat?.destroy();
+    chat = OpenClaveChat.mountChat({
+      agent: {id: a.id, name: a.name}, conversationId: id, api: tileApi,
+      form: tile.querySelector('.tile-chat-input'), messages,
+      emptyClass: 'msg-empty', enterSends: true,
+      pendingKey: 'openclave.dashboard.pending',
+      notify: name => window.openclaveNotifyReply?.(name),
+      onForward: (targetId, text) => OpenClaveChat.forwardToAgentPage(targetId, text),
+    });
+  };
+  mount(conversationId);
+  // Conversations ▾ right of the name: switch this tile's chat in place.
+  tile.querySelector('.tile-top').appendChild(OpenClaveChat.conversationMenu({
+    agent: {id: a.id, name: a.name}, api: tileApi,
+    currentId: () => chat?.conversationId || null,
+    onPick: mount,
+  }));
+}
+
+async function tileApi(path, options = {}) {
+  const res = await fetch(path, {headers: {'Content-Type': 'application/json'}, ...options});
+  let body = null;
+  try { body = await res.json(); } catch (e) {}
+  if (!res.ok) {
+    const error = new Error(body?.detail || `Request failed (${res.status})`);
+    error.status = res.status;
+    throw error;
+  }
+  return body;
+}
+
+// Drag-to-reorder: only the grip handle in .tile-top is draggable, so the
+// tile's own link/select/textarea/buttons keep working normally. The tile
+// itself just moves in the DOM as the handle drags over neighboring tiles;
+// the new order is persisted once, on drop, not on every intermediate move.
+let dragTile = null;
+
+function attachDragHandlers(tile) {
+  const handle = tile.querySelector('.drag-handle');
+  handle.draggable = true;
+
+  handle.addEventListener('dragstart', e => {
+    dragTile = tile;
+    tile.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', tile.dataset.agentId);
+    // Drag the whole card, not just the tiny handle glyph.
+    e.dataTransfer.setDragImage(tile, 20, 20);
+  });
+
+  handle.addEventListener('dragend', () => {
+    tile.classList.remove('dragging');
+    dragTile = null;
+    persistAgentOrder();
+  });
+
+  tile.addEventListener('dragover', e => {
+    if (!dragTile || dragTile === tile) return;
+    e.preventDefault();
+    const rect = tile.getBoundingClientRect();
+    const before = (e.clientX - rect.left) < rect.width / 2;
+    tile.parentElement.insertBefore(dragTile, before ? tile : tile.nextSibling);
+  });
+}
+
+async function persistAgentOrder() {
+  const grid = document.getElementById('grid');
+  const order = [...grid.querySelectorAll('.tile[data-agent-id]')].map(t => t.dataset.agentId);
+  try {
+    await fetch('/api/agents/order', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({order}),
+    });
+  } catch (e) { /* best-effort — a reload just falls back to the last saved order */ }
+}
+
+// Quick edit: click an agent's round icon for name, colour and icon. The icon
+// uses the avatar maker (static/avatar_maker.js), the same one as the Control
+// Panel's Edit.
+function closeQuickEdit() { document.querySelector('.qe')?.remove(); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeQuickEdit(); });
+document.addEventListener('click', e => { const qe = document.querySelector('.qe'); if (qe && !qe.contains(e.target) && !e.target.closest('.avm-back')) closeQuickEdit(); });
+
+function openQuickEdit(a, anchor) {
+  closeQuickEdit();
+  const qe = document.createElement('div');
+  qe.className = 'qe';
+  qe.style.setProperty('--qe-color', a.color);
+  qe.innerHTML = `
+    <div class="qe-row"><span class="qe-av" style="background:${a.color}"><img src="/api/agents/${a.id}/avatar?v=${Date.now()}" alt=""></span><button type="button" class="qe-icon">Change icon…</button></div>
+    <label>Name<input type="text" class="qe-name" maxlength="24" value="${escapeHtml(a.name)}"></label>
+    <div class="qe-row"><label style="flex-direction:row;align-items:center;gap:10px">Colour <input type="color" class="qe-color" value="${/^#[0-9a-f]{6}$/i.test(a.color) ? a.color : '#7fd1ae'}"></label></div>
+    <div class="qe-msg"></div>
+    <div class="qe-actions"><button type="button" class="qe-cancel">Cancel</button><button type="button" class="qe-save">Save</button></div>`;
+  document.body.appendChild(qe);
+  const r = anchor.getBoundingClientRect();
+  qe.style.top = `${r.bottom + window.scrollY + 8}px`;
+  qe.style.left = `${Math.max(8, Math.min(r.left + window.scrollX - 8, document.documentElement.clientWidth - qe.offsetWidth - 8))}px`;
+  const color = qe.querySelector('.qe-color'), av = qe.querySelector('.qe-av'), msg = qe.querySelector('.qe-msg');
+  color.oninput = () => { av.style.background = color.value; qe.style.setProperty('--qe-color', color.value); };
+  qe.querySelector('.qe-cancel').onclick = closeQuickEdit;
+  qe.querySelector('.qe-icon').onclick = () => OpenClaveAvatarMaker.open({agentId: a.id, agentName: a.name, color: a.color, onSaved: () => {
+    av.querySelector('img').src = `/api/agents/${a.id}/avatar?v=${Date.now()}`;
+    document.querySelectorAll(`.tile[data-agent-id="${CSS.escape(a.id)}"] .tile-icon img`).forEach(img => img.src = `/api/agents/${a.id}/avatar?v=${Date.now()}`);
+  }});
+  const save = async () => {
+    msg.textContent = '';
+    const name = qe.querySelector('.qe-name').value.trim();
+    try {
+      if (name && name !== a.name) {
+        const res = await fetch(`/api/agents/${a.id}/name`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({name, tagline: a.tagline})});
+        if (!res.ok) throw new Error((await res.json()).detail || 'Could not rename');
+      }
+      if (color.value.toLowerCase() !== (a.color || '').toLowerCase()) {
+        const res = await fetch(`/api/agents/${a.id}/color`, {method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({color: color.value})});
+        if (!res.ok) throw new Error((await res.json()).detail || 'Could not change the colour');
+      }
+      // Update the tile in place (a reload would remount every tile's chat).
+      a.name = name || a.name;
+      a.color = color.value;
+      const tile = document.querySelector(`.tile[data-agent-id="${CSS.escape(a.id)}"]`);
+      if (tile) {
+        const nameEl = tile.querySelector('.tile-name');
+        const dot = nameEl.querySelector('.attn-dot');
+        nameEl.textContent = a.name;
+        if (dot) nameEl.appendChild(dot);
+        tile.querySelector('.tile-icon').style.background = a.color;
+        tile.querySelector('.tile-icon').title = `Edit ${a.name}: name, colour, icon`;
+        tile.querySelector('.tile-icon img').src = `/api/agents/${a.id}/avatar?v=${Date.now()}`;  // initials avatars use the colour
+      }
+      closeQuickEdit();
+    } catch (e) { msg.textContent = e.message; }
+  };
+  qe.querySelector('.qe-save').onclick = save;
+  qe.querySelector('.qe-name').onkeydown = e => { if (e.key === 'Enter') save(); };
+  qe.querySelector('.qe-name').focus();
+}
+
+async function load() {
+  const grid = document.getElementById('grid');
+  try {
+    const agentsRes = await fetch('/api/agents');
+    if (!agentsRes.ok) throw new Error(agentsRes.status);
+    await clavePickerReady;
+    const only = activeMembers();
+    const agents = (await agentsRes.json()).filter(a => !only || only.has(a.id));
+    grid.innerHTML = '';
+    for (const a of agents) {
+      const tile = document.createElement('div');
+      tile.className = 'tile';
+      tile.style.borderColor = 'transparent';
+      tile.onmouseenter = () => tile.style.borderColor = a.color;
+      tile.onmouseleave = () => tile.style.borderColor = 'transparent';
+
+      tile.dataset.agentId = a.id;
+      tile.innerHTML = `
+        <div class="tile-header">
+          <div class="tile-top">
+            <span class="drag-handle" title="Drag to reorder">⠿</span>
+            <button type="button" class="tile-icon" style="background:${a.color}" title="Edit ${escapeHtml(a.name)}: name, colour, icon">${tileIcon(a)}</button>
+            <a class="tile-link" href="/${a.id}">
+              <div class="tile-name">${escapeHtml(a.name)}</div>
+            </a>
+          </div>
+          <a class="tile-tagline-link" href="/${a.id}"><div class="tile-tagline">${escapeHtml(a.tagline)}</div></a>
+        </div>
+        <div class="tile-chat">
+          <div class="tile-chat-msgs"><div class="msg-empty">loading…</div></div>
+          <div class="tile-chat-input"></div>
+        </div>`;
+
+      attachDragHandlers(tile);
+      tile.querySelector('.tile-icon').onclick = (e) => { e.stopPropagation(); openQuickEdit(a, e.currentTarget); };
+
+      grid.appendChild(tile);
+      mountTileChat(a, tile);
+    }
+    const addTile = document.createElement('a');
+    addTile.className = 'add-tile';
+    // With a clave picked, a new agent joins it (like its "+ New agent" box).
+    addTile.href = homeClaves?.active && only ? `/control/?clave=${encodeURIComponent(homeClaves.active)}#new-agent` : '/control/#new-agent';
+    addTile.innerHTML = '<span class="plus">+</span><span>Create new specialist</span>';
+    grid.appendChild(addTile);
+    markAttention(grid);
+    showWelcome(grid, agents.length);
+  } catch (e) {
+    grid.innerHTML = '<div class="empty">Failed to load agents.</div>';
+  }
+}
+
+// First run (setup_check.py): no model set up yet, or no agents yet.
+async function showWelcome(grid, agentCount) {
+  document.querySelector('#welcome')?.remove();
+  let d;
+  try { d = await (await fetch('/api/setup')).json(); } catch { return; }
+  if (d.ready && (d.agents || agentCount)) return;
+  const card = document.createElement('div');
+  card.id = 'welcome';
+  card.style.cssText = 'border:1px solid #30373a;border-radius:12px;background:#1a1e22;padding:18px 22px;margin:0 0 18px;line-height:1.55;max-width:760px';
+  const step1 = d.ready
+    ? '<li style="color:#9dd6b9">A model is set up. ✓</li>'
+    : `<li><b>Set up a model.</b> None can answer yet. Quickest: an Anthropic or xAI API key in <code>${escapeHtml(d.env_file)}</code>, e.g. <code>ANTHROPIC_API_KEY=sk-ant-…</code>, then restart OpenClave. A Claude or ChatGPT subscription works too, through its CLI. <a href="/control/#setup">Setup check</a></li>`;
+  card.innerHTML = `<h2 style="margin:0 0 6px;font-size:18px">Welcome to OpenClave</h2>
+    <ol style="margin:6px 0 0;padding-left:20px">${step1}
+      <li><b>Add your first agents</b> from <a href="/control/#new-agent">ready-made agents</a>: start with <b>Rick</b> (the manager) plus two to four areas you care about. Each one interviews you for a few minutes to fit itself to you.</li>
+      <li><b>Chat</b> here, or open an agent for its full page. Everything it learns is kept as plain Markdown files in <code>${escapeHtml(d.agents_folder)}</code>.</li></ol>`;
+  card.querySelectorAll('a').forEach(a => { a.style.color = '#9dd6b9'; });
+  grid.before(card);
+}
+
+// ── Chat view: agents left, group chat or a direct chat right ─────────────
+const VIEW_KEY = 'openclave.home.view';
+const SPOT_KEY = 'openclave.home.chatSpot';
+const SEEN_KEY = 'openclave.home.seen';
+const store = OpenClaveChat.storage();
+const md = text => DOMPurify.sanitize(marked.parse(text || ''));
+let tilesLoaded = false, cvAgents = [], cvThreads = [], cvClaves = [], cvChannels = [], cvActive = null, cvSidePoll = null;
+
+function readJson(key, fallback) { try { return JSON.parse(store.get(key) || '') ?? fallback; } catch { return fallback; } }
+function seen() { return readJson(SEEN_KEY, {}); }
+function markSeen(key) { const s = seen(); s[key] = Date.now(); store.set(SEEN_KEY, JSON.stringify(s)); }
+
+function setView(view) {
+  document.querySelectorAll('header [data-view]').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.view === view)));
+  document.getElementById('grid').hidden = view !== 'tiles';
+  document.getElementById('chatview').hidden = view !== 'chat';
+  document.getElementById('claves').hidden = view !== 'claves';
+  document.body.classList.toggle('chat-mode', view === 'chat');
+  document.body.dataset.view = view;
+  store.set(VIEW_KEY, view);
+  if (view === 'tiles' && !tilesLoaded) { tilesLoaded = true; load(); }
+  if (view === 'chat') startChatView();
+  if (view === 'claves') loadClaves();
+}
+
+function fitChatView() {
+  const top = document.getElementById('chatview').getBoundingClientRect().top + window.scrollY;
+  document.documentElement.style.setProperty('--chat-top', `${Math.round(top)}px`);
+}
+window.addEventListener('resize', fitChatView);
+
+async function loadSide() {
+  try {
+    let claveData;
+    [cvAgents, cvThreads, claveData, cvChannels] = await Promise.all([tileApi('/api/agents'), tileApi('/api/agent-messages'),
+                                                         tileApi('/api/claves').catch(() => null), tileApi('/api/channels').catch(() => [])]);
+    cvClaves = claveData?.enabled ? claveData.claves : [];
+  } catch (e) { return; }
+  drawSide();
+}
+
+function drawSide() {
+  const s = seen();
+  const isActive = spot => cvActive && JSON.stringify(cvActive.spot) === JSON.stringify(spot);
+  const agentRow = a => {
+    const unread = a.last_is_reply && a.last_activity_ms > (s[a.id] || 0);
+    return `<div class="cv-row"><button type="button" class="cv-item${unread ? ' unread' : ''}${isActive({agent: a.id}) ? ' active' : ''}" data-agent="${escapeHtml(a.id)}" title="${escapeHtml(a.tagline || a.name)}">
+      <span class="cv-av" style="background:${a.color}"><img src="/api/agents/${a.id}/avatar" alt=""></span><span class="cv-name">${escapeHtml(a.name)}</span>${unread ? '<span class="cv-dot" title="New reply"></span>' : ''}</button>
+      <a class="cv-open" href="/${a.id}" title="Open ${escapeHtml(a.name)}'s page">↗</a></div>`;
+  };
+  const threadRow = t => {
+    const key = `${t.agent_id}/${t.conversation_id}`;
+    const unread = t.updated_ms > (s[key] || 0) && t.updated_ms > Date.now() - 7 * 864e5;
+    return `<button type="button" class="cv-item cv-thread${unread ? ' unread' : ''}${isActive({agent: t.agent_id, conversation: t.conversation_id}) ? ' active' : ''}" data-agent="${escapeHtml(t.agent_id)}" data-conversation="${escapeHtml(t.conversation_id)}" title="${escapeHtml(t.from_name)} → ${escapeHtml(t.agent_name)}">
+      <span class="cv-hash">→</span><span class="cv-name">${escapeHtml(t.from_name)} → ${escapeHtml(t.agent_name)}</span>${unread ? '<span class="cv-dot"></span>' : ''}</button>`;
+  };
+  document.getElementById('cv-side').innerHTML = `
+    <div class="cv-section">Channels</div>
+    <button type="button" class="cv-item${isActive({room: true}) ? ' active' : ''}" data-room><span class="cv-hash">#</span><span class="cv-name">everyone</span></button>
+    ${cvClaves.map(c => `<button type="button" class="cv-item${isActive({room: true, clave: c.id}) ? ' active' : ''}" data-room data-clave="${escapeHtml(c.id)}" title="${escapeHtml(c.name)} clave: ${c.members.length} agents"><span class="cv-hash">#</span><span class="cv-name">${escapeHtml(c.name)}</span></button>`).join('')}
+    ${cvChannels.map(c => `<div class="cv-row"><button type="button" class="cv-item${isActive({room: true, clave: c.id}) ? ' active' : ''}" data-room data-clave="${escapeHtml(c.id)}" title="#${escapeHtml(c.name)}: ${c.members.length} agents"><span class="cv-hash">#</span><span class="cv-name">${escapeHtml(c.name)}</span></button>
+      <button type="button" class="cv-open" data-channel-edit="${escapeHtml(c.id)}" title="Members, rename or delete">⋯</button></div>`).join('')}
+    <button type="button" class="cv-item" data-channel-new><span class="cv-hash">+</span><span class="cv-name">Add channel</span></button>
+    <div class="cv-section">Agents – private chat</div>
+    ${cvAgents.map(agentRow).join('')}
+    <a class="cv-item" href="/control/#new-agent"><span class="cv-hash">+</span><span class="cv-name">New specialist</span></a>
+    <div class="cv-section">Between agents</div>
+    ${cvThreads.map(threadRow).join('') || '<div class="cv-empty">Messages agents send each other show up here.</div>'}`;
+}
+
+async function editChannel(channel) {
+  const result = await OpenClaveRoom.editChannel({api: tileApi, agents: cvAgents, channel});
+  if (!result) return;
+  await loadSide();
+  if (result.deleted) { if (cvActive?.spot?.clave === result.deleted) openSpot({room: true}); }
+  else openSpot({room: true, clave: result.id});
+}
+
+document.getElementById('cv-side').addEventListener('click', e => {
+  const edit = e.target.closest('[data-channel-edit]');
+  if (edit) { editChannel(cvChannels.find(c => c.id === edit.dataset.channelEdit)); return; }
+  if (e.target.closest('[data-channel-new]')) { editChannel(null); return; }
+  const item = e.target.closest('button.cv-item');
+  if (!item) return;
+  if (item.hasAttribute('data-room')) openSpot(item.dataset.clave ? {room: true, clave: item.dataset.clave} : {room: true});
+  else openSpot(item.dataset.conversation ? {agent: item.dataset.agent, conversation: item.dataset.conversation} : {agent: item.dataset.agent});
+});
+
+function openSpot(spot) {
+  cvActive?.destroy?.();
+  cvActive = null;
+  const head = document.getElementById('cv-head');
+  const msgs = document.getElementById('cv-msgs');
+  const input = document.getElementById('cv-input');
+  msgs.innerHTML = '';
+  store.set(SPOT_KEY, JSON.stringify(spot));
+  if (spot.room) {
+    const channel = spot.clave ? cvChannels.find(c => c.id === spot.clave) : null;
+    const clave = spot.clave ? channel || cvClaves.find(c => c.id === spot.clave) : null;
+    if (spot.clave && !clave) { openSpot({room: true}); return; }
+    head.innerHTML = channel
+      ? `<span class="cv-title"># ${escapeHtml(channel.name)}</span><span class="cv-sub">${channel.members.map(id => escapeHtml(cvAgents.find(a => a.id === id)?.name || id)).join(', ') || 'Nobody yet'}: @name asks an agent (and brings them in), @all asks everyone here.</span><button type="button" class="cv-btn" id="cv-channel-edit">Members</button>`
+      : clave
+      ? `<span class="cv-title"># ${escapeHtml(clave.name)}</span><span class="cv-sub">Group chat for the ${escapeHtml(clave.name)} clave (${clave.members.length} agents). @name asks an agent, @all asks everyone here.</span>`
+      : `<span class="cv-title"># everyone</span><span class="cv-sub">Group chat with all agents. @name asks an agent, @all asks everyone.</span>`;
+    const room = OpenClaveRoom.mount({
+      messages: msgs, form: input, api: tileApi, agents: cvAgents, md,
+      clave: clave?.id, claveName: clave?.name,
+      onOpenAgent: id => openSpot({agent: id}),
+      // A reply read here isn't unread in the agent list.
+      onMessages: fresh => { if (fresh.some(m => m.from !== 'user')) { fresh.forEach(m => m.from !== 'user' && markSeen(m.from)); drawSide(); } },
+    });
+    cvActive = {spot, destroy: () => room.destroy()};
+    document.getElementById('cv-channel-edit')?.addEventListener('click', () => editChannel(channel));
+    drawSide();
+    input.querySelector('textarea')?.focus();
+    return;
+  }
+  const a = cvAgents.find(x => x.id === spot.agent);
+  if (!a) { openSpot({room: true}); return; }
+  head.innerHTML = `<span class="cv-av" style="background:${a.color};width:34px;height:34px"><img src="/api/agents/${a.id}/avatar" alt=""></span>
+    <span class="cv-title">${escapeHtml(a.name)}</span><span class="cv-sub" id="cv-convo-title">${escapeHtml(a.tagline || '')}</span>
+    <span id="cv-menu"></span><button type="button" class="cv-btn" id="cv-new">New chat</button><a class="cv-btn" href="/${a.id}">Open page ↗</a>`;
+  let chat = null;
+  const mount = async id => {
+    chat?.destroy();
+    if (id === undefined) {
+      try { id = (await tileApi(`/${a.id}/conversations`))[0]?.id || null; } catch { id = null; }
+    }
+    chat = OpenClaveChat.mountChat({
+      agent: {id: a.id, name: a.name}, conversationId: id, api: tileApi,
+      form: input, messages: msgs, markdown: md,
+      emptyClass: 'msg-empty', enterSends: true,
+      pendingKey: 'openclave.dashboard.pending',
+      notify: name => window.openclaveNotifyReply?.(name),
+      onForward: (targetId, text) => OpenClaveChat.forwardToAgentPage(targetId, text),
+      onTitle: title => { const el = document.getElementById('cv-convo-title'); if (el) el.textContent = title; },
+      onConversationChange: cid => { store.set(SPOT_KEY, JSON.stringify({agent: a.id, conversation: cid})); },
+    });
+    markSeen(a.id);
+    if (id) markSeen(`${a.id}/${id}`);
+    cvActive = {spot: spot.conversation ? spot : {agent: a.id}, destroy: () => chat?.destroy()};
+    drawSide();
+    input.querySelector('textarea')?.focus();
+  };
+  document.getElementById('cv-menu').appendChild(OpenClaveChat.conversationMenu({
+    agent: {id: a.id, name: a.name}, api: tileApi,
+    currentId: () => chat?.conversationId || null,
+    onPick: id => { spot = {agent: a.id, conversation: id}; mount(id); },
+  }));
+  document.getElementById('cv-new').onclick = () => { spot = {agent: a.id}; mount(null); };
+  cvActive = {spot, destroy: () => chat?.destroy()};
+  mount(spot.conversation === undefined ? undefined : spot.conversation);
+}
+
+async function startChatView() {
+  fitChatView();
+  if (cvSidePoll) return;
+  await loadSide();
+  cvSidePoll = setInterval(loadSide, 15000);
+  openSpot(readJson(SPOT_KEY, null) || {room: true});
+}
+
+// ── Claves overview (claves.py, 2026-11-04) ──────────────────────────────
+// One card per clave: lead on top, members below, the manager in a strip above
+// them all (it is in every clave). An agent is in one clave: drag to move it;
+// hold Ctrl (or Alt) on drop to clone it there instead (same name, persona,
+// mission, tools and skills; its own empty memory and chats). ⋯ for the rest.
+let clData = null, clAgents = [], clDrag = null;
+
+async function loadClaves() {
+  const box = document.getElementById('claves');
+  if (!clData) box.innerHTML = '<div class="empty">loading…</div>';
+  try {
+    [clData, clAgents] = await Promise.all([tileApi('/api/claves'), tileApi('/api/agents')]);
+  } catch (e) {
+    box.innerHTML = '<div class="empty">Failed to load claves.</div>';
+    return;
+  }
+  drawClaves();
+}
+
+const clAgent = id => clAgents.find(a => a.id === id);
+
+function clChip(id, claveId, isLead) {
+  const a = clAgent(id);
+  if (!a) return '';
+  return `<div class="cl-agent" draggable="true" data-agent="${escapeHtml(id)}" data-from="${escapeHtml(claveId || '')}">`
+    + `<span class="cv-av" style="background:${a.color}"><img src="/api/agents/${a.id}/avatar" alt=""></span>`
+    + `<span class="cl-aname">${escapeHtml(a.name)}</span>`
+    + (isLead ? '<span class="cl-lead-tag">Lead</span>' : '')
+    + `<button type="button" class="cl-more" data-agent-menu="${escapeHtml(id)}" data-clave="${escapeHtml(claveId || '')}" aria-label="More for ${escapeHtml(a.name)}">⋯</button></div>`;
+}
+
+function drawClaves() {
+  const box = document.getElementById('claves');
+  const on = clData.enabled;
+  const top = `<div class="cl-top"><label class="cl-switch"><input type="checkbox" id="cl-enabled"${on ? ' checked' : ''}> Multiple claves</label>
+    <span class="cl-hint">${on ? 'Drag an agent to move it to another clave. Hold Ctrl (or Alt) when you drop to clone it there instead. ⋯ for more.' : ''}</span>
+    <span class="cl-status" id="cl-status" role="status"></span></div>`;
+  if (!on) {
+    box.innerHTML = top + `<p class="cl-off">A clave is a group of agents with its own group chat, e.g. <b>Personal</b> and <b>RnD</b>.
+      Each agent is in one clave; clone it to have it in another too. Turn this on and every agent starts out in one clave called Personal; nothing else changes until you add another.</p>`;
+    return;
+  }
+  const manager = clData.manager && clAgent(clData.manager);
+  const managerHtml = manager ? `<div class="cl-manager"><span class="cl-label">Manager</span>
+    <span class="cv-av" style="background:${manager.color};width:26px;height:26px"><img src="/api/agents/${manager.id}/avatar" alt=""></span>
+    <b>${escapeHtml(manager.name)}</b><span class="cl-hint">Looks after the whole install and is in every clave. Drop it on a clave's Lead slot to make it lead there.</span></div>` : '';
+  const cards = clData.claves.map(c => {
+    const rest = c.members.filter(m => m !== c.lead && m !== clData.manager);
+    return `<div class="cl-card" data-clave="${escapeHtml(c.id)}">
+      <div class="cl-head"><span class="cl-name" title="Vault folder: Claves/${escapeHtml(c.folder)}">${escapeHtml(c.name)}</span>
+        <span class="cl-count">${c.members.length}</span>
+        <button type="button" class="cl-more" data-clave-menu="${escapeHtml(c.id)}" aria-label="More for ${escapeHtml(c.name)}">⋯</button></div>
+      <div class="cl-sub">Lead</div><div class="cl-zone lead" data-zone="lead" data-clave="${escapeHtml(c.id)}">${c.lead ? clChip(c.lead, c.id, true) : ''}</div>
+      <div class="cl-sub">Members</div><div class="cl-zone members" data-zone="members" data-clave="${escapeHtml(c.id)}">${rest.map(m => clChip(m, c.id, false)).join('')}</div>
+      <a class="cl-add" href="/control/?clave=${encodeURIComponent(c.id)}#new-agent" title="Create a new agent in ${escapeHtml(c.name)}"><span class="plus">+</span> New agent</a>
+    </div>`;
+  }).join('');
+  const inAny = new Set(clData.claves.flatMap(c => c.members));
+  const loose = clAgents.filter(a => !inAny.has(a.id) && a.id !== clData.manager);
+  const pool = loose.length ? `<div class="cl-card pool"><div class="cl-head"><span class="cl-name">Not in a clave</span></div>
+    <div class="cl-zone members" data-zone="pool">${loose.map(a => clChip(a.id, '', false)).join('')}</div></div>` : '';
+  box.innerHTML = top + managerHtml + `<div class="cl-grid">${cards}${pool}<button type="button" class="cl-new" id="cl-new">+ New clave</button></div>`;
+}
+
+async function clDo(path, options) {
+  const status = document.getElementById('cl-status');
+  if (status) status.textContent = '';
+  try {
+    const data = await tileApi(path, options);
+    if (data && Array.isArray(data.claves)) {
+      clData = {...clData, ...data};
+      homeClaves = {...clData};
+      drawClavePicker();
+      tilesLoaded = false;  // members may have changed
+    }
+    drawClaves();
+    if (cvSidePoll) loadSide();  // the group chat's channel list
+    return data;
+  } catch (e) {
+    const el = document.getElementById('cl-status');
+    if (el) el.textContent = e.message || 'Could not save.';
+    return null;
+  }
+}
+
+function clMenu(anchor, items) {
+  document.querySelector('.cl-menu')?.remove();
+  const menu = document.createElement('div');
+  menu.className = 'cl-menu';
+  menu.setAttribute('role', 'menu');
+  items.forEach(item => {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.textContent = item.label;
+    if (item.danger) b.className = 'danger';
+    b.onclick = () => { menu.remove(); item.fn(); };
+    menu.appendChild(b);
+  });
+  document.body.appendChild(menu);
+  const r = anchor.getBoundingClientRect();
+  menu.style.top = `${Math.min(r.bottom + 4, window.innerHeight - menu.offsetHeight - 8)}px`;
+  menu.style.left = `${Math.max(8, Math.min(r.right - menu.offsetWidth, window.innerWidth - menu.offsetWidth - 8))}px`;
+  setTimeout(() => document.addEventListener('click', function close(e) {
+    if (!menu.contains(e.target)) { menu.remove(); document.removeEventListener('click', close); }
+  }), 0);
+}
+
+const clJson = (method, body) => ({method, body: JSON.stringify(body)});
+
+function clAgentMenu(button) {
+  const id = button.dataset.agentMenu, from = button.dataset.clave;
+  const a = clAgent(id);
+  const items = [{label: `Open ${a.name}'s page`, fn: () => { location.href = `/${encodeURIComponent(id)}`; }}];
+  const home = clData.claves.find(c => c.id === from);
+  if (id !== clData.manager) clData.claves.filter(c => c.id !== from).forEach(c =>
+    items.push({label: `Clone into ${c.name}…`, fn: () => clClone(id, c)}));
+  if (home && home.lead !== id) items.push({label: `Make lead of ${home.name}`, fn: () => clDo('/api/claves/place', clJson('POST', {agent: id, to: home.id, lead: true}))});
+  if (home && home.lead === id) items.push({label: 'Not the lead any more', fn: () => clDo(`/api/claves/${encodeURIComponent(home.id)}`, clJson('PATCH', {set_lead: true, lead: null}))});
+  if (home) items.push({label: `Remove from ${home.name}`, danger: true, fn: () => clDo('/api/claves/remove', clJson('POST', {agent: id, clave: home.id}))});
+  clMenu(button, items);
+}
+
+async function clClone(id, clave) {
+  const a = clAgent(id);
+  if (!confirm(`Clone ${a.name} into ${clave.name}?\n\nThe clone gets the same name, avatar, persona, mission, model, tools and skills, and starts with its own empty memory and chats. From then on the two change separately.`)) return;
+  const made = await clDo('/api/claves/clone', clJson('POST', {agent: id, to: clave.id}));
+  if (made) { tilesLoaded = false; loadClaves(); }
+}
+
+function clClaveMenu(button) {
+  const c = clData.claves.find(x => x.id === button.dataset.claveMenu);
+  clMenu(button, [
+    {label: 'Open group chat', fn: () => { store.set(SPOT_KEY, JSON.stringify({room: true, clave: c.id})); setView('chat'); if (cvSidePoll) loadSide().then(() => openSpot({room: true, clave: c.id})); }},
+    {label: 'Rename…', fn: () => {
+      const name = prompt('New name for this clave (its vault folder keeps its name):', c.name);
+      if (name && name.trim() !== c.name) clDo(`/api/claves/${encodeURIComponent(c.id)}`, clJson('PATCH', {name: name.trim()}));
+    }},
+    {label: 'Archive clave', danger: true, fn: () => {
+      if (confirm(`Archive the ${c.name} clave? Its folder moves to Claves/_Archived. The agents stay as they are.`))
+        clDo(`/api/claves/${encodeURIComponent(c.id)}`, {method: 'DELETE'});
+    }},
+  ]);
+}
+
+(function bindClaves() {
+  const box = document.getElementById('claves');
+  box.addEventListener('change', e => {
+    if (e.target.id === 'cl-enabled') clDo('/api/claves/enabled', clJson('POST', {enabled: e.target.checked}));
+  });
+  box.addEventListener('click', e => {
+    if (e.target.closest('#cl-new')) {
+      const name = prompt('Name of the new clave (e.g. RnD):');
+      if (name && name.trim()) clDo('/api/claves', clJson('POST', {name: name.trim()}));
+      return;
+    }
+    const agentMenu = e.target.closest('[data-agent-menu]');
+    if (agentMenu) { e.stopPropagation(); clAgentMenu(agentMenu); return; }
+    const claveMenu = e.target.closest('[data-clave-menu]');
+    if (claveMenu) { e.stopPropagation(); clClaveMenu(claveMenu); }
+  });
+  box.addEventListener('dragstart', e => {
+    const chip = e.target.closest('.cl-agent');
+    if (!chip) return;
+    clDrag = {agent: chip.dataset.agent, from: chip.dataset.from || null};
+    chip.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'copyMove';
+    e.dataTransfer.setData('text/plain', chip.dataset.agent);
+  });
+  box.addEventListener('dragend', e => {
+    e.target.closest('.cl-agent')?.classList.remove('dragging');
+    box.querySelectorAll('.cl-zone.over').forEach(z => z.classList.remove('over'));
+    clDrag = null;
+  });
+  box.addEventListener('dragover', e => {
+    const zone = e.target.closest('.cl-zone');
+    if (!zone || !clDrag) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = (e.ctrlKey || e.altKey) && zone.dataset.zone !== 'pool' ? 'copy' : 'move';
+    box.querySelectorAll('.cl-zone.over').forEach(z => z !== zone && z.classList.remove('over'));
+    zone.classList.add('over');
+  });
+  box.addEventListener('dragleave', e => {
+    const zone = e.target.closest('.cl-zone');
+    if (zone && !zone.contains(e.relatedTarget)) zone.classList.remove('over');
+  });
+  box.addEventListener('drop', e => {
+    const zone = e.target.closest('.cl-zone');
+    if (!zone || !clDrag) return;
+    e.preventDefault();
+    zone.classList.remove('over');
+    const {agent, from} = clDrag;
+    clDrag = null;
+    if (zone.dataset.zone === 'pool') {
+      if (from) clDo('/api/claves/remove', clJson('POST', {agent, clave: from}));
+      return;
+    }
+    const to = zone.dataset.clave;
+    const target = clData.claves.find(c => c.id === to);
+    if ((e.ctrlKey || e.altKey) && from && from !== to && agent !== clData.manager) {
+      clClone(agent, target);
+      return;
+    }
+    let index = null;
+    if (zone.dataset.zone === 'members') {
+      const before = [...zone.querySelectorAll('.cl-agent')].find(chip =>
+        chip.dataset.agent !== agent && chip.getBoundingClientRect().top + chip.offsetHeight / 2 > e.clientY);
+      if (before) index = target.members.filter(m => m !== agent).indexOf(before.dataset.agent);
+    }
+    clDo('/api/claves/place', clJson('POST', {agent, to, index, lead: zone.dataset.zone === 'lead'}));
+  });
+})();
+
+document.querySelectorAll('.view-switch [data-view]').forEach(b => b.onclick = () => setView(b.dataset.view));
+// Organize (in the Claves box) opens the overview; a second click goes back to Boxes.
+document.querySelector('.claves-btn').onclick = () => setView(document.body.dataset.view === 'claves' ? 'tiles' : 'claves');
+
+// Active clave (claves.active): with more than one clave, one chip per clave
+// right of the Claves button. The picked one decides which agents Boxes, the
+// Dashboard button and an agent page's tabs show.
+let homeClaves = null;
+async function loadClavePicker() {
+  try { homeClaves = await tileApi('/api/claves'); } catch (e) { homeClaves = null; }
+  drawClavePicker();
+}
+function drawClavePicker() {
+  const box = document.getElementById('clave-pick');
+  const list = homeClaves?.enabled ? homeClaves.claves : [];
+  box.innerHTML = list.length > 1 ? list.map(c => `<button type="button" class="clave-chip" data-clave="${escapeHtml(c.id)}" aria-pressed="${c.id === homeClaves.active}" title="Show ${escapeHtml(c.name)}'s agents in Boxes and on the Dashboard">${escapeHtml(c.name)}</button>`).join('') : '';
+}
+function activeMembers() {
+  const c = homeClaves?.enabled && homeClaves.claves.find(x => x.id === homeClaves.active);
+  return c ? new Set([...c.members, homeClaves.manager].filter(Boolean)) : null;  // the manager is in every clave
+}
+document.getElementById('clave-pick').addEventListener('click', async e => {
+  const chip = e.target.closest('.clave-chip');
+  if (!chip || chip.getAttribute('aria-pressed') === 'true') return;
+  try { homeClaves = await tileApi('/api/claves/active', {method: 'POST', body: JSON.stringify({clave: chip.dataset.clave})}); } catch (err) { return; }
+  drawClavePicker();
+  tilesLoaded = false;
+  if (document.body.dataset.view === 'tiles') { tilesLoaded = true; load(); }
+});
+const clavePickerReady = loadClavePicker();
+// "Dashboard" (2026-11-04): the same as clicking an agent's box, for the
+// agent used most recently (its page has tabs for all the others).
+document.querySelector('[data-open-dashboard]').onclick = async e => {
+  e.target.disabled = true;
+  try {
+    const only = activeMembers();
+    const list = (await tileApi('/api/agents')).filter(a => !only || only.has(a.id));
+    const last = [...list].sort((a, b) => (b.last_activity_ms || 0) - (a.last_activity_ms || 0))[0];
+    if (last) { location.href = `/${encodeURIComponent(last.id)}`; return; }
+  } catch (err) { /* stay here */ }
+  e.target.disabled = false;
+};
+setView(['chat', 'claves'].includes(store.get(VIEW_KEY)) ? store.get(VIEW_KEY) : 'tiles');
+// Stale-deploy banner: backend code changed on disk but openclave.service
+// wasn't restarted (see deploy_state.py). Hidden unless /api/version says stale.
+async function checkDeployState() {
+  try {
+    const res = await fetch('/api/version');
+    if (!res.ok) return;
+    const v = await res.json();
+    const lines = [];
+    if (v.stale) lines.push(`Backend code changed since the service started (${v.changed_files.join(', ')}). Run: sudo systemctl restart openclave`);
+    if (v.manager_problem) lines.push(v.manager_problem);
+    if (!lines.length) return;
+    const el = document.getElementById('stale-banner');
+    el.textContent = lines.join(' · ');
+    el.style.display = '';
+  } catch (e) { /* non-critical */ }
+}
+checkDeployState();
+// Reply notifications are mounted by the trusted script below.
+</script>
+<script src="/static/reply_notifications.js"></script>
+</body>
+</html>

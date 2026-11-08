@@ -1,0 +1,39 @@
+{
+  "id": "reba",
+  "name": "Reba",
+  "color": "#E8A33D",
+  "tagline": "Rehab and training load",
+  "connections": {
+    "garmin": {
+      "label": "Garmin",
+      "short": "Garmin",
+      "routes": [
+        "claude-cli"
+      ],
+      "mcp_servers": [
+        "garmin"
+      ],
+      "ready": "garmin_token_dir"
+    }
+  },
+  "mcp_servers": {
+    "garmin": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "git+https://github.com/Sinfjell/garmin-mcp@72ecc61903a399afb7e1b9b00ff7504574f0050b",
+        "garmin-mcp"
+      ]
+    }
+  },
+  "catalog": {
+    "version": 1,
+    "category": "Health",
+    "summary": "A highly conscientious, Feynman-spirited trainer who rehabs injuries, plans training to prevent new ones and logs progress.",
+    "suggested_tools": null,
+    "needs": "Optional Garmin connection (activities, sleep, HRV, training load): log in once with garmin-mcp-auth; works on Claude CLI models.",
+    "authors": [
+      "OpenClave"
+    ]
+  }
+}

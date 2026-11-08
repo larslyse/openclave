@@ -1,0 +1,15 @@
+{
+  "id": "stash",
+  "name": "Stash",
+  "color": "#8B7FD1",
+  "tagline": "Parts, stock and inventory",
+  "catalog": {
+    "version": 1,
+    "category": "Home",
+    "summary": "The gruff warehouse: single source of truth for what the user owns, so nothing is bought twice, plus procurement, rental and resale.",
+    "suggested_tools": null,
+    "authors": [
+      "OpenClave"
+    ]
+  }
+}

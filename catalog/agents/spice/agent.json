@@ -1,0 +1,15 @@
+{
+  "id": "spice",
+  "name": "Spice",
+  "color": "#D14D8C",
+  "tagline": "Taste, preferences and communication style",
+  "catalog": {
+    "version": 1,
+    "category": "Personal",
+    "summary": "The quiet listener who keeps an honest record of the user's taste, humor and communication style, and advises the other agents.",
+    "suggested_tools": null,
+    "authors": [
+      "OpenClave"
+    ]
+  }
+}

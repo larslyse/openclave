@@ -1,0 +1,10 @@
+# Optional local voice (README, "Voice"): speech to text and text to speech.
+# Install into the same venv: .venv/bin/pip install -r requirements-voice.txt
+# Pinned to a set that works together: newer PyAV (av 19) breaks
+# faster-whisper 1.2.1's audio decoding.
+faster-whisper==1.2.1
+av==17.0.0
+ctranslate2==4.7.1
+kokoro-onnx==0.5.0
+onnxruntime==1.24.4
+soundfile==0.13.1
