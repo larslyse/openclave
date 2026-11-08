@@ -16,7 +16,7 @@ or xAI, or the Claude or ChatGPT subscription you already pay for.
 
 ## Contents
 
-**[Part 1: Easy setup](#part-1-easy-setup)**: [Install](#install) ·
+**[Part 1: Easy setup](#part-1-easy-setup)**: [Install](#install) · [What it runs](#what-the-installer-runs) ·
 [Your first agents](#your-first-agents) · [Updating](#updating)
 
 **[Part 2: Detailed setup](#part-2-detailed-setup)**:
@@ -42,6 +42,12 @@ server or old PC is better for daily use.
 Open a terminal and paste:
 
 ```sh
+curl -fsSL https://getopenclave.com/install.sh | bash
+```
+
+Prefer git? This does the same:
+
+```sh
 sudo apt install -y git
 git clone https://github.com/larslyse/openclave.git
 cd openclave && ./install.sh
@@ -53,8 +59,47 @@ checks your API key, or installs Claude or Codex and signs you in to your
 subscription). It can add note search and start OpenClave with the computer.
 Then it opens **http://localhost:8777/**.
 
-Run `./install.sh` again any time, for example to add a model. It keeps your
-settings and agents.
+Run the installer again any time (`./install.sh` in `~/openclave`), for
+example to add a model. It keeps your settings and agents.
+
+### What the installer runs
+
+Piping a script into `bash` means trusting it, so here is what
+[`install.sh`](install.sh) does, in order. It runs as your normal user and only
+uses `sudo` for the steps marked **(sudo)**.
+
+1. **Checks** that you're on Ubuntu or Debian (or WSL), not root, with
+   Python 3.12 or newer.
+2. **Installs missing basics** with apt: git, curl, python3, python3-venv
+   **(sudo)**.
+3. **Downloads OpenClave** with `git clone` to `~/openclave`, or updates it
+   there if it's already present (skipped when you run it from a clone).
+4. **Installs its Python packages** into `~/openclave/.venv`. Nothing
+   system-wide.
+5. **Asks about you**: your name and timezone, saved to
+   `~/.openclave/openclave.toml`.
+6. **Asks about your manager agent**: its name, personality, and any changes
+   to its job.
+7. **Sets up a model**, the one you pick:
+   - API key (Anthropic or xAI): checked against the provider, saved to
+     `~/.openclave/.env` (only you can read it).
+   - Claude Pro/Max: installs Claude Code from claude.ai and lets you sign in.
+   - ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the
+     Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox
+     works, then lets you sign in **(sudo)**.
+8. **Optional, asks first:** note search (qmd, through npm) **(sudo)**, and a
+   systemd service `openclave.service` so it starts with the computer
+   **(sudo)**.
+9. **Starts OpenClave** on http://localhost:8777/ and opens your browser.
+
+Its only network use is downloading those packages and checking your API key
+with its provider. To read it before running it:
+
+```sh
+curl -fsSL https://getopenclave.com/install.sh -o install.sh
+less install.sh
+bash install.sh
+```
 
 ## Your first agents
 

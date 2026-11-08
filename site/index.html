@@ -36,7 +36,7 @@
     <button type="button" aria-label="Copy install command">Copy</button>
   </div>
   <p class="small">Ubuntu, Debian or Windows with WSL. Free and open source (AGPL-3.0).
-    <a href="#install">What you need</a></p>
+    <a href="#install">What you need</a> · <a href="#what-it-runs">What it runs</a></p>
 </section>
 
 <section class="wrap shot-main">
@@ -120,6 +120,35 @@
     <li><b>Early software:</b> it runs every day for its author, but you are among the first to install it. If something fails or confuses you, <a href="https://github.com/larslyse/openclave/issues">please report it</a>.</li>
   </ul>
   <p><a class="btn" href="https://github.com/larslyse/openclave#readme">Full setup guide on GitHub</a></p>
+</section>
+
+<section id="what-it-runs" class="wrap">
+  <h2>What the installer runs</h2>
+  <p>Piping a script into <code>bash</code> means trusting it, so here is what
+    <a href="/install.sh">install.sh</a> does, in order. It runs as your normal user and only uses
+    <code>sudo</code> for the steps marked <b>(sudo)</b>.</p>
+  <ol class="needs">
+    <li><b>Checks</b> that you're on Ubuntu or Debian (or WSL), not root, with Python 3.12 or newer.</li>
+    <li><b>Installs missing basics</b> with apt: git, curl, python3, python3-venv <b>(sudo)</b>.</li>
+    <li><b>Downloads OpenClave</b> with <code>git clone</code> to <code>~/openclave</code>, or updates it there if it's already present.</li>
+    <li><b>Installs its Python packages</b> into <code>~/openclave/.venv</code>. Nothing system-wide.</li>
+    <li><b>Asks about you</b>: your name and timezone, saved to <code>~/.openclave/openclave.toml</code>.</li>
+    <li><b>Asks about your manager agent</b>: its name, personality, and any changes to its job.</li>
+    <li><b>Sets up a model</b>, the one you pick:
+      <ul>
+        <li>API key (Anthropic or xAI): checked against the provider, saved to <code>~/.openclave/.env</code> (only you can read it).</li>
+        <li>Claude Pro/Max: installs Claude Code from claude.ai and lets you sign in.</li>
+        <li>ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox works, then lets you sign in <b>(sudo)</b>.</li>
+      </ul></li>
+    <li><b>Optional, asks first:</b> note search (qmd, through npm) <b>(sudo)</b>, and a systemd service so OpenClave starts with the computer <b>(sudo)</b>.</li>
+    <li><b>Starts OpenClave</b> on <code>http://localhost:8777</code> and opens your browser.</li>
+  </ol>
+  <p>Its only network use is downloading those packages and checking your API key with its provider.
+    Want to read it first?</p>
+  <div class="cmd" data-copy>
+    <code>curl -fsSL https://getopenclave.com/install.sh -o install.sh &amp;&amp; less install.sh &amp;&amp; bash install.sh</code>
+    <button type="button" aria-label="Copy read-first command">Copy</button>
+  </div>
 </section>
 </main>
 
