@@ -12,6 +12,7 @@ set -euo pipefail
 
 REPO_URL="https://github.com/larslyse/openclave.git"
 DATA="${OPENCLAVE_HOME:-$HOME/.openclave}"
+export OPENCLAVE_HOME="$DATA"
 PORT=8777
 USER="${USER:-$(id -un)}"
 
@@ -145,6 +146,31 @@ else
   ok "Saved to $TOML"
 fi
 
+# ── Your manager ─────────────────────────────────────────────────────────
+# Every install has one manager agent (the ready-made manager template). The
+# user names it; there is no default name. Created after the model step.
+step "Your manager"
+MANAGER=""
+if MGR_NAME="$(.venv/bin/python scripts/add_manager.py --status 2>/dev/null)"; then
+  ok "Your manager is $MGR_NAME"
+else
+  MGR_NAME=""
+  say "Every OpenClave has one manager agent. It keeps OpenClave tidy, runs a weekly"
+  say "review, and turns the other agents' bugs and ideas into a to-do list."
+  say "Give it any name you like; it will introduce itself by it."
+  while :; do
+    ask MANAGER "What do you want to call your manager?" ""
+    MANAGER="$(printf '%s' "$MANAGER" | sed 's/^ *//; s/ *$//')"
+    if [ -z "$MANAGER" ]; then
+      if [ -z "$TTY" ]; then MANAGER=Manager; break; fi
+      warn "Your manager needs a name: letters, digits, spaces or dashes."
+      continue
+    fi
+    if why="$(.venv/bin/python scripts/add_manager.py --check "$MANAGER" 2>&1)"; then break; fi
+    warn "$why"
+  done
+fi
+
 # ── A model ──────────────────────────────────────────────────────────────
 have_key() { grep -q "^$1=." "$ENV_FILE" 2>/dev/null || [ -n "${!1:-}" ]; }
 set_key() {  # set_key NAME value: replace or add the line in .env
@@ -249,6 +275,14 @@ if [ "$pick" = 1 ]; then
   esac
 fi
 
+if [ -n "$MANAGER" ]; then
+  if out="$(.venv/bin/python scripts/add_manager.py "$MANAGER" 2>&1)"; then
+    MGR_NAME="$MANAGER"; ok "Created $MGR_NAME, your manager. It interviews you briefly the first time you open it."
+  else
+    warn "Couldn't create the manager ($out). Add it later: Control Panel → New agent → ready-made agents."
+  fi
+fi
+
 # ── Extras ───────────────────────────────────────────────────────────────
 step "Extras"
 if command -v qmd >/dev/null; then ok "Note search (qmd) is installed"
@@ -271,7 +305,6 @@ fi
 
 # ── Check and start ──────────────────────────────────────────────────────
 step "Checking the setup"
-export OPENCLAVE_HOME="$DATA"
 .venv/bin/python run.py --check || true
 
 URL="http://localhost:$PORT/"
@@ -297,7 +330,7 @@ if [ -n "$BOOT" ]; then
   say ""
   say "It keeps running in the background and starts with the computer."
   say "Log: journalctl -u openclave -f   ·   Restart: sudo systemctl restart openclave"
-  say "Next: open $URL, add ${B}Rick${N} (the manager) and two or three agents for what you care about."
+  say "Next: open $URL, say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
 elif curl -s -o /dev/null -m 3 "$URL"; then
   ok "OpenClave is already running at ${B}$URL${N}."
   say "Stop it (Ctrl+C where it runs) and start it again so it picks up the changes:"
@@ -305,7 +338,7 @@ elif curl -s -o /dev/null -m 3 "$URL"; then
 else
   ok "Open ${B}$URL${N} in your browser (stop OpenClave with Ctrl+C)."
   far_away
-  say "Next: add ${B}Rick${N} (the manager) and two or three agents for what you care about."
+  say "Next: say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
   say "To start it again later: cd $REPO && .venv/bin/python run.py"
   ( wait_up && open_browser ) &
   exec .venv/bin/python run.py

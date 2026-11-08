@@ -1,7 +1,11 @@
 # What a new user types (see dev/install_driver.py). Default run: Enter for the
-# name, a timezone, Anthropic key: a wrong one, then skip; no search.
+# name, a timezone, no manager name (asked again), a bad one, then a good one;
+# Anthropic key: a wrong one, then skip; no search.
 call you? =>
 timezone =>Europe/Oslo
+call your manager? =>
+call your manager? =>Max/2
+call your manager? =>Max
 Your choice: =>1
 Paste your Anthropic key =>sk-ant-not-a-real-key
 Paste your Anthropic key =>

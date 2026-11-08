@@ -115,7 +115,7 @@ def manager_problem() -> str | None:
         return None  # a fresh install: nothing to manage yet
     if not found:
         return ("No manager: OpenClave needs one agent with the manager role (cleanup, weekly audit, "
-                "the way back into your vault). Add Rick from Ready-made agents, or add \"manager\" "
+                "the way back into your vault). Add the Manager from Ready-made agents, or add \"manager\" "
                 "to one agent's roles in its agent.json.")
     if len(found) > 1:
         names = ", ".join(AGENTS[a].name for a in found)

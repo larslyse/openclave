@@ -12,7 +12,7 @@ Thirteen to start from. Pick the few that match your life, not all of them.
 
 | Agent | Area | What it does | Needs |
 |---|---|---|---|
-| **Rick** | OpenClave | The manager (every install needs one): keeps OpenClave tidy, runs the weekly audit, proposes what's worth moving from agent workspaces into your main vault, turns the other agents' bugs and ideas into a buildable backlog. Also evaluates business ideas. | |
+| **Manager** | OpenClave | You give it its name. Every install needs one: keeps OpenClave tidy, runs the weekly audit, proposes what's worth moving from agent workspaces into your main vault, turns the other agents' bugs and ideas into a buildable backlog. Also evaluates business ideas. | |
 | **Reba** | Health | A conscientious, Feynman-spirited trainer: rehabs injuries, plans training to prevent new ones, logs progress. | Optional Garmin connection ([garmin-mcp](https://github.com/Sinfjell/garmin-mcp), MIT, pinned) |
 | **Fresh** | Health | A blunt long-horizon steward of how you look and feel: longevity, sleep, diet, hair, skin, grooming. | |
 | **Bolt** | Home | A household droid: Home Assistant, home security, networking and IT support. Acts directly instead of just advising. | Home Assistant token |
@@ -32,13 +32,13 @@ Each agent is a domain, so "who do I ask?" and "where did that end up?" have the
 
 Inside an agent, chats can go in plain **folders** (drag a chat onto one): one per running thread, such as an injury, a project or a bike. Agent → folder → chat, and no deeper.
 
-So templates combine well. Start with Rick plus the two to four areas you care about most, and fold related ones together instead of adding agents:
+So templates combine well. Start with the manager plus the two to four areas you care about most, and fold related ones together instead of adding agents:
 
 - Reba + Fresh → one health agent; longevity and appearance get a folder
 - Rocky + Marco → one maker; the motorcycles get a folder
 - Ray + Greg → one outdoors agent; garden and plants get a folder
 - Penny + Charles → one desk agent for money and writing
-- Rick + Spice → the manager gets a taste folder
+- Manager + Spice → the manager gets a taste folder
 
 Add an agent when a domain has its own vocabulary and no agent obviously owns it. Merge two when you keep hesitating which one to ask. Split one when it has ten or more busy folders that don't share context. To fold an agent you already run into another, run:
 

@@ -61,6 +61,8 @@ def _read(folder: Path, source: str) -> dict | None:
         "needs": meta.get("needs", ""), "suggested_tools": meta.get("suggested_tools"),
         "version": meta.get("version", 1), "authors": meta.get("authors", []),
         "has_avatar": (folder / "avatar.svg").is_file(),
+        # The manager has no default name: the user names it (install.sh, or the name box).
+        "manager": agents.MANAGER in (data.get("roles") or []) or agents.LEGACY_MANAGER in (data.get("roles") or []),
         "skills": sorted(p.name for p in (folder / "skills").iterdir() if (p / "SKILL.md").is_file())
         if (folder / "skills").is_dir() else [],
         "source": source, "folder": folder, "data": data,
@@ -112,10 +114,12 @@ def listing() -> list[dict]:
 
 def install(template_id: str, model_id: str, name: str | None = None) -> dict:
     t = get(template_id)
+    if t["manager"] and not (name or "").strip():
+        raise ValueError("Give your manager a name first: type it in the box, then Add.")
     name = (name or t["name"]).strip()
     agent_id = agent_factory._check_new_name(name)
     llm_models.get(model_id)  # raises on an unknown model
-    questions = _questions(t["folder"])
+    questions = [_renamed(q, t["name"], name) for q in _questions(t["folder"])]
     agent_data = {k: t["data"][k] for k in CARRIED if k in t["data"]}
     agent_data["template"] = {"id": t["id"], "version": t["version"], "source": t["source"], "questions": questions}
     suggested = t["suggested_tools"]
@@ -145,4 +149,8 @@ def _body(path: Path, template_name: str, name: str) -> str:
     if text.startswith("---"):
         end = text.find("\n---", 3)
         text = text[end + 4:] if end != -1 else text
+    return _renamed(text, template_name, name)
+
+
+def _renamed(text: str, template_name: str, name: str) -> str:
     return re.sub(rf"\b{re.escape(template_name)}\b", name, text) if name != template_name else text

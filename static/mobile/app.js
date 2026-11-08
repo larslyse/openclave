@@ -410,9 +410,9 @@ async function renderCreateAgent(token) {
   if (token !== renderToken) return;
   const card = t => `<div class="template" data-id="${escapeHtml(t.id)}">
     <div class="template-head">${t.has_avatar ? `<img class="template-av" src="/api/catalog/${encodeURIComponent(t.id)}/avatar" alt="">` : `<span class="template-av" style="background:${escapeHtml(t.color)}">${escapeHtml(t.name.slice(0, 2).toUpperCase())}</span>`}
-      <span><b>${escapeHtml(t.name)}</b>${t.installed.length ? '<span class="draft-tag">added</span>' : ''}<small>${escapeHtml(t.tagline)}</small></span></div>
+      <span><b>${t.manager ? 'Manager' : escapeHtml(t.name)}</b>${t.installed.length ? '<span class="draft-tag">added</span>' : ''}<small>${escapeHtml(t.tagline)}</small></span></div>
     <p>${escapeHtml(t.summary)}</p>${t.needs ? `<p class="warn">Needs: ${escapeHtml(t.needs)}</p>` : ''}
-    <div class="template-add"><input value="${escapeHtml(t.name)}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>
+    <div class="template-add"><input value="${t.manager ? '' : escapeHtml(t.name)}" placeholder="${t.manager ? 'Name your manager' : ''}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>
     <p class="form-error"></p></div>`;
   const categories = [...new Set(templates.map(t => t.category))];
   // Past about ROSTER_WARN agents, lanes overlap and routing gets harder (Rick's backlog).

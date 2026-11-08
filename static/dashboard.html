@@ -627,7 +627,7 @@ async function showWelcome(grid, agentCount) {
     : `<li><b>Set up a model.</b> None can answer yet. Quickest: an Anthropic or xAI API key in <code>${escapeHtml(d.env_file)}</code>, e.g. <code>ANTHROPIC_API_KEY=sk-ant-…</code>, then restart OpenClave. A Claude or ChatGPT subscription works too, through its CLI. <a href="/control/#setup">Setup check</a></li>`;
   card.innerHTML = `<h2 style="margin:0 0 6px;font-size:18px">Welcome to OpenClave</h2>
     <ol style="margin:6px 0 0;padding-left:20px">${step1}
-      <li><b>Add your first agents</b> from <a href="/control/#new-agent">ready-made agents</a>: start with <b>Rick</b> (the manager) plus two to four areas you care about. Each one interviews you for a few minutes to fit itself to you.</li>
+      <li><b>Add your first agents</b> from <a href="/control/#new-agent">ready-made agents</a>: start with the <b>Manager</b> (give it any name; every install needs one) plus two to four areas you care about. Each one interviews you for a few minutes to fit itself to you.</li>
       <li><b>Chat</b> here, or open an agent for its full page. Everything it learns is kept as plain Markdown files in <code>${escapeHtml(d.agents_folder)}</code>.</li></ol>`;
   card.querySelectorAll('a').forEach(a => { a.style.color = '#9dd6b9'; });
   grid.before(card);

@@ -58,18 +58,19 @@ settings and agents.
 
 ## Your first agents
 
-The home page shows a short welcome until you have agents.
+The installer creates your **manager** under the name you gave it. It keeps
+the other agents tidy, runs a weekly review and collects bugs and ideas. Every
+install has exactly one. Open it first: it interviews you briefly.
 
 1. Click **Create new specialist**. You land on the **New agent** form with a
-   list of **ready-made agents** below it.
-2. Add **Rick** first. He's the manager: he keeps the others tidy, runs a
-   weekly review and collects bugs and ideas. Every install needs one.
-3. Add two to four more for the areas you care about most. Each comes with a
+   list of **ready-made agents** below it. (Installed by hand? Add the
+   **Manager** from that list first and give it a name.)
+2. Add two to four more for the areas you care about most. Each comes with a
    job and a personality, then interviews you for a few minutes to fit itself
    to you. Answer in your own words; you can always change it later. Prefer
    your own? Fill in **Name** and **What is it for?** at the top of the form
    instead.
-4. Chat from the home page, or click an agent for its full page: chats, plan,
+3. Chat from the home page, or click an agent for its full page: chats, plan,
    backlog, files and settings.
 
 About 5 to 10 agents works best: few enough that you always know whom to ask.

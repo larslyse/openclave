@@ -22,6 +22,7 @@ from config import CONFIG
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import export_agent  # noqa: E402
+import add_manager  # noqa: E402,F401
 
 MODEL = "gpt-5.6-terra"
 
@@ -95,14 +96,39 @@ class CatalogInstallTests(unittest.TestCase):
         self.assertEqual(catalog.installed_from(), {"bolt": ["bolt"]})
 
     def test_install_under_another_name(self):
-        catalog.install("rick", MODEL)
+        catalog.install("bolt", MODEL)
         with self.assertRaisesRegex(ValueError, "taken"):
-            catalog.install("rick", MODEL)
+            catalog.install("bolt", MODEL)
+        catalog.install("bolt", MODEL, name="Sparky")
+        self.assertIn("sparky", agents.AGENTS)
+
+    def test_the_manager_has_no_default_name(self):
+        self.assertTrue(catalog.get("rick")["manager"])
+        for name in (None, "", "  "):
+            with self.assertRaisesRegex(ValueError, "name"):
+                catalog.install("rick", MODEL, name=name)
         catalog.install("rick", MODEL, name="Morty")
         persona = (self.root / "Morty" / "persona.md").read_text()
         self.assertIn("Morty keeps OpenClave itself working", persona)
+        self.assertNotIn("Rick", persona)
+        questions = json.loads((self.root / "Morty" / "agent.json").read_text())["template"]["questions"]
+        self.assertFalse([q for q in questions if "Rick" in q])
         self.assertEqual(set(agents.AGENTS["morty"].roles), {"manager", "maintainer"})
         self.assertEqual(agents.AGENTS["morty"].cli_tools, ("WebSearch", "WebFetch"))
+
+    def test_add_manager_script(self):
+        import add_manager
+        out = io.StringIO()
+        with redirect_stdout(out):
+            self.assertEqual(add_manager.main(["--status"]), 4)
+            self.assertEqual(add_manager.main(["--check", "Bad/name"]), 2)
+            self.assertEqual(add_manager.main(["--check", "Zed"]), 0)
+            self.assertNotIn("zed", agents.AGENTS)
+            self.assertEqual(add_manager.main(["Zed"]), 0)
+            self.assertEqual(add_manager.main(["Other"]), 3, "only one manager")
+            self.assertEqual(add_manager.main(["--status"]), 0)
+        self.assertEqual(out.getvalue().split()[-1], "Zed")
+        self.assertIn("manager", agents.AGENTS["zed"].roles)
 
     def test_null_suggestions_mean_every_optional_tool(self):
         catalog.install("spice", MODEL)
