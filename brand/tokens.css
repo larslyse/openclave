@@ -1,0 +1,14 @@
+/* OpenClave brand tokens: the one place the colours and fonts are defined.
+   brand/render.sh copies this file to site/tokens.css. The app's CSS uses the same values. */
+:root {
+  --oc-mint: #7fd1b0;       /* accent: buttons, links, the Keeper */
+  --oc-mint-deep: #5fae90;  /* hood rim, seams, hover */
+  --oc-night: #111416;      /* background */
+  --oc-panel: #1a1e22;      /* cards, panels */
+  --oc-line: #2b3137;       /* borders */
+  --oc-paper: #f0ede7;      /* main text */
+  --oc-muted: #969ca3;      /* secondary text */
+  --oc-danger: #ef8b83;     /* errors */
+  --oc-font-head: 'Space Grotesk', system-ui, sans-serif;
+  --oc-font-body: 'Inter', system-ui, sans-serif;
+}

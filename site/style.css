@@ -1,24 +1,26 @@
 :root {
-  --bg: #111417;
-  --panel: #1a1e23;
-  --line: #2a3038;
-  --text: #e8eaed;
-  --muted: #9aa3ad;
-  --accent: #f97316;
-  --mint: #7fd1b0;
+  /* Brand values live in tokens.css (copied from brand/tokens.css by brand/render.sh). */
+  --bg: var(--oc-night);
+  --panel: var(--oc-panel);
+  --line: var(--oc-line);
+  --text: var(--oc-paper);
+  --muted: var(--oc-muted);
+  --accent: var(--oc-mint);
+  --mint: var(--oc-mint);
   color-scheme: dark;
 }
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   margin: 0; background: var(--bg); color: var(--text);
-  font: 17px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font: 17px/1.6 var(--oc-font-body);
 }
 a { color: var(--mint); }
 img { max-width: 100%; height: auto; display: block; }
 code { font: 0.92em ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
 .wrap { max-width: 1080px; margin: 0 auto; padding-left: 16px; padding-right: 16px; }
 section { padding-top: 56px; padding-bottom: 8px; }
+h1, h2, h3, .brand { font-family: var(--oc-font-head); }
 h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.1; margin: 0 0 20px; letter-spacing: -0.02em; }
 h2 { font-size: 1.8rem; margin: 0 0 8px; }
 h3 { font-size: 1.1rem; margin: 0 0 8px; }
@@ -40,10 +42,10 @@ h3 { font-size: 1.1rem; margin: 0 0 8px; }
 }
 .cmd code { flex: 1; overflow-x: auto; white-space: nowrap; color: var(--mint); }
 .cmd button, .btn {
-  background: var(--accent); color: #111; border: 0; border-radius: 8px; padding: 8px 14px;
-  font: 600 0.95rem system-ui, sans-serif; cursor: pointer; text-decoration: none; display: inline-block; flex: none;
+  background: var(--accent); color: var(--oc-night); border: 0; border-radius: 8px; padding: 8px 14px;
+  font: 600 0.95rem var(--oc-font-body); cursor: pointer; text-decoration: none; display: inline-block; flex: none;
 }
-.cmd button:hover, .btn:hover { filter: brightness(1.1); }
+.cmd button:hover, .btn:hover { background: var(--oc-mint-deep); }
 
 .shot-main { padding-top: 8px; }
 .shot-main img { border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,.5); }

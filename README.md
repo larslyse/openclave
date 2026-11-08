@@ -1,3 +1,5 @@
+<img src="brand/svg/keeper.svg" alt="" width="88" align="right">
+
 # OpenClave
 
 Your own small team of AI agents, each with one area of your life: training,
