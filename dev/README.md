@@ -28,7 +28,13 @@ It refuses a commit whose added lines, file names or author match a pattern in y
 
 ## Trying the install as a new user
 
-`bash dev/fresh-install-test.sh` follows the README install in a brand-new
+`bash dev/fresh-install-test.sh` follows the README's "Install by hand" in a brand-new
 Ubuntu 24.04 container (Docker) with a fresh user and no keys, using your
 working tree, then serves it on http://localhost:8777/ (`PORT=` to change).
 Use it after changing the README, requirements or first-run screens.
+
+`bash dev/install-script-test.sh` does the same for `./install.sh`: it answers
+the installer's questions through a real terminal, from
+`dev/install-answers.txt` (or `ANSWERS=<file>`; format in
+`dev/install_driver.py`), and skips the Claude/Codex sign-in. It uses the host
+network, so port 8777 must be free.

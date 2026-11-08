@@ -12,21 +12,89 @@ or xAI, or the Claude or ChatGPT subscription you already pay for.
 
 > **Status: early.** It works every day for its author, but you are among the
 > first to install it from scratch. If a step below fails or confuses you,
-> that's a bug in this README: please report it (see [Feedback](#feedback)).
+> that's a bug: please report it (see [Feedback](#feedback)).
 
 ## Contents
 
-- [What you need](#what-you-need)
-- [Install (about 10 minutes)](#install-about-10-minutes)
-- [Your first agents](#your-first-agents)
-- [Choosing a model](#choosing-a-model)
-- [Where your data lives](#where-your-data-lives)
-- [Optional extras](#optional-extras): subscriptions through the Claude/Codex
-  CLI, note search, use it from your phone, keep it running, voice, Docker
-- [Updating](#updating)
-- [Troubleshooting](#troubleshooting)
-- [Feedback](#feedback)
-- [Licence](#licence)
+**[Part 1: Easy setup](#part-1-easy-setup)**: [Install](#install) ·
+[Your first agents](#your-first-agents) · [Updating](#updating)
+
+**[Part 2: Detailed setup](#part-2-detailed-setup)**:
+[What you need](#what-you-need) · [Install by hand](#install-by-hand) ·
+[Choosing a model](#choosing-a-model) · [Where your data lives](#where-your-data-lives) ·
+[Optional extras](#optional-extras) (subscriptions, note search, phone, keep it
+running, voice, Docker) · [Updating by hand](#updating-by-hand) ·
+[Troubleshooting](#troubleshooting)
+
+[Feedback](#feedback) · [For developers](#for-developers) · [Licence](#licence)
+
+# Part 1: Easy setup
+
+**You need** a computer running Ubuntu or Debian (or Windows with
+[WSL](https://learn.microsoft.com/windows/wsl/install)), and one way to pay for
+the AI: an [Anthropic API key](https://console.anthropic.com/) (pay per use, a
+few dollars a month for light use), or the Claude Pro/Max or ChatGPT Plus/Pro
+subscription you already have. A laptop is fine to try it; an always-on home
+server or old PC is better for daily use.
+
+## Install
+
+Open a terminal and paste:
+
+```sh
+sudo apt install -y git
+git clone https://github.com/larslyse/openclave.git
+cd openclave && ./install.sh
+```
+
+The installer asks a few questions (press Enter for the suggested answer):
+what your agents should call you, your timezone, and how the agents think (it
+checks your API key, or installs Claude or Codex and signs you in to your
+subscription). It can add note search and start OpenClave with the computer.
+Then it opens **http://localhost:8777/**.
+
+Run `./install.sh` again any time, for example to add a model. It keeps your
+settings and agents.
+
+## Your first agents
+
+The home page shows a short welcome until you have agents.
+
+1. Click **Create new specialist**. You land on the **New agent** form with a
+   list of **ready-made agents** below it.
+2. Add **Rick** first. He's the manager: he keeps the others tidy, runs a
+   weekly review and collects bugs and ideas. Every install needs one.
+3. Add two to four more for the areas you care about most. Each comes with a
+   job and a personality, then interviews you for a few minutes to fit itself
+   to you. Answer in your own words; you can always change it later. Prefer
+   your own? Fill in **Name** and **What is it for?** at the top of the form
+   instead.
+4. Chat from the home page, or click an agent for its full page: chats, plan,
+   backlog, files and settings.
+
+About 5 to 10 agents works best: few enough that you always know whom to ask.
+`catalog/README.md` explains how the ready-made agents fit together.
+
+The **Control Panel** (link at the top of the home page) has everything else:
+models per agent, tools, scheduled tasks, reminders, usage and the **Setup**
+check.
+
+## Updating
+
+```sh
+cd openclave && git pull && ./install.sh
+```
+
+## Something not working?
+
+See [Troubleshooting](#troubleshooting), or ask the person who invited you.
+`.venv/bin/python run.py --check` (in the `openclave` folder) shows what is
+set up.
+
+# Part 2: Detailed setup
+
+Everything the installer does, step by step, plus all the extras: for other
+systems, for doing it by hand, or to understand what's where.
 
 ## What you need
 
@@ -41,7 +109,7 @@ or xAI, or the Claude or ChatGPT subscription you already pay for.
 You do **not** need a GPU, Docker or a domain name. Node.js is only needed for
 some optional extras.
 
-## Install (about 10 minutes)
+## Install by hand
 
 These commands are for Ubuntu/Debian and WSL. On other systems, install git and
 Python 3.12+ your usual way and skip the first line.
@@ -112,29 +180,6 @@ Ctrl+C. To keep it running after you close the terminal, see
 Installed on a server without a screen? From your own computer, run
 `ssh -L 8777:localhost:8777 you@your-server`, then open
 http://localhost:8777/ on your own computer.
-
-## Your first agents
-
-The home page shows a short welcome until you have agents.
-
-1. Click **Create new specialist**. You land on the **New agent** form with a
-   list of **ready-made agents** below it.
-2. Add **Rick** first. He's the manager: he keeps the others tidy, runs a
-   weekly review and collects bugs and ideas. Every install needs one.
-3. Add two to four more for the areas you care about most. Each comes with a
-   job and a personality, then interviews you for a few minutes to fit itself
-   to you. Answer in your own words; you can always change it later. Prefer
-   your own? Fill in **Name** and **What is it for?** at the top of the form
-   instead.
-4. Chat from the home page, or click an agent for its full page: chats, plan,
-   backlog, files and settings.
-
-About 5 to 10 agents works best: few enough that you always know whom to ask.
-`catalog/README.md` explains how the ready-made agents fit together.
-
-The **Control Panel** (link at the top of the home page) has everything else:
-models per agent, tools, scheduled tasks, reminders, usage and the **Setup**
-check.
 
 ## Choosing a model
 
@@ -283,7 +328,7 @@ service. Run this in the `openclave` folder (it fills in
 `deploy/openclave.service.example`):
 
 ```sh
-sed -e "s|__USER__|$USER|g" -e "s|__REPO__|$PWD|g" -e "s|__DATA__|$HOME/.openclave|g" \
+sed -e "s|__USER__|$USER|g" -e "s|__REPO__|$PWD|g" -e "s|__DATA__|$HOME/.openclave|g" -e "s|__HOME__|$HOME|g" \
     deploy/openclave.service.example | sudo tee /etc/systemd/system/openclave.service
 sudo systemctl daemon-reload
 sudo systemctl enable --now openclave
@@ -338,7 +383,7 @@ most Linux systems) so the files stay yours; if `id -u` says otherwise, add
 `UID=` and `GID=` lines with your ids to `./.env`. The container covers the API routes only:
 the Claude/Codex CLI routes, voice and note search need the normal install.
 
-## Updating
+## Updating by hand
 
 ```sh
 cd openclave
@@ -380,6 +425,8 @@ not `http://<ip>:8777`.
 Still stuck? Run `.venv/bin/python run.py --check`, copy the output and the
 last lines OpenClave printed in its terminal (or `journalctl -u openclave -n 50`),
 and send them along with what you tried.
+
+---
 
 ## Feedback
 

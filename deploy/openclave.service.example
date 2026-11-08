@@ -1,5 +1,5 @@
 # systemd unit template. The README ("Keep it running") fills in the
-# __USER__, __REPO__ and __DATA__ values with one sed command; or copy it to
+# __USER__, __HOME__, __REPO__ and __DATA__ values with one sed command; or copy it to
 # /etc/systemd/system/openclave.service and replace them by hand, then:
 #   sudo systemctl daemon-reload && sudo systemctl enable --now openclave
 # Bind address and port come from __DATA__/openclave.toml ([network]).
@@ -17,7 +17,7 @@ Environment=OPENCLAVE_HOME=__DATA__
 # reads this file itself; the leading "-" makes it optional.
 EnvironmentFile=-__DATA__/.env
 # The CLI routes (claude, codex) are usually installed in ~/.local/bin.
-Environment=PATH=/home/__USER__/.local/bin:/usr/local/bin:/usr/bin:/bin
+Environment=PATH=__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=__REPO__/.venv/bin/python run.py
 Restart=on-failure
 RestartSec=5

@@ -1,0 +1,8 @@
+# What a new user types (see dev/install_driver.py). Default run: Enter for the
+# name, a timezone, Anthropic key: a wrong one, then skip; no search.
+call you? =>
+timezone =>Europe/Oslo
+Your choice: =>1
+Paste your Anthropic key =>sk-ant-not-a-real-key
+Paste your Anthropic key =>
+note search =>n
