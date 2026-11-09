@@ -2,26 +2,40 @@
 evaluate JS in the page or in a sandboxed child frame, click at coordinates,
 take screenshots. Chromium runs headless with site isolation off so the
 sandboxed agent-page iframe stays in-process and reachable."""
-import asyncio, base64, json, os, signal, subprocess, time, urllib.request
+import asyncio, base64, json, os, shutil, signal, socket, subprocess, time, urllib.request
 import websockets
 
 # The snap Chromium can only write under ~/snap/chromium/common.
-PORT = 9334
+
+
+def _free_port():
+    # A new debug port per browser: with one fixed port, a browser still
+    # shutting down from the previous test kept it, and the next test
+    # attached to that old browser (and its storage) instead of its own.
+    with socket.socket() as sock:
+        sock.bind(("127.0.0.1", 0))
+        return sock.getsockname()[1]
 PROFILE = os.path.expanduser("~/snap/chromium/common/openclave-ui-test-profile")
 SHOTS = os.path.expanduser("~/snap/chromium/common/openclave-ui-test-shots")
 
 
 class Browser:
     async def start(self, width=1400, height=900):
-        os.makedirs(PROFILE, exist_ok=True); os.makedirs(SHOTS, exist_ok=True)
+        # Its own port and a fresh profile every time: browser storage
+        # (Autojump, seen replies, drafts) left by an earlier test made later
+        # ones depend on run order.
+        port = _free_port()
+        self.profile = f"{PROFILE}-{port}"
+        shutil.rmtree(self.profile, ignore_errors=True)
+        os.makedirs(self.profile, exist_ok=True); os.makedirs(SHOTS, exist_ok=True)
         self.proc = subprocess.Popen([
-            "chromium", "--headless=new", "--no-sandbox", "--disable-gpu", f"--remote-debugging-port={PORT}",
-            f"--user-data-dir={PROFILE}", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
+            "chromium", "--headless=new", "--no-sandbox", "--disable-gpu", f"--remote-debugging-port={port}",
+            f"--user-data-dir={self.profile}", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
             "--autoplay-policy=no-user-gesture-required", "--disable-site-isolation-trials", "--disable-features=IsolateOrigins,site-per-process", f"--window-size={width},{height}", "about:blank",
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)  # own group, see stop()
         for _ in range(50):
             try:
-                pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{PORT}/json"))
+                pages = json.load(urllib.request.urlopen(f"http://127.0.0.1:{port}/json"))
                 page = next(p for p in pages if p["type"] == "page")
                 break
             except Exception:
@@ -108,3 +122,4 @@ class Browser:
             os.killpg(self.proc.pid, signal.SIGKILL)
         except ProcessLookupError:
             pass
+        shutil.rmtree(self.profile, ignore_errors=True)

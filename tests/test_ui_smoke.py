@@ -137,7 +137,7 @@ class UiSmokeTest(unittest.TestCase):
             composer_top = await br.eval("return document.querySelector('.composer').getBoundingClientRect().top;")
             await br.release(10, 10)
             self.assertGreater(len(items), 3, "menu lists the other agents")
-            self.assertTrue(all(i["bottom"] <= composer_top + 1 for i in items), "menu sits above the composer")
+            self.assertTrue(all(i["bottom"] <= composer_top + 1 for i in items), f"menu sits above the composer (composer top {composer_top:.0f}, lowest item {max(i['bottom'] for i in items):.0f})")
             self.assertTrue(all(i["right"] > 390 * 0.6 for i in items), "menu is on the right of the screen")
             self.assertEqual(len({round(i["textX"]) for i in items}), 1, "agent names start at the same x (left-aligned)")
             order = await br.eval("return [...document.querySelectorAll('.quick-switch-item')].map(i=>i.dataset.agent);")
@@ -145,7 +145,11 @@ class UiSmokeTest(unittest.TestCase):
             self.assertEqual(order[-1], "stash", "the agent with the latest message is at the bottom, nearest the thumb")
             self.assertTrue(await br.eval("return !!document.querySelector('.quick-switch-item[data-agent=stash] .new-tag');"),
                             "a reply that landed while in this chat shows as new")
-            self.assertEqual([activity[a] for a in order], sorted(activity[a] for a in order), "older ones above it")
+            # Unread replies sit nearest the thumb, then latest activity (app.js drawItems);
+            # earlier tests can leave other agents with unread replies.
+            unread = set(await br.eval("return [...document.querySelectorAll('.quick-switch-item')].filter(i=>i.querySelector('.new-tag')).map(i=>i.dataset.agent);"))
+            rank = lambda a: (a in unread, activity[a])
+            self.assertEqual([rank(a) for a in order], sorted(rank(a) for a in order), "older ones above it")
 
             # A hold released on no agent keeps the menu open; tapping Quick jump closes it.
             qx, qy = qj["x"] + qj["w"] / 2, qj["y"] + qj["h"] / 2

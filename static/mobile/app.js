@@ -209,6 +209,8 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
   let menuOpen = false;
   let activeAgentId = null;
   let closeOnUp = false;
+  let anchorWatch = null;
+  let placeMenu = null;
 
   function openMenu() {
     menuOpen = true;
@@ -217,9 +219,16 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
     menuEl.className = 'quick-switch';
     drawItems();
     // Right side of the screen, but names left-aligned inside the menu.
-    // Above the whole composer, so it never covers the text box or Send.
-    const rect = (btn.closest('.composer, .list-footer') || btn).getBoundingClientRect();
-    menuEl.style.bottom = `${window.innerHeight - rect.top + 8}px`;
+    // Above the whole composer, so it never covers the text box or Send, and
+    // it follows the composer while open (a status line or a growing text
+    // box pushes it up; the menu used to stay put and cover it).
+    const anchor = btn.closest('.composer, .list-footer') || btn;
+    const place = () => { if (menuEl) menuEl.style.bottom = `${window.innerHeight - anchor.getBoundingClientRect().top + 8}px`; };
+    place();
+    anchorWatch = new ResizeObserver(place);
+    anchorWatch.observe(anchor);
+    placeMenu = place;
+    window.addEventListener('resize', place);
     menuEl.onclick = event => {
       const toggle = event.target.closest('[data-autojump]');
       if (toggle) {
@@ -271,6 +280,10 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
     btn.classList.remove('holding');
     menuEl?.remove();
     menuEl = null;
+    anchorWatch?.disconnect();
+    anchorWatch = null;
+    if (placeMenu) window.removeEventListener('resize', placeMenu);
+    placeMenu = null;
     document.removeEventListener('pointerdown', onOutside, true);
     window.removeEventListener('hashchange', closeMenu);
   }
