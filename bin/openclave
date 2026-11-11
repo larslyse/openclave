@@ -1,0 +1,253 @@
+#!/usr/bin/env bash
+# openclave: start, stop, update and back up OpenClave from a terminal.
+# install.sh links it to ~/.local/bin/openclave. `openclave help` lists the
+# commands. Works with the systemd service (openclave.service) and without
+# it (then `start` runs OpenClave in this terminal).
+set -euo pipefail
+
+SELF="$(readlink -f "${BASH_SOURCE[0]}")"
+REPO="${OPENCLAVE_REPO:-$(cd "$(dirname "$SELF")/.." && pwd)}"
+DATA="${OPENCLAVE_HOME:-$HOME/.openclave}"
+export OPENCLAVE_HOME="$DATA"
+PY="$REPO/.venv/bin/python"
+UNIT="${OPENCLAVE_UNIT_FILE:-/etc/systemd/system/openclave.service}"
+LINK="$HOME/.local/bin/openclave"
+BACKUPS="${OPENCLAVE_BACKUP_DIR:-$HOME/openclave-backups}"
+
+if [ -t 1 ]; then B=$'\e[1m'; G=$'\e[32m'; Y=$'\e[33m'; R=$'\e[31m'; N=$'\e[0m'; else B= G= Y= R= N=; fi
+say()  { printf '%s\n' "$*"; }
+ok()   { printf '%s✓%s %s\n' "$G" "$N" "$*"; }
+warn() { printf '%s!%s %s\n' "$Y" "$N" "$*"; }
+die()  { printf '%s✗ %s%s\n' "$R" "$*" "$N" >&2; exit 1; }
+
+[ -x "$PY" ] || die "No Python environment in $REPO/.venv. Run ./install.sh in $REPO first."
+
+# Settings this script needs, read through config.py (so defaults match).
+read_config() {
+  cd "$REPO" && "$PY" - <<'PY'
+from config import CONFIG as c
+bind = c.bind_address.strip().lower()
+print(f"port={c.port}")
+print("host=" + ("localhost" if bind in ("127.0.0.1", "0.0.0.0", "::", "localhost", "") else c.bind_address))
+print(f"public_url={c.public_url}")
+print(f"vault={c.vault_root}")
+print(f"agents={c.agents_root}")
+print(f"home={c.home}")
+print(f"cache={c.qmd_cache_home}")
+PY
+}
+PORT=8777 HOST=localhost PUBLIC_URL="" VAULT="$DATA" AGENTS="$DATA/agents" HOME_DIR="$DATA" CACHE=""
+while IFS='=' read -r k v; do
+  case "$k" in
+    port) PORT=$v ;; host) HOST=$v ;; public_url) PUBLIC_URL=$v ;; vault) VAULT=$v ;;
+    agents) AGENTS=$v ;; home) HOME_DIR=$v ;; cache) CACHE=$v ;;
+  esac
+done < <(read_config 2>/dev/null || true)
+URL="http://$HOST:$PORT/"
+
+# The service counts only when it runs this checkout (a second clone for
+# development must never restart the service of the main one).
+has_service() {
+  [ -f "$UNIT" ] && command -v systemctl >/dev/null && grep -q "^WorkingDirectory=$REPO\$" "$UNIT"
+}
+service_active() { systemctl is-active -q openclave 2>/dev/null; }
+
+# Prints "version (commit)" when OpenClave answers on its port, else fails.
+running_version() {
+  "$PY" - "$URL" <<'PY'
+import json, sys, urllib.request
+try:
+    with urllib.request.urlopen(sys.argv[1] + "api/version", timeout=3) as r:
+        d = json.load(r)
+except Exception:
+    sys.exit(1)
+if "started_at" not in d:
+    sys.exit(1)
+print(d.get("version") or d.get("running_commit") or "unknown version")
+PY
+}
+wait_up() { for _ in $(seq 40); do running_version >/dev/null && return 0; sleep 0.5; done; return 1; }
+
+# Foreground runs of this checkout: `.venv/bin/python run.py` started in $REPO.
+foreground_pids() {
+  local pid
+  for pid in $(pgrep -f 'run\.py' 2>/dev/null || true); do
+    [ "$(readlink -f "/proc/$pid/cwd" 2>/dev/null)" = "$REPO" ] || continue
+    tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null | grep -q '\.venv/bin/python[^ ]* run\.py' || continue
+    tr '\0' ' ' <"/proc/$pid/cmdline" | grep -q -- '--check' && continue
+    echo "$pid"
+  done
+}
+
+stay() {  # keeps this terminal busy while OpenClave runs (WSL stops when nothing does)
+  say "Keeping this window open while OpenClave runs. Close it to let it stop."
+  while running_version >/dev/null; do sleep 60; done
+}
+
+cmd_start() {
+  local stay_open=""; [ "${1:-}" = "--stay" ] && stay_open=1
+  if v="$(running_version)"; then
+    ok "OpenClave is already running: $URL ($v)"
+    [ -z "$stay_open" ] || stay
+    return 0
+  fi
+  if has_service; then
+    sudo systemctl start openclave
+    if wait_up; then ok "OpenClave is running: $URL"; else warn "It didn't answer yet: openclave logs shows why."; fi
+    [ -z "$stay_open" ] || stay
+  else
+    say "Starting OpenClave in this terminal: $URL  (stop it with Ctrl+C)"
+    cd "$REPO" && exec "$PY" run.py
+  fi
+}
+
+cmd_stop() {
+  if has_service; then
+    sudo systemctl stop openclave && ok "Stopped OpenClave"
+    return
+  fi
+  local pids; pids="$(foreground_pids)"
+  if [ -z "$pids" ]; then
+    if running_version >/dev/null; then die "Something answers on $URL, but not an OpenClave started from $REPO. Stop it where it runs."; fi
+    say "OpenClave isn't running."; return 0
+  fi
+  # shellcheck disable=SC2086
+  kill $pids && ok "Stopped OpenClave"
+}
+
+cmd_restart() {
+  if has_service; then
+    sudo systemctl restart openclave
+    if wait_up; then ok "OpenClave is running again: $URL"; else warn "It didn't answer yet: openclave logs shows why."; fi
+  else
+    cmd_stop
+    for _ in $(seq 20); do running_version >/dev/null || break; sleep 0.5; done
+    cmd_start
+  fi
+}
+
+cmd_status() {
+  if has_service; then say "Service: openclave.service is $(systemctl is-active openclave 2>/dev/null || true), starts with the computer: $(systemctl is-enabled openclave 2>/dev/null || true)"; fi
+  if v="$(running_version)"; then
+    ok "Running at $URL ($v)"
+    [ -z "$PUBLIC_URL" ] || say "Secure address: $PUBLIC_URL/   phone app: $PUBLIC_URL/mobile/"
+  else
+    say "Not running. Start it with: openclave start"
+    return 3
+  fi
+}
+
+cmd_logs() {
+  if has_service; then
+    journalctl -u openclave -n 100 -f 2>/dev/null || sudo journalctl -u openclave -n 100 -f
+  else
+    say "OpenClave isn't installed as a service, so its log is what it prints in the"
+    say "terminal where you started it (openclave start)."
+  fi
+}
+
+cmd_update() {
+  cd "$REPO"
+  local rc=0
+  "$PY" updater.py apply || rc=$?
+  case $rc in
+    0) ;;
+    4) return 0 ;;   # already up to date
+    *) exit 1 ;;
+  esac
+  if has_service && service_active; then
+    sudo systemctl restart openclave
+    if wait_up; then ok "Restarted OpenClave"; else warn "It didn't answer yet: openclave logs shows why."; fi
+  elif running_version >/dev/null; then
+    warn "OpenClave is running in a terminal: stop it (Ctrl+C) and run openclave start to use the new version."
+  fi
+  say "Now at: $("$PY" updater.py version)"
+}
+
+cmd_backup() {
+  mkdir -p "$BACKUPS"; chmod 700 "$BACKUPS"
+  local file; file="$BACKUPS/openclave-$(date +%Y%m%d-%H%M%S).tgz"
+  local parent base; parent="$(dirname "$HOME_DIR")"; base="$(basename "$HOME_DIR")"
+  local ex=(--exclude="$base/state/qmd-cache" --exclude="$base/models")
+  case "$CACHE" in "$HOME_DIR"/*) ex+=(--exclude="$base/${CACHE#"$HOME_DIR"/}") ;; esac
+  ( umask 077; tar -czf "$file" -C "$parent" "${ex[@]}" "$base" )
+  chmod 600 "$file"
+  ok "Saved $file ($(du -h "$file" | cut -f1))"
+  say "It holds your settings, keys (.env), agents and chats in $HOME_DIR. Keep it private."
+  say "Left out: search cache and voice models (they download again)."
+  local outside=() p
+  for p in "$VAULT" "$AGENTS"; do
+    case "$p/" in "$HOME_DIR"/*) ;; *) [[ " ${outside[*]-} " == *" $p "* ]] || outside+=("$p") ;; esac
+  done
+  if [ ${#outside[@]} -gt 0 ]; then
+    warn "NOT included, because they are outside $HOME_DIR: ${outside[*]}"
+    say "Back those up as well (your notes app or sync may already do it)."
+  fi
+}
+
+cmd_uninstall() {
+  local p
+  for p in "$HOME_DIR" "$VAULT" "$AGENTS"; do
+    case "$p/" in "$REPO"/*) die "Your data ($p) is inside $REPO, so this won't delete that folder. Move your data out first, or remove the program files by hand." ;; esac
+  done
+  case "$REPO" in "$HOME"|/|"") die "Refusing to delete $REPO" ;; esac
+  say "This removes OpenClave the program:"
+  has_service && say "  - the service $UNIT (stopped and disabled first; needs sudo)"
+  say "  - the folder $REPO"
+  [ -L "$LINK" ] && say "  - the command $LINK"
+  say ""
+  say "It does NOT remove your agents, chats, settings and keys in ${B}$HOME_DIR${N}."
+  say "Delete this folder yourself if you want your agents and chats gone."
+  local a=""
+  if [ -t 0 ]; then printf 'Remove OpenClave? Type yes to go ahead: '; IFS= read -r a || true; fi
+  [ "$a" = yes ] || { say "Nothing removed."; return 0; }
+  if has_service; then
+    sudo systemctl disable --now openclave || true
+    sudo rm -f "$UNIT" && sudo systemctl daemon-reload
+    ok "Removed the service"
+  else
+    local pids; pids="$(foreground_pids)"
+    # shellcheck disable=SC2086
+    [ -z "$pids" ] || kill $pids || true
+  fi
+  [ "$(readlink -f "$LINK" 2>/dev/null)" = "$SELF" ] && rm -f "$LINK" && ok "Removed $LINK"
+  rm -rf -- "$REPO" && ok "Removed $REPO"
+  say "Your data is still in $HOME_DIR."
+}
+
+cmd_url() {
+  say "$URL"
+  [ -z "$PUBLIC_URL" ] || { say "$PUBLIC_URL/"; say "$PUBLIC_URL/mobile/  (phone app)"; }
+}
+
+usage() {
+  cat <<EOF
+openclave: manage OpenClave ($REPO, data in $HOME_DIR)
+
+  openclave start      start it (as a service if installed as one, else in this terminal)
+  openclave stop       stop it
+  openclave restart    restart it, e.g. after changing settings or keys
+  openclave status     is it running, which version
+  openclave logs       follow its log (service only)
+  openclave check      show what is set up: models, search, voice
+  openclave update     get the latest version and restart
+  openclave backup     save your settings, agents and chats to $BACKUPS
+  openclave url        print its addresses
+  openclave uninstall  remove the program (never your agents or chats)
+EOF
+}
+
+case "${1:-help}" in
+  start) shift; cmd_start "$@" ;;
+  stop) cmd_stop ;;
+  restart) cmd_restart ;;
+  status) cmd_status ;;
+  logs|log) cmd_logs ;;
+  check) cd "$REPO" && exec "$PY" run.py --check ;;
+  update) cmd_update ;;
+  backup) cmd_backup ;;
+  uninstall) cmd_uninstall ;;
+  url) cmd_url ;;
+  help|-h|--help) usage ;;
+  *) usage >&2; exit 2 ;;
+esac

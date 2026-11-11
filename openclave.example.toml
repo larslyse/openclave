@@ -71,3 +71,9 @@ name = ""
 # Languages your notes are written in. Agents then search the vault in each,
 # e.g. note_languages = ["English", "Norwegian"].
 note_languages = []
+
+[updates]
+# Look for a newer OpenClave every few hours (a `git fetch` from the
+# repository you installed from), shown in Control Panel → Update. Besides
+# your model provider, this is the only call OpenClave makes on its own.
+check = true
