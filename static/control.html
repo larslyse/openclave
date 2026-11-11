@@ -108,6 +108,7 @@
 <p><button class="link" type="button" id="push-test">Send test notification</button> <span class="muted" id="push-test-msg"></span> · Turn a device on with the 🔔 toggle on its OpenClave page. On an iPhone, use the Home Screen app.</p></section>
 <section><h2>Quota &amp; credits</h2><table><tbody id="quota"><tr><td>Loading…</td></tr></tbody></table><p>Subscription limits reset on their own. When a limit is hit, the agent's reply says so.</p></section>
 <section><h2>Token usage</h2><table><thead><tr><th>Agent</th><th>Last 7 days</th><th>Last 30 days</th><th>All time</th></tr></thead><tbody id="usage"><tr><td colspan="4">Loading…</td></tr></tbody></table><p>Cost appears only where the provider reports it. Subscription (CLI) use has no bill; the grey "≈ at API prices" line estimates what the same tokens would cost on that model's API, to compare routes.</p></section>
+<section id="jobs"><h2>Background jobs</h2><p class="muted">What OpenClave does by itself while it runs. Most jobs only check whether something is due; "Run now" does that check straight away.</p><table><thead><tr><th>Job</th><th>Last run</th><th>Next</th><th></th></tr></thead><tbody id="jobs-list"><tr><td colspan="4">Loading…</td></tr></tbody></table></section>
 <script>
 // Phone layout: give each cell its column header as data-label (tables are
 // re-rendered by load(), so this re-labels on every change). And when opened
@@ -837,5 +838,27 @@ async function loadUpdate(){
 }
 loadPhone();
 loadUpdate();
+// Background jobs (scheduler.py): read-only table with a "Run now" per job.
+function jobAgo(iso){const s=Math.round((Date.now()-new Date(iso))/1000);return s<60?'just now':s<3600?`${Math.round(s/60)} min ago`:s<86400?`${Math.round(s/3600)} h ago`:new Date(iso).toLocaleString([], {dateStyle:'medium',timeStyle:'short'})}
+function jobIn(iso){const s=Math.round((new Date(iso)-Date.now())/1000);return s<60?'within a minute':s<3600?`in ${Math.round(s/60)} min`:`in ${Math.round(s/3600)} h`}
+let jobsTimer;
+async function loadJobs(){
+  const body=document.querySelector('#jobs-list');
+  let jobs;
+  try{({jobs}=await (await fetch('/api/jobs')).json())}catch{body.innerHTML='<tr><td colspan="4">Could not load.</td></tr>';return}
+  body.innerHTML=jobs.length?jobs.map(j=>{
+    const last=j.running?'Running now':!j.last_finish?'Not run yet':j.last_result==='ok'?`${jobAgo(j.last_finish)}, fine`:`${jobAgo(j.last_finish)}, failed: ${esc(j.last_result)}`;
+    const next=!j.enabled?'Off on this instance':j.running||!j.next_due?'—':jobIn(j.next_due);
+    return `<tr><td>${esc(j.name)}</td><td${j.last_result&&j.last_result!=='ok'&&!j.running?' style="color:#E8877A"':''}>${last}</td><td class="muted">${next}</td><td><button class="link" type="button" data-job="${esc(j.id)}"${j.running||!j.enabled?' disabled':''}>Run now</button></td></tr>`;
+  }).join(''):'<tr><td colspan="4" class="muted">No background jobs.</td></tr>';
+  body.querySelectorAll('[data-job]').forEach(b=>b.onclick=async()=>{
+    b.disabled=true;
+    const r=await fetch(`/api/jobs/${encodeURIComponent(b.dataset.job)}/run`,{method:'POST'});
+    if(!r.ok)alert((await r.json().catch(()=>({}))).detail||'Could not start it.');
+    loadJobs();
+  });
+  clearTimeout(jobsTimer);jobsTimer=setTimeout(loadJobs,jobs.some(j=>j.running)?2000:30000);
+}
+loadJobs();
 </script>
 </body></html>
