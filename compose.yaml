@@ -1,4 +1,6 @@
 # docker compose up -d   then open http://localhost:8777/
+# API model routes only (Anthropic, xAI keys): no Claude or Codex CLI, no voice,
+# no note search in this image. Use the normal install (README) for those.
 # First run: put an openclave.toml in ./data (copy openclave.example.toml) with
 #   [paths] vault_root = "/vault"   and   [network] bind = "0.0.0.0"
 # and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY).
@@ -12,6 +14,10 @@ services:
         required: false
     environment:
       OPENCLAVE_DISABLE_BACKGROUND_JOBS: "0"
+      # Set a login token: inside the container OpenClave listens on 0.0.0.0, so
+      # every request arrives from the network, not from this computer. Better
+      # still, put OPENCLAVE_ACCESS_TOKEN=... in ./.env instead of here.
+      # OPENCLAVE_ACCESS_TOKEN: "a-long-random-string"
     volumes:
       - ./data:/data
       - ${OPENCLAVE_VAULT:-./vault}:/vault

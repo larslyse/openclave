@@ -1,6 +1,6 @@
-# OpenClave in a container: the web app on the API routes (xAI, Anthropic).
-# The CLI routes (claude, codex), local voice and qmd vault search need those
-# tools installed on the host; see INSTALL.md for a full install.
+# OpenClave in a container, for the API model routes only (Anthropic, xAI keys).
+# This image has no Claude or Codex CLI, no voice and no note search (qmd); use
+# the normal install (README) for those.
 FROM python:3.12-slim
 WORKDIR /app
 COPY requirements.txt .
