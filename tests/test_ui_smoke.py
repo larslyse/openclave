@@ -114,7 +114,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertGreaterEqual(qj["h"], 44, "Quick jump is big")
             self.assertEqual(await br.eval("return getComputedStyle(document.querySelector('#switch-btn')).backgroundColor;"), "rgb(249, 115, 22)", "orange")
             home = await box(".composer [data-home]")
-            self.assertLess(abs(home["y"] - qj["y"]), 2, "in a chat, Conclave is on the Quick jump row")
+            self.assertLess(abs(home["y"] - qj["y"]), 2, "in a chat, All agents is on the Quick jump row")
             self.assertLessEqual(home["x"] + home["w"], qj["x"] + 1, "just left of Quick jump")
             self.assertLessEqual(send["x"] + send["w"], 390, "Send is on screen")
             top = await br.eval(f"const e=document.elementFromPoint({send['x'] + send['w'] / 2}, {send['y'] + send['h'] / 2}); return e.closest('.send') ? 'send' : e.className;")
@@ -135,7 +135,10 @@ class UiSmokeTest(unittest.TestCase):
             await br.click(qj["x"] + qj["w"] / 2, qj["y"] + qj["h"] / 2, hold_s=0.6)
             items = await br.eval("return [...document.querySelectorAll('.quick-switch-item')].map(i=>{const r=i.getBoundingClientRect(); const t=[...i.childNodes].find(n=>n.nodeType===3); const rr=document.createRange(); rr.selectNodeContents(t); const tr=rr.getBoundingClientRect(); return {x:r.x,w:r.width,right:r.right,bottom:r.bottom,textX:tr.x};});")
             composer_top = await br.eval("return document.querySelector('.composer').getBoundingClientRect().top;")
+            toggle_bg = await br.eval("const t=document.querySelector('.quick-switch-toggle'); return t ? getComputedStyle(t).backgroundColor : null;")
             await br.release(10, 10)
+            if toggle_bg is not None:
+                self.assertNotIn(toggle_bg, ("transparent", "rgba(0, 0, 0, 0)"), "the Autojump row is solid, the chat doesn't show through")
             self.assertGreater(len(items), 3, "menu lists the other agents")
             self.assertTrue(all(i["bottom"] <= composer_top + 1 for i in items), f"menu sits above the composer (composer top {composer_top:.0f}, lowest item {max(i['bottom'] for i in items):.0f})")
             self.assertTrue(all(i["right"] > 390 * 0.6 for i in items), "menu is on the right of the screen")
@@ -210,14 +213,14 @@ class UiSmokeTest(unittest.TestCase):
             await br.eval("history.back(); return 1;")
             await asyncio.sleep(1)
             self.assertEqual(await br.eval("return location.hash;"), "#/agents", "Back goes to the agent list, like ‹")
-            # Conclave under Quick jump on the list too: back to all agents.
+            # All agents under Quick jump on the list too: back to all agents.
             await br.eval("location.hash = '#/agents/spice/conversations'; return 1;")
             await asyncio.sleep(2)
             pos = await br.eval("const q=document.querySelector('.list-footer #switch-btn').getBoundingClientRect(), h=document.querySelector('.list-footer [data-home]').getBoundingClientRect(); return {q:q.bottom, h:h.top, w:h.width};")
-            self.assertGreaterEqual(pos["h"], pos["q"], "Conclave under Quick jump on the list")
+            self.assertGreaterEqual(pos["h"], pos["q"], "All agents under Quick jump on the list")
             await br.eval("document.querySelector('.list-footer [data-home]').click(); return 1;")
             await asyncio.sleep(1.5)
-            self.assertEqual(await br.eval("return location.hash;"), "#/agents", "Conclave opens the agent list")
+            self.assertEqual(await br.eval("return location.hash;"), "#/agents", "All agents opens the agent list")
 
             # The yellow "new" light: Stash's reply (sent at the start) shows on
             # the agent list, in Quick jump and on that conversation, until it's opened.
@@ -819,7 +822,7 @@ class UiSmokeTest(unittest.TestCase):
         try:
             await br.goto(f"{self.base}/mobile/#/agents/rick/console", wait=4)
             self.assertEqual(await br.eval("return document.querySelector('#console-body').firstElementChild.id;"), "cleanup", "cleanup is at the top of Rick's page")
-            await br.eval("document.querySelector('#cleanup [data-check]').click(); return 1;")
+            await br.eval("document.querySelector('#cleanup [data-run-review]').click(); return 1;")
             await asyncio.sleep(3)
             rows = await br.eval("return [...document.querySelectorAll('.cleanup-item')].filter(r=>r.dataset.id.includes(':greg:')).map(r=>r.innerText);")
             self.assertEqual(len(rows), 2, rows)
@@ -1127,12 +1130,12 @@ class UiSmokeTest(unittest.TestCase):
             mid = await br.eval("const d=document.querySelector('.open-dashboard').getBoundingClientRect(), c=document.querySelector('.claves-btn').getBoundingClientRect(), v=document.querySelector('.view-switch').getBoundingClientRect(); return [d.right < v.left, v.right < c.left];")
             self.assertEqual(mid, [True, True], "Boxes / Group chat in the middle, Claves on the right")
             pos = await br.eval("const d=document.querySelector('.open-dashboard').getBoundingClientRect(), v=document.querySelector('.view-switch').getBoundingClientRect(), r=document.querySelector('.clave-row').getBoundingClientRect(), h=document.querySelector('header').getBoundingClientRect(); return [d.left-h.left, h.right-r.right, d.height, v.height];")
-            self.assertLess(pos[0], 5, "Dashboard on the left")
+            self.assertLess(pos[0], 5, "Open agent page on the left")
             self.assertLess(pos[1], 5, "Claves (and its picker) on the right")
             self.assertEqual(await br.eval("const r=document.querySelector('.clave-row'); return [r.tagName, r.querySelector('legend').textContent, document.querySelector('.claves-btn').textContent];"),
                              ["FIELDSET", "Claves", "Organize"], "a box labelled Claves holding Organize and the picker")
             self.assertEqual(await br.eval("return document.querySelector('.view-switch').closest('fieldset').querySelector('legend').textContent;"), "View")
-            self.assertGreater(pos[2], pos[3], "Dashboard is the bigger button")
+            self.assertGreater(pos[2], pos[3], "Open agent page is the bigger button")
             self.assertLess(pos[2], pos[3] * 1.5, "but not much bigger (about 30%)")
             await br.eval("document.querySelector('.tile[data-agent-id=r2] .tile-icon').click(); return 1;")
             await asyncio.sleep(0.5)
@@ -1534,6 +1537,84 @@ class UiSmokeTest(unittest.TestCase):
 
     def test_desktop_agent_page_chat(self):
         self.run_async(self._desktop())
+
+
+@unittest.skipUnless(HAVE_DEPS, "needs chromium and websockets")
+class FirstRunUiTest(unittest.TestCase):
+    """A blank install (no agents; no model unless the test sets a key): the
+    first steps on the home page and the phone, and nothing shown that can't
+    be used yet."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = Path(tempfile.mkdtemp())
+        home = cls.tmp / ".openclave"
+        (home / "agents").mkdir(parents=True)
+        cls.port = _free_port()
+        cls.base = f"http://127.0.0.1:{cls.port}"
+        env = {k: v for k, v in os.environ.items() if k not in ("ANTHROPIC_API_KEY", "XAI_API_KEY")}
+        cls.server = subprocess.Popen([sys.executable, str(HERE / "ui_server.py"), str(cls.port)],
+                                      env={**env, "HOME": str(cls.tmp), "PATH": "/usr/bin:/bin",
+                                           "PYTHONUSERBASE": site.getuserbase(), "OPENCLAVE_HOME": str(home)},
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for _ in range(60):
+            try:
+                urllib.request.urlopen(f"{cls.base}/api/version", timeout=1)
+                break
+            except OSError:
+                time.sleep(0.5)
+        else:
+            cls.server.kill()
+            raise RuntimeError("UI test server did not start")
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.terminate()
+        try:
+            cls.server.wait(timeout=10)
+        except subprocess.TimeoutExpired:
+            cls.server.kill()
+        shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    async def _first_run(self):
+        br = Browser()
+        await br.start(1400, 900)
+        try:
+            await br.goto(f"{self.base}/", wait=3)
+            steps = await br.eval("return [...document.querySelectorAll('#welcome .fr-step')].map(s=>s.className);")
+            self.assertEqual(len(steps), 3)
+            self.assertTrue(all("todo" in s for s in steps), steps)
+            self.assertEqual(await br.eval("return document.querySelector('#welcome .fr-btn:not(.quiet)').getAttribute('href');"),
+                             "/control/#setup", "the first step is adding a model")
+            self.assertEqual(await br.eval("return document.querySelector('[data-first-run=manager]').getAttribute('href');"), "/control/#manager")
+            hidden = await br.eval("return ['.open-dashboard','.view-box','.clave-row'].map(s=>getComputedStyle(document.querySelector(s)).display);")
+            self.assertEqual(hidden, ["none"] * 3, "nothing to open, view or organize with no agents")
+            self.assertEqual(await br.eval("return document.querySelector('.add-tile').textContent.trim();"), "+New agent")
+            await br.shot("first-run-desktop.png")
+            self.assertEqual([l for l in br.logs if "EXC" in l], [], "no page errors")
+        finally:
+            await br.stop()
+        br = Browser()
+        await br.start(390, 844)
+        try:
+            await br.goto(f"{self.base}/mobile/", wait=4)
+            self.assertTrue(await br.eval("return !!document.querySelector('#welcome .fr-step');"), "the same steps on the phone")
+            self.assertEqual(await br.eval("return document.querySelector('[data-first-run=manager]').getAttribute('href');"), "#/create-agent/manager")
+            self.assertFalse(await br.eval("return !!document.querySelector('#open-room, [data-channel-new], .clave-chip');"),
+                             "no group chat, channels or Claves with no agents")
+            self.assertEqual(await br.eval("return document.documentElement.scrollWidth;"), 390, "fits a phone")
+            await br.shot("first-run-phone.png")
+            # Straight to the manager's card in New agent.
+            await br.eval("document.querySelector('[data-first-run=manager]').click(); return 1;")
+            await asyncio.sleep(2)
+            self.assertTrue(await br.eval("return document.activeElement === document.querySelector('.template.focused .template-add input');"),
+                            "the manager's name box is ready to type in")
+            self.assertEqual([l for l in br.logs if "EXC" in l], [], "no page errors")
+        finally:
+            await br.stop()
+
+    def test_first_run(self):
+        asyncio.run(asyncio.wait_for(self._first_run(), 120))
 
 
 if __name__ == "__main__":
