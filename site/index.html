@@ -276,22 +276,24 @@
   <ol class="needs">
     <li><b>Checks</b> that you're on Ubuntu or Debian (or WSL), not root, with Python 3.12 or newer.</li>
     <li><b>Installs missing basics</b> with apt: git, curl, python3, python3-venv <b>(sudo)</b>.</li>
-    <li><b>Downloads OpenClave</b> with <code>git clone</code> to <code>~/openclave</code>, or updates it there if it's already present.</li>
+    <li><b>Downloads OpenClave</b> with <code>git clone</code> to <code>~/openclave</code> and picks the newest release, or updates it there if it's already present. Then it carries on with the <code>install.sh</code> of that version.</li>
     <li><b>Installs its Python packages</b> into <code>~/openclave/.venv</code>. Nothing system-wide. Links the <code>openclave</code> command into <code>~/.local/bin</code>.</li>
     <li><b>Asks about you</b>: your name and timezone, saved to <code>~/.openclave/openclave.toml</code>.</li>
-    <li><b>Asks about your manager agent</b>: its name, personality, and any changes to its job.</li>
     <li><b>Sets up a model</b>, the one you pick:
       <ul>
         <li>API key (Anthropic or xAI): checked against the provider, saved to <code>~/.openclave/.env</code> (only you can read it).</li>
         <li>Claude Pro/Max: installs Claude Code from claude.ai and lets you sign in.</li>
         <li>ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox works, then lets you sign in <b>(sudo)</b>.</li>
       </ul></li>
-    <li><b>Asks which ready-made agents to start with</b> (none unless you pick some).</li>
     <li><b>Optional, asks first:</b> note search (qmd, through npm) <b>(sudo)</b>, and a systemd service so OpenClave starts with the computer <b>(sudo)</b>.</li>
     <li><b>Picks the port</b>: the one in <code>openclave.toml</code> (8777 unless you set another). If another program uses it, it takes the next free one and saves it there (asks first if you already had settings).</li>
     <li><b>On a computer without a screen, asks first:</b> if Tailscale is signed in, runs <code>tailscale serve --bg &lt;port&gt;</code> for a private HTTPS address and saves it as <code>public_url</code> in <code>openclave.toml</code> <b>(sudo)</b> if Tailscale needs it. On WSL it explains how to keep OpenClave running.</li>
     <li><b>Starts OpenClave</b> on <code>http://localhost:8777</code> and opens your browser.</li>
   </ol>
+  <p>Your manager agent and your first agents you set up on the welcome card in the browser.
+    With <code>--ask-all</code> (<code>curl -fsSL https://getopenclave.com/install.sh | bash -s -- --ask-all</code>)
+    the installer asks about them too: before the model step your manager's name, personality, extra jobs and
+    changes to its job, and after it which ready-made agents to start with.</p>
   <p>Its only network use is downloading those packages and checking your API key with its provider.
     Want to read it first?</p>
   <div class="cmd" data-copy>

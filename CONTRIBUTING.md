@@ -73,6 +73,24 @@ HOME=$(mktemp -d) .venv/bin/python -m unittest discover -s tests
 - Every change that a user would notice gets a line under "Unreleased" in
   [CHANGELOG.md](CHANGELOG.md), in the same pull request.
 
+What users get: the installer and every update (`openclave update`, Control
+Panel → Update, running the one-line install again) put a copy on the newest
+`vX.Y.Z` tag, as a detached HEAD. A push to `main` reaches nobody until it is
+in a release. While the repository has no release tag yet, they follow
+`main` as before. Updates only move forward: a copy that is ahead of the
+newest release (an older install that followed `main`) stays where it is
+until a newer release comes out. The rule lives in `updater.py`
+(`plan()`), the one place install.sh, `bin/openclave` and the Control Panel
+share.
+
+To follow `main` instead (developers, the maintainer's own install), set this
+in `openclave.toml` and run `openclave update`:
+
+```toml
+[updates]
+channel = "main"
+```
+
 To cut a release (maintainer):
 
 1. Put the new number in `VERSION`.
@@ -80,6 +98,8 @@ To cut a release (maintainer):
    empty "Unreleased" above it; update the compare links at the bottom.
 3. Commit both ("Release X.Y.Z"), then tag and push:
    `git tag -a vX.Y.Z -m "OpenClave X.Y.Z" && git push origin main vX.Y.Z`.
+   Only tags named exactly `vX.Y.Z` count; anything else (`v1.0.0-rc1`) is
+   ignored by updates. Never move or delete a pushed tag.
 
 ## Licence
 

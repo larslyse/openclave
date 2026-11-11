@@ -53,12 +53,13 @@ Open a terminal and paste:
 curl -fsSL https://getopenclave.com/install.sh | bash
 ```
 
-Prefer git? This does the same:
+Prefer git? This does the same (the middle line picks the newest release):
 
 ```sh
 sudo apt install -y git
-git clone https://github.com/larslyse/openclave.git
-cd openclave && ./install.sh
+git clone https://github.com/larslyse/openclave.git && cd openclave
+python3 updater.py first-checkout
+./install.sh
 ```
 
 The installer asks a few questions (press Enter for the suggested answer):
@@ -66,7 +67,13 @@ what your agents should call you, your timezone, and how the agents think (it
 checks your API key, or installs Claude or Codex and signs you in to your
 subscription). It can add note search and start OpenClave with the computer.
 Then it opens **http://localhost:8777/** (or the next free port, if another
-program already uses 8777).
+program already uses 8777), where a welcome card walks you through the rest:
+add a model if you skipped it, name your manager, and pick your first agents.
+
+Rather answer everything in the terminal, the manager and first agents too?
+Use `./install.sh --ask-all`, or with the one-line install:
+`curl -fsSL https://getopenclave.com/install.sh | bash -s -- --ask-all`
+(`OPENCLAVE_ASK_ALL=1` in front of `bash` does the same).
 
 On a computer without a screen, which is the best setup for daily use, it
 offers to make OpenClave reachable from your laptop and phone over a private
@@ -87,35 +94,36 @@ uses `sudo` for the steps marked **(sudo)**.
    Python 3.12 or newer.
 2. **Installs missing basics** with apt: git, curl, python3, python3-venv
    **(sudo)**.
-3. **Downloads OpenClave** with `git clone` to `~/openclave`, or updates it
-   there if it's already present (skipped when you run it from a clone).
+3. **Downloads OpenClave** with `git clone` to `~/openclave` and picks the
+   newest release, or updates it there if it's already present (skipped
+   when you run it from a clone). Then it carries on with the `install.sh`
+   of that version.
 4. **Installs its Python packages** into `~/openclave/.venv`. Nothing
    system-wide. Links the `openclave` command into `~/.local/bin`.
 5. **Asks about you**: your name and timezone, saved to
    `~/.openclave/openclave.toml`.
-6. **Asks about your manager agent**: its name, personality, any extra jobs,
-   and changes to its job. Nothing is filled in for you; each question lists
-   suggestions you can pick by number.
-7. **Sets up a model**, the one you pick:
+6. **Sets up a model**, the one you pick:
    - API key (Anthropic or xAI): checked against the provider, saved to
      `~/.openclave/.env` (only you can read it).
    - Claude Pro/Max: installs Claude Code from claude.ai and lets you sign in.
    - ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the
      Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox
      works, then lets you sign in **(sudo)**.
-8. **Asks which ready-made agents to start with** (none unless you pick
-   some).
-9. **Optional, asks first:** note search (qmd, through npm) **(sudo)**, and a
+7. **Optional, asks first:** note search (qmd, through npm) **(sudo)**, and a
    systemd service `openclave.service` so it starts with the computer
    **(sudo)**.
-10. **Picks the port**: the one in `openclave.toml` (8777 unless you set
-    another). If another program uses it, it takes the next free one and
-    saves it there (asks first if you already had settings).
-11. **On a computer without a screen, asks first:** if Tailscale is signed
-    in, runs `tailscale serve --bg <port>` for a private HTTPS address and
-    saves it as `public_url` in `openclave.toml` (**(sudo)** if Tailscale
-    needs it). On WSL it explains how to keep OpenClave running.
-12. **Starts OpenClave** on http://localhost:8777/ and opens your browser.
+8. **Picks the port**: the one in `openclave.toml` (8777 unless you set
+   another). If another program uses it, it takes the next free one and
+   saves it there (asks first if you already had settings).
+9. **On a computer without a screen, asks first:** if Tailscale is signed
+   in, runs `tailscale serve --bg <port>` for a private HTTPS address and
+   saves it as `public_url` in `openclave.toml` (**(sudo)** if Tailscale
+   needs it). On WSL it explains how to keep OpenClave running.
+10. **Starts OpenClave** on http://localhost:8777/ and opens your browser.
+
+With `--ask-all` it also asks, before the model step, about your manager
+agent (its name, personality, extra jobs and changes to its job; nothing is
+filled in for you) and, after it, which ready-made agents to start with.
 
 Its only network use is downloading those packages and checking your API key
 with its provider. To read it before running it:
@@ -128,10 +136,12 @@ bash install.sh
 
 ## Your first agents
 
-The installer creates your **manager** with the name and personality you
-chose, plus any ready-made agents you picked. The manager keeps the other
-agents tidy, runs a weekly review and collects bugs and ideas. Every install
-has exactly one. Open it first: it interviews you briefly. It starts with its
+The welcome card on the home page has three steps: add a model (skipped if
+the installer already did), name your **manager** and pick its personality,
+and add two to four ready-made agents. (With `./install.sh --ask-all` the
+installer did the last two already.) The manager keeps the other agents
+tidy, runs a weekly review and collects bugs and ideas. Every install has
+exactly one. Open it first: it interviews you briefly. It starts with its
 initials as a picture: pick one in **Control Panel → Edit → Pick from
 library**, make your own, or ask it to draw one.
 
@@ -166,7 +176,7 @@ found yet):
 | `openclave logs` | Follow its log (when it runs as a service) |
 | `openclave check` | What is set up: models, search, voice, phone |
 | `openclave url` | Its addresses |
-| `openclave update` | Get the latest version, see [Updating](#updating) |
+| `openclave update` | Get the newest release, see [Updating](#updating) |
 | `openclave backup` | See [Back up](#back-up) |
 | `openclave uninstall` | See [Remove OpenClave](#remove-openclave) |
 
@@ -176,11 +186,25 @@ found yet):
 openclave update
 ```
 
-It downloads the latest version (`git pull`), installs its Python packages and
-restarts OpenClave if it runs as a service. It won't update a folder you
-changed yourself. **Control Panel → Update** shows whether a newer version
+It moves to the newest release, installs its Python packages and restarts
+OpenClave if it runs as a service. A release is a tested version with a
+number like `v0.2.0`; [CHANGELOG.md](CHANGELOG.md) says what changed in each.
+It won't update a folder you changed yourself, and it never goes back to an
+older version. **Control Panel → Update** shows whether a newer release
 exists and, when OpenClave runs as a service, can update it with one button.
-Running `./install.sh` again also updates.
+Running the one-line install again also updates.
+
+Want every change as soon as it lands, before a release? Put this in
+`~/.openclave/openclave.toml` and run `openclave update`:
+
+```toml
+[updates]
+channel = "main"
+```
+
+`main` can change from one day to the next; it is meant for people who work
+on OpenClave. Remove the line to go back to releases: you stay where you are
+until the next release is newer than your copy.
 
 ## Back up
 
@@ -242,7 +266,11 @@ Python 3.12+ your usual way and skip the first line.
 sudo apt update && sudo apt install -y git python3-venv
 git clone https://github.com/larslyse/openclave.git
 cd openclave
+python3 updater.py first-checkout
 ```
+
+The last line picks the newest release; without it you get `main`, the
+version being worked on.
 
 **2. Install OpenClave's Python packages** into a folder of its own (`.venv`),
 so nothing on your system changes:
@@ -562,21 +590,23 @@ vault_root = "/vault"
 bind = "0.0.0.0"
 ```
 
-and put your API keys in `./.env`. A container must bind to `0.0.0.0`, so
-also put `OPENCLAVE_ACCESS_TOKEN=<a long random string>` in `./.env` before you
-publish the port beyond `127.0.0.1` (compose.yaml keeps it local by default).
-It runs as user id 1000 (the first user on
-most Linux systems) so the files stay yours; if `id -u` says otherwise, add
-`UID=` and `GID=` lines with your ids to `./.env`. The container covers the API routes only:
-the Claude/Codex CLI routes, voice and note search need the normal install.
+and put your API keys in `./.env`. The image runs the API routes only
+(Anthropic and xAI keys): no Claude or Codex CLI, no voice and no note
+search. Because it listens on `0.0.0.0` inside the container, also set
+`OPENCLAVE_ACCESS_TOKEN=<a long random string>` in `./.env` (compose.yaml
+publishes the port on `127.0.0.1` only by default). It runs as user id 1000
+(the first user on most Linux systems) so the files stay yours; if `id -u`
+says otherwise, add `UID=` and `GID=` lines with your ids to `./.env`.
 
 ## Updating by hand
 
 ```sh
 cd openclave
-git pull
-.venv/bin/pip install -r requirements.txt
+.venv/bin/python updater.py apply
 ```
+
+That fetches the newest release (or `main`, see [Updating](#updating)) and
+installs the Python packages.
 
 Then restart OpenClave (Ctrl+C and start it again, or
 `sudo systemctl restart openclave`). Your agents and settings live outside this
