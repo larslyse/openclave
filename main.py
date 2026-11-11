@@ -5,102 +5,41 @@ are generated from the same router factory (build_agent_router) rather than
 hand-written per agent — this is what replaced the reba-service/fresh-service
 copy-paste split from 2026-09-04.
 """
-import base64
-import json
-import mimetypes
 import os
-import tempfile
-import io
-from datetime import datetime, timezone
-from pathlib import Path
 
-from fastapi import APIRouter, FastAPI, HTTPException, Request, Response, status
-from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, PlainTextResponse, RedirectResponse
+from fastapi import FastAPI, Request
+from fastapi.responses import HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from PIL import Image, UnidentifiedImageError
 
 from config import CONFIG
 import agent_factory
 import access
 from urllib.parse import quote
-import agent_order
-import purge
-import channels
-import vault_access
-import agent_tools
-import avatar_maker
-import deploy_state
-from version import VERSION
 import migrations
-import phone_setup
 import updater
-from urllib.parse import urlsplit
-import model_discovery
 import model_updater
-import provider_credits
-import service_settings
 import tools_doc
-import llm_client
-import llm_models
-import request_phase
 import reminders
 import scheduled_tasks
-import skills
-import catalog
-import svg_avatar
 import attention
-import claude_auth
 import cleanup
-import connections
-import web_push
-import vault
 import chat_jobs
-import conversation_titles
 import recaps
-import folders
-import proposals
-import audit
-import agent_messages
-import room
-import claves
-import custom_pages
-import page_history
-import chat_service
-import handover
 import voice_engine
-import setup_check
-import agents as agents_module
 from agents import AGENTS
-from schemas import (
-    AgentColorRequest,
-    RoomPost, CreateClaveRequest, UpdateClaveRequest, PlaceAgentRequest, RemoveFromClaveRequest,
-    ClavesEnabledRequest, AgentClaveRequest, CloneAgentRequest,
-    ClaudeLoginCode,
-    AvatarFetchRequest, CleanupAction, UnarchiveRequest,
-    AgentSummary, AgentUsage, AllUsageResponse, CreateAgentRequest, IdentityBodyRequest, WorkspaceFileCreate, WorkspaceFileRename, WorkspaceFileWrite, MoveWorkspaceFileRequest, RenameAgentRequest, SetAgentToolsRequest, AttachmentUploadResponse, BacklogResponse, ChatRequest,
-    ChatRequestCreate, ChatRequestStatus, ChatResponse, ConversationDetail, ConversationSummary, InboxItem,
-    InboxResponse, KanbanResponse, KanbanItem, LogMeasurementRequest,
-    LogMeasurementsRequest, ModelOption, PlanResponse,
-    HandoverRequest, PageAddRequest, MoveConversationRequest, RenameConversationRequest, SetAgentOrderRequest, FolderRequest, SetKanbanStageRequest, SetModelRequest,
-    TrackingResponse, UpdateInboxItemRequest, UploadAttachmentRequest, UsageResponse, UsageWindow,
-    VoiceReplyRequest, VoiceTranscribeRequest, VoiceTranscribeResponse, VoiceTurnResponse,
-)
-from routes.common import VOICE_ENABLED_AGENTS, STATIC_DIR, _lan_address, _clave_call, _join_clave, _skill_agent
-from routes.library import _avatar_file, _avatar_version
-from routes import library as library_routes
+from routes.common import VOICE_ENABLED_AGENTS, STATIC_DIR, _lan_address
+from routes.agent_api import build_agent_router
 from routes.pages import _agent_shell_html
+from routes import library as library_routes
 from routes import pages as page_routes
-from routes.models import _model_option, _picker_options, _set_model
-from routes import models as model_routes
 from routes import review as review_routes
-from routes import setup as setup_routes
 from routes import tools as tool_routes
-from routes import push as push_routes
-from routes.conversations import api_agent_recap_write
 from routes import conversations as conversation_routes
+from routes import push as push_routes
 from routes import claves as clave_routes
 from routes import agents as agent_routes
-from routes.agent_api import build_agent_router
+from routes import models as model_routes
+from routes import setup as setup_routes
 
 app = FastAPI(title="OpenClave")
 
@@ -205,8 +144,6 @@ def stop_voice_engine():
 # except the narrow, agent-id-checked postMessage bridge that script owns.
 # This check is defense in depth for everything else on this origin (a
 # genuinely cross-site page, or a future change that weakens the sandbox).
-
-
 def _trusted_origins() -> set[str]:
     """Origins allowed to call this instance's API from a browser."""
     from urllib.parse import urlsplit
@@ -314,16 +251,19 @@ def _register_agent_routes(agent_id: str) -> None:
     app.get(f"/{agent_id}")(lambda: HTMLResponse(_agent_shell_html(agent_id)))
 
 
+# Route modules (routes/), in the order their routes first appeared in this
+# file. FastAPI matches in registration order; tests/test_route_table.py
+# checks that every path still reaches the same handler.
 app.include_router(library_routes.router)
 app.include_router(page_routes.router)
-app.include_router(model_routes.router)
 app.include_router(review_routes.router)
-app.include_router(setup_routes.router)
 app.include_router(tool_routes.router)
-app.include_router(push_routes.router)
 app.include_router(conversation_routes.router)
+app.include_router(push_routes.router)
 app.include_router(clave_routes.router)
 app.include_router(agent_routes.router)
+app.include_router(model_routes.router)
+app.include_router(setup_routes.router)
 
 
 for _agent_id in list(AGENTS):
