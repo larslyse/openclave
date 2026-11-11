@@ -9,6 +9,7 @@ from unittest.mock import patch
 
 import chat_service
 import llm_client
+from providers import xai_api
 
 
 PROMPT_ECHO = "OpenAI Codex v1\nuser\n<system_instructions>\nsecret-ish notes " + "x" * 2000 + "\n### Assistant\n"
@@ -82,7 +83,7 @@ class CliDiagnosticTests(unittest.TestCase):
         messages = [{"role": "user", "content": [{"type": "text", "text": "colour?"},
                                                   {"type": "image", "media_type": "image/png", "data": "QUJD"}]}]
         with patch.dict(os.environ, {"XAI_API_KEY": "k"}), patch("openai.OpenAI", return_value=fake), \
-             patch.object(llm_client, "log_usage"), patch.object(llm_client, "tools_for", return_value=[]):
+             patch.object(xai_api, "log_usage"), patch.object(xai_api, "tools_for", return_value=[]):
             self.assertEqual(llm_client._chat_xai("rick", "grok-4.3", "system", messages), "Red")
         parts = sent["messages"][-1]["content"]
         self.assertEqual(parts[1], {"type": "image_url", "image_url": {"url": "data:image/png;base64,QUJD"}})

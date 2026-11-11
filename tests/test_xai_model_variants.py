@@ -4,6 +4,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import llm_client
+from providers import xai_api
 import llm_models
 
 
@@ -25,7 +26,7 @@ class XaiModelVariantTests(unittest.TestCase):
     def setUp(self):
         os.environ.setdefault("XAI_API_KEY", "test-key")
         # _chat_xai logs usage on success — keep fake calls out of the real usage_log.jsonl.
-        patcher = patch.object(llm_client, "log_usage")
+        patcher = patch.object(xai_api, "log_usage")
         patcher.start()
         self.addCleanup(patcher.stop)
 
