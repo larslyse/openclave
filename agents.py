@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any
 
 from config import CONFIG
+from state_io import save_json
 
 AGENTS_ROOT = CONFIG.agents_root
 AGENT_FILE = "agent.json"
@@ -142,7 +143,7 @@ def set_onboarding(agent_id: str, onboarding: bool) -> None:
     f = AGENTS_ROOT / AGENTS[agent_id].folder / AGENT_FILE
     data = json.loads(f.read_text(encoding="utf-8"))
     data["onboarding"] = onboarding
-    f.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    save_json(f, data)
 
 
 _load_created_agents()

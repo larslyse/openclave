@@ -29,6 +29,7 @@ import re
 import threading
 import time
 from config import CONFIG
+from state_io import load_json, save_json
 import agents
 
 
@@ -160,9 +161,8 @@ def call_key(call: dict) -> str:
 
 
 def _load() -> dict:
-    try:
-        data = json.loads(STATE_FILE.read_text())
-    except (OSError, ValueError):
+    data = load_json(STATE_FILE, {})
+    if not isinstance(data, dict):
         data = {}
     now = time.time()
     window = data.get("window") or {}
@@ -182,9 +182,7 @@ def _save(data: dict) -> None:
     data = {"pending": data["pending"], "approved": data["approved"],
             "window": data.get("window") or data.get("spent"),
             "requests": data.get("requests", []), "conversation": data.get("conversation")}
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=1))
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, data, indent=1)
 
 
 def check(call: dict, summary: str) -> str | None:

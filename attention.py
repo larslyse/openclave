@@ -21,7 +21,6 @@ The digest (optional, Control Panel → Settings) pushes one line per agent
 that has something, weekly or daily, at a set time in the configured timezone. It only
 reads files and sends one notification: it never runs an agent.
 """
-import json
 import re
 import agents
 import threading
@@ -29,6 +28,7 @@ import time
 from datetime import date, datetime
 from pathlib import Path
 from config import CONFIG
+from state_io import load_json, save_json
 
 import claude_auth
 import llm_models
@@ -164,17 +164,12 @@ def digest_lines(results: dict[str, list[dict]]) -> list[str]:
 # ── digest ──────────────────────────────────────────────────────────────
 
 def _load_state() -> dict:
-    try:
-        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
-        return {}
+    data = load_json(STATE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save_state(state: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, state)
 
 
 def state() -> dict:

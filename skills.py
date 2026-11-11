@@ -33,6 +33,7 @@ import yaml
 import vault
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 SKILL_FILE = "SKILL.md"
 META_FILE = "openclave.json"
@@ -113,10 +114,7 @@ def _scan(root: Path, scope: str) -> list[dict]:
 
 
 def _selection() -> dict:
-    try:
-        data = json.loads(SELECTION_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = load_json(SELECTION_FILE, {})
     return data if isinstance(data, dict) else {}
 
 
@@ -143,9 +141,7 @@ def set_enabled(agent_id: str, key: str, on: bool) -> dict:
     off = set(data.get(agent_id, {}).get("off", []))
     (off.discard if on else off.add)(key)
     data[agent_id] = {"off": sorted(off)}
-    tmp = SELECTION_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(SELECTION_FILE)
+    save_json(SELECTION_FILE, data)
     return {**skill, "enabled": on}
 
 
@@ -411,7 +407,7 @@ def approve(agent_id: str, key: str) -> dict:
     if not meta:
         raise SkillError("only imported skills need enabling")
     meta["approved"] = True
-    (folder / META_FILE).write_text(json.dumps(meta, indent=2) + "\n", encoding="utf-8")
+    save_json(folder / META_FILE, meta)
     return set_enabled(agent_id, key, True)
 
 

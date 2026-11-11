@@ -33,6 +33,7 @@ import chat_jobs
 import claves
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 ROOM_FILE = CONFIG.state_path("room.jsonl")
 CONVERSATIONS_FILE = CONFIG.state_path("room_conversations.json")
@@ -105,9 +106,8 @@ def mentions(text: str, *, exclude: str | None = None, clave: str = claves.EVERY
 def _conversation(agent_id: str, clave: str = claves.EVERYONE) -> str:
     """The agent's own "Group chat" conversation, where it answers the room."""
     import vault
-    try:
-        known = json.loads(CONVERSATIONS_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    known = load_json(CONVERSATIONS_FILE, {})
+    if not isinstance(known, dict):
         known = {}
     key = agent_id if clave == claves.EVERYONE else f"{clave}:{agent_id}"
     conversation_id = known.get(key)
@@ -128,9 +128,7 @@ def _conversation(agent_id: str, clave: str = claves.EVERYONE) -> str:
         conversation_id = vault.find_conversation(agent_id, ROOM_KEY, clave) or \
             vault.create_conversation(agent_id, f"{ROOM_TITLE} · {name}", {ROOM_KEY: clave, "Folder": name})
     known[key] = conversation_id
-    tmp = CONVERSATIONS_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(known, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(CONVERSATIONS_FILE)
+    save_json(CONVERSATIONS_FILE, known)
     return conversation_id
 
 

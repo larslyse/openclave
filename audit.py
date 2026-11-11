@@ -22,7 +22,6 @@ looks for. "Suggest removing old models" and "Suggest adding new models" are
 filed here directly (model_proposals), from llm_models.old_reason and what
 model_updater found, so the ids are exact; the manager doesn't write them.
 """
-import json
 import time
 from datetime import datetime
 from pathlib import Path
@@ -33,6 +32,7 @@ import recaps
 import vault
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 STATE_FILE = CONFIG.state_path("audit_state.json")
 FIRST_LOOKBACK_DAYS = 30
@@ -47,16 +47,12 @@ TEXT_SUFFIXES = {".md", ".txt", ".csv", ".json"}
 
 
 def _load() -> dict:
-    try:
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = load_json(STATE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save(state: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=1) + "\n", encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, state, indent=1)
 
 
 def changed_files(agent_id: str, since_ts: float) -> list[dict]:

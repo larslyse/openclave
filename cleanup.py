@@ -31,6 +31,7 @@ import scheduled_tasks
 import vault
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 STALE_DAYS = 30
 SMALL_IDLE_DAYS = 7     # delete: no reply, or a trivially short exchange
@@ -48,16 +49,12 @@ _LOCK = threading.Lock()
 
 
 def _load() -> dict:
-    try:
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = load_json(STATE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save(state: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, state, indent=1, ensure_ascii=False)
 
 
 def _conversation_facts(agent_id: str, item: dict, now_ms: int) -> dict | None:

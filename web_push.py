@@ -27,6 +27,7 @@ from cryptography.hazmat.primitives.asymmetric.utils import decode_dss_signature
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from config import CONFIG
+from state_io import load_json, save_json
 
 KEYS_FILE = CONFIG.state_path("push_keys.json")
 SUBSCRIPTIONS_FILE = CONFIG.state_path("push_subscriptions.json")
@@ -51,19 +52,15 @@ def _raw_public(key: ec.EllipticCurvePublicKey) -> bytes:
 
 
 def _write_json(path: Path, data, private: bool = False) -> None:
-    tmp = path.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    if private:
-        os.chmod(tmp, 0o600)
-    tmp.replace(path)
+    save_json(path, data, mode=0o600 if private else None)
 
 
 def _vapid_key() -> ec.EllipticCurvePrivateKey:
     with _lock:
         try:
-            pem = json.loads(KEYS_FILE.read_text(encoding="utf-8"))["private_pem"]
+            pem = load_json(KEYS_FILE, {})["private_pem"]
             return serialization.load_pem_private_key(pem.encode(), password=None)
-        except (OSError, ValueError, KeyError):
+        except (ValueError, KeyError, TypeError, AttributeError):
             key = ec.generate_private_key(ec.SECP256R1())
             pem = key.private_bytes(serialization.Encoding.PEM, serialization.PrivateFormat.PKCS8,
                                     serialization.NoEncryption()).decode()
@@ -105,11 +102,8 @@ def vapid_authorization(endpoint: str) -> str:
 
 
 def subscriptions() -> list[dict]:
-    try:
-        data = json.loads(SUBSCRIPTIONS_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, list) else []
-    except (OSError, ValueError):
-        return []
+    data = load_json(SUBSCRIPTIONS_FILE, [])
+    return data if isinstance(data, list) else []
 
 
 def add_subscription(sub: dict, label: str = "") -> None:

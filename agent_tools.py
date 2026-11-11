@@ -9,10 +9,10 @@ the pre-existing agents keep working unchanged until someone trims them.
 Ops state, not agent knowledge: stored under OPENCLAVE_HOME/state.
 Read fresh per call, so a Control Panel change applies to the next message.
 """
-import json
 
 import agents
 from config import CONFIG
+from state_io import load_json, save_json
 
 SELECTION_FILE = CONFIG.state_path("agent_tools.json")
 
@@ -42,10 +42,8 @@ CLAVE_TOOL = "clave_backlog"
 
 
 def _load() -> dict[str, list[str]]:
-    try:
-        return json.loads(SELECTION_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = load_json(SELECTION_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def optional_for(agent_id: str) -> tuple[str, ...]:
@@ -81,7 +79,5 @@ def set_optional(agent_id: str, tools: list[str]) -> list[str]:
         raise ValueError(f"not optional tools for this agent: {', '.join(sorted(unknown))}")
     data = _load()
     data[agent_id] = [t for t in optional_for(agent_id) if t in tools]
-    tmp = SELECTION_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(SELECTION_FILE)
+    save_json(SELECTION_FILE, data)
     return data[agent_id]

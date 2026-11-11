@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from datetime import date
 
 from config import CONFIG
+from state_io import load_json, save_json
 
 SELECTION_FILE = CONFIG.state_path("agent_models.json")
 
@@ -147,10 +148,8 @@ PROVIDER_OLDER: set[str] = set()  # catalog ids the provider itself calls older 
 
 
 def _read_auto() -> dict:
-    try:
-        return json.loads(AUTO_FILE.read_text())
-    except (OSError, ValueError):
-        return {}
+    data = load_json(AUTO_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def apply_auto(state: dict | None = None) -> None:
@@ -311,13 +310,12 @@ def get(model_id: str) -> ModelOption:
 
 
 def _load_selections() -> dict[str, str]:
-    if SELECTION_FILE.exists():
-        return json.loads(SELECTION_FILE.read_text())
-    return {}
+    data = load_json(SELECTION_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save_selections(data: dict[str, str]) -> None:
-    SELECTION_FILE.write_text(json.dumps(data, indent=2))
+    save_json(SELECTION_FILE, data)
 
 
 def selected_model_id(agent_id: str) -> str:

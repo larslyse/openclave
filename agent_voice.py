@@ -15,6 +15,7 @@ import re
 import requests
 
 import agents
+from state_io import save_json
 
 FISH_MODELS_URL = "https://api.fish.audio/model"
 TIMEOUT_S = 15
@@ -97,8 +98,5 @@ def set_voice(agent_id: str, voice_id: str) -> dict:
     except (OSError, ValueError):
         data = {"id": agent_id}
     data["voice"] = {"provider": "fish_audio", "voice_id": found["id"], "name": found["name"]}
-    f.parent.mkdir(parents=True, exist_ok=True)
-    tmp = f.with_suffix(".tmp")
-    tmp.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    tmp.replace(f)
+    save_json(f, data, ensure_ascii=False)
     return data["voice"]

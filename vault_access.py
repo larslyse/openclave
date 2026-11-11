@@ -15,6 +15,7 @@ from pathlib import Path
 
 import agents
 import vault
+from state_io import save_json
 
 MAX_FOLDERS = 10
 
@@ -56,7 +57,7 @@ def set_folders(agent_id: str, wanted: list[str]) -> list[str]:
         data["vault_write"] = clean
     else:
         data.pop("vault_write", None)
-    f.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    save_json(f, data, ensure_ascii=False)
     return clean
 
 

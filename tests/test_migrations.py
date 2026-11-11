@@ -58,6 +58,18 @@ class StateIoTests(unittest.TestCase):
         self.assertEqual(state_io.load_json(path), {"old": 1})
         self.assertEqual([p.name for p in self.dir.iterdir()], ["s.json"])
 
+    def test_a_module_using_it_survives_a_corrupt_file(self):
+        import agent_order
+        from unittest.mock import patch
+        path = self.dir / "agent_order.json"
+        path.write_text("[\"half", encoding="utf-8")
+        with patch.object(agent_order, "ORDER_FILE", path), \
+                patch.object(agent_order, "AGENTS", {"a": None, "b": None}):
+            self.assertEqual(agent_order.get_order(), ["a", "b"])
+            agent_order.set_order(["b", "a"])
+            self.assertEqual(json.loads(path.read_text()), ["b", "a"])
+        self.assertEqual((self.dir / "agent_order.json.corrupt").read_text(), "[\"half")
+
 
 class MigrationTests(unittest.TestCase):
     def setUp(self):

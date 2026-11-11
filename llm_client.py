@@ -39,6 +39,7 @@ import agents
 import llm_models
 import request_phase
 import vault
+from state_io import load_json, save_json
 
 XAI_BASE_URL = "https://api.x.ai/v1"
 MAX_TOOL_ROUNDS = 5
@@ -1172,7 +1173,7 @@ def _unmark_run(agent_id: str, marker: str) -> None:
 _API_STOPS: dict[str, threading.Event] = {}
 
 
-class StoppedByLars(RuntimeError):
+class StoppedByOwner(RuntimeError):
     pass
 
 
@@ -1189,7 +1190,7 @@ def _api_run(agent_id: str):
 
 def _check_stop(stop: threading.Event) -> None:
     if stop.is_set():
-        raise StoppedByLars("stopped by the user")
+        raise StoppedByOwner("stopped by the user")
 
 
 def cancel_running(agent_id: str) -> bool:
@@ -1230,14 +1231,9 @@ def _record_codex_rate_limits(codex_home: Path) -> None:
             found = codex_rate_limits_from_log(session.read_text(encoding="utf-8")) or found
         if not found:
             return
-        try:
-            data = json.loads(CLI_QUOTA_FILE.read_text(encoding="utf-8"))
-        except (OSError, ValueError):
-            data = {}
+        data = load_json(CLI_QUOTA_FILE, {})
         data["codex"] = {**found, "observed_at": datetime.now(timezone.utc).isoformat()}
-        tmp = CLI_QUOTA_FILE.with_suffix(".tmp")
-        tmp.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
-        tmp.replace(CLI_QUOTA_FILE)
+        save_json(CLI_QUOTA_FILE, data)
     except Exception:
         pass  # quota display is informational; never break a chat reply
 

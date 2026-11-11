@@ -4,11 +4,11 @@ Ops state, not agent knowledge, so it lives in OPENCLAVE_HOME/state,
 not in the vault. Read fresh on every call so a Control Panel
 change applies to the next message with no restart.
 """
-import json
 import re
 
 import llm_models
 from config import CONFIG
+from state_io import load_json, save_json
 
 SETTINGS_FILE = CONFIG.state_path("service_settings.json")
 
@@ -52,9 +52,8 @@ SORT_CHOICES = {"sort_conversations": ("newest", "alphabetical"), "sort_agent_ta
 
 
 def load() -> dict:
-    try:
-        stored = json.loads(SETTINGS_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
+    stored = load_json(SETTINGS_FILE, {})
+    if not isinstance(stored, dict):
         stored = {}
     settings = {**DEFAULTS, **{k: v for k, v in stored.items() if k in DEFAULTS}}
     review = settings["weekly_review"] if isinstance(settings["weekly_review"], dict) else {}
@@ -93,7 +92,5 @@ def update(changes: dict) -> dict:
             raise ValueError("weekly_review: tick boxes by name, true or false")
         changes = {**changes, "weekly_review": {**load()["weekly_review"], **review}}
     settings = {**load(), **changes}
-    tmp = SETTINGS_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(settings, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(SETTINGS_FILE)
+    save_json(SETTINGS_FILE, settings)
     return settings

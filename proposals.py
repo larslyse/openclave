@@ -23,7 +23,6 @@ they don't come back the next week.
 
 Ops state, not agent knowledge: OPENCLAVE_HOME/state/manager_proposals.json.
 """
-import json
 import threading
 import uuid
 from datetime import datetime, timedelta
@@ -32,6 +31,7 @@ import agents
 import vault
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 STATE_FILE = CONFIG.state_path("manager_proposals.json")
 KINDS = ("vault_note", "message_agent", "task", "model")
@@ -44,17 +44,12 @@ _LOCK = threading.Lock()
 
 
 def _load() -> dict:
-    try:
-        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-        return data if isinstance(data, dict) else {}
-    except (OSError, ValueError):
-        return {}
+    data = load_json(STATE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save(state: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, state, indent=1, ensure_ascii=False)
 
 
 def _clean(text, limit: int) -> str:

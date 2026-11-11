@@ -28,6 +28,7 @@ import time
 from datetime import datetime, timezone
 from pathlib import Path
 from config import CONFIG
+from state_io import load_json, save_json
 
 STATE_FILE = CONFIG.state_path("claude_auth.json")
 LOGIN_URL_TIMEOUT_S = 30
@@ -81,16 +82,12 @@ def is_auth_failure(output: str, reason: str = "") -> bool:
 
 
 def _load() -> dict:
-    try:
-        return json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
+    data = load_json(STATE_FILE, {})
+    return data if isinstance(data, dict) else {}
 
 
 def _save(state: dict) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state), encoding="utf-8")
-    os.replace(tmp, STATE_FILE)
+    save_json(STATE_FILE, state, indent=None)
 
 
 def signed_out() -> bool:

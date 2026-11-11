@@ -40,6 +40,7 @@ import httpx
 import llm_client
 import llm_models
 from llm_models import ModelOption
+from state_io import load_json, save_json
 
 STATE_FILE = llm_models.AUTO_FILE
 MAX_PER_GROUP = 6
@@ -57,9 +58,8 @@ _running = threading.Event()
 # ── state ────────────────────────────────────────────────────────────────
 
 def load() -> dict:
-    try:
-        state = json.loads(STATE_FILE.read_text())
-    except (OSError, ValueError):
+    state = load_json(STATE_FILE, {})
+    if not isinstance(state, dict):
         state = {}
     for key in ("added", "hidden", "pinned", "blocked", "log", "gone", "provider_older"):
         state.setdefault(key, [])
@@ -72,9 +72,7 @@ def load() -> dict:
 
 def save(state: dict) -> None:
     state["log"] = state["log"][-100:]
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(state, indent=1))
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, state, indent=1)
     llm_models.apply_auto(state)
 
 

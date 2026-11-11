@@ -12,13 +12,13 @@ keeps its messages file (renamed .deleted) and the agents' conversations.
 State: OPENCLAVE_HOME/state/channels.json, a list of {id, name, members}.
 Channel ids start with "ch-" so they never clash with clave ids.
 """
-import json
 import re
 import threading
 import uuid
 
 from agents import AGENTS
 from config import CONFIG
+from state_io import load_json, save_json
 
 STATE_FILE = CONFIG.state_path("channels.json")
 PREFIX = "ch-"
@@ -33,17 +33,12 @@ def is_channel(room_id: str | None) -> bool:
 
 
 def _load() -> list[dict]:
-    try:
-        data = json.loads(STATE_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return []
+    data = load_json(STATE_FILE, [])
     return [c for c in data if isinstance(c, dict) and is_channel(c.get("id"))] if isinstance(data, list) else []
 
 
 def _save(items: list[dict]) -> None:
-    tmp = STATE_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(items, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    tmp.replace(STATE_FILE)
+    save_json(STATE_FILE, items, ensure_ascii=False)
 
 
 def _clean_name(name: str) -> str:

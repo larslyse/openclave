@@ -19,6 +19,7 @@ from pathlib import Path
 import httpx
 
 from config import CONFIG
+from state_io import load_json, save_json
 import llm_client
 import llm_models
 
@@ -66,17 +67,12 @@ def check() -> dict:
         except Exception as exc:
             providers[name] = {"new": [], "error": f"could not check ({type(exc).__name__})"}
     result = {"checked_at": datetime.now(timezone.utc).isoformat(), "providers": providers}
-    tmp = CHECK_FILE.with_suffix(".tmp")
-    tmp.write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
-    tmp.replace(CHECK_FILE)
+    save_json(CHECK_FILE, result)
     return result
 
 
 def cached() -> dict | None:
-    try:
-        return json.loads(CHECK_FILE.read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return None
+    return load_json(CHECK_FILE, None)
 
 
 def is_stale(result: dict | None) -> bool:

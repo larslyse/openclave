@@ -16,6 +16,7 @@ import agent_tools
 import avatar_maker
 import agents
 from config import CONFIG
+from state_io import save_json
 import llm_client
 import llm_models
 import svg_avatar
@@ -92,7 +93,7 @@ Just created. First step is the onboarding interview.
     (folder / "dashboard.html").write_text(render_dashboard(name, agent_id, color, _initials(name)), encoding="utf-8")
     data = {"id": agent_id, "name": name, "color": color, "tagline": tagline, **agent_data,
             "onboarding": True, "created": today}
-    (folder / agents.AGENT_FILE).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    save_json(folder / agents.AGENT_FILE, data, ensure_ascii=False)
 
     agents.register(agents._agent_config(data, name))
     llm_models.set_selected_model(agent_id, model_id)
@@ -103,7 +104,7 @@ Just created. First step is the onboarding interview.
     # Remembered so the weekly cleanup can offer to delete it once onboarding
     # is done: mission, persona and tools hold what came out of it.
     data["onboarding_conversation"] = conversation_id
-    (folder / agents.AGENT_FILE).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    save_json(folder / agents.AGENT_FILE, data, ensure_ascii=False)
     return {"id": agent_id, "conversation_id": conversation_id, "folder": folder}
 
 
@@ -220,7 +221,7 @@ def finish_onboarding(agent_id: str, tools: list[str], tagline: str | None, avat
         data["tagline"] = tagline.strip()[:TAGLINE_MAX]
         agents.register(replace(cfg, tagline=data["tagline"]))
     data["onboarding"] = False
-    agent_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    save_json(agent_file, data)
 
     for f in (vault.mission_file(agent_id), vault.persona_file(agent_id)):
         text = f.read_text(encoding="utf-8")
@@ -348,7 +349,7 @@ def rename_agent(agent_id: str, name: str, tagline: str) -> dict:
     if name != cfg.name and cfg.name not in former:
         former.append(cfg.name)
     data.update(name=name, tagline=tagline, former_names=former)
-    agent_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    save_json(agent_file, data)
     agents.register(replace(cfg, name=name, tagline=tagline, former_names=tuple(former)))
 
     if name != cfg.name:
@@ -367,7 +368,7 @@ def set_color(agent_id: str, color: str) -> dict:
     agent_file = agents.AGENTS_ROOT / cfg.folder / agents.AGENT_FILE
     data = json.loads(agent_file.read_text(encoding="utf-8")) if agent_file.exists() else {"id": agent_id}
     data["color"] = color
-    agent_file.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
+    save_json(agent_file, data)
     agents.register(replace(cfg, color=color))
     f = agents.AGENTS_ROOT / cfg.folder / "dashboard.html"
     if f.exists() and cfg.color != color:
@@ -459,7 +460,7 @@ def clone_agent(agent_id: str, clave_id: str) -> dict:
         data.pop(key, None)
     data.update(id=new_id, name=cfg.name, color=cfg.color, tagline=cfg.tagline, roles=roles,
                 created=today, cloned_from=agent_id)
-    (target / agents.AGENT_FILE).write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    save_json(target / agents.AGENT_FILE, data, ensure_ascii=False)
     agents.register(agents._agent_config(data, folder_name))
     try:
         llm_models.set_selected_model(new_id, llm_models.selected_model_id(agent_id))
