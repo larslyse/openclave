@@ -93,6 +93,7 @@ from routes import pages as page_routes
 from routes.models import _model_option, _picker_options, _set_model
 from routes import models as model_routes
 from routes import review as review_routes
+from routes import setup as setup_routes
 
 app = FastAPI(title="OpenClave")
 
@@ -1416,148 +1417,6 @@ def sort_conversations(items: list[dict]) -> list[dict]:
     return items
 
 
-@app.get("/api/settings")
-def api_get_settings():
-    return service_settings.load()
-
-
-@app.get("/api/access")
-def api_access():
-    """Control Panel → Connections: the addresses this instance answers on."""
-    port, bind = CONFIG.port, CONFIG.bind_address.strip().lower()
-    rows = [{"name": "This computer", "url": f"http://localhost:{port}/", "kind": "Local"},
-            {"name": "This computer (phone app)", "url": f"http://localhost:{port}/mobile/", "kind": "Local"}]
-    lan = _lan_address() if bind in {"0.0.0.0", "::"} else None
-    if lan:
-        rows.append({"name": "Other devices on the network", "url": f"http://{lan}:{port}/", "kind": "LAN"})
-    if CONFIG.public_url:
-        rows += [{"name": "Secure address", "url": f"{CONFIG.public_url}/", "kind": "Public"},
-                 {"name": "Secure address (phone app)", "url": f"{CONFIG.public_url}/mobile/", "kind": "Public"}]
-    tunnel = f"ssh -L {port}:localhost:{port} <user>@{lan}" if lan else ""
-    return {"rows": rows, "tunnel": tunnel}
-
-
-@app.get("/api/network")
-def api_network():
-    """Network values needed by the mobile client, without exposing settings."""
-    return {
-        "secure_mobile_url": f"{CONFIG.public_url}/mobile/" if CONFIG.public_url else "",
-        "voice_available": voice_engine.available(),
-    }
-
-
-# Control Panel → Phone (phone_setup.py) and → Update (updater.py).
-@app.get("/api/phone")
-def api_phone():
-    saved = phone_setup.saved_public_url(CONFIG.home / "openclave.toml")
-    return {**phone_setup.status(CONFIG.port), "public_url": saved,
-            "https": saved.startswith("https://"), "port": CONFIG.port,
-            "restart_needed": saved != CONFIG.public_url}
-
-
-@app.post("/api/phone/setup")
-def api_phone_setup():
-    result = phone_setup.setup(CONFIG.port, CONFIG.home / "openclave.toml")
-    if result["ok"]:
-        # Trust the new address at once (the origin check reads this set on
-        # every request); other places that show public_url follow on restart.
-        public = urlsplit(result["url"])
-        TRUSTED_ORIGINS.add(f"{public.scheme}://{public.netloc}")
-    return result
-
-
-@app.get("/api/update")
-def api_update():
-    return {"current": updater.version(), "check": updater.cached(), "checking": updater.is_checking(),
-            "enabled": CONFIG.update_check, "restart": updater.restart_mode(),
-            "local_changes": updater.local_changes()}
-
-
-@app.post("/api/update/check")
-def api_update_check():
-    return {"started": updater.check_in_background()}
-
-
-@app.post("/api/update/apply")
-def api_update_apply():
-    mode = updater.restart_mode()
-    if not mode:
-        raise HTTPException(status_code=409, detail="OpenClave isn't running as a service that can restart "
-                            "itself. Run `openclave update` in a terminal instead.")
-    result = updater.apply()
-    if result["ok"] and result.get("changed"):
-        updater.restart_self(mode)
-        result["restarting"] = True
-    return result
-
-
-@app.post("/api/settings")
-def api_update_settings(changes: dict):
-    try:
-        return service_settings.update(changes)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-# Claude CLI sign-in (claude_auth.py): status, start, code, cancel.
-@app.get("/api/claude-auth")
-def api_claude_auth():
-    return claude_auth.status()
-
-
-@app.post("/api/claude-auth/login")
-def api_claude_auth_login():
-    return claude_auth.start_login()
-
-
-@app.post("/api/claude-auth/code")
-def api_claude_auth_code(req: ClaudeLoginCode):
-    try:
-        return claude_auth.submit_code(req.code)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except LookupError as exc:
-        raise HTTPException(status_code=409, detail=str(exc))
-
-
-@app.post("/api/claude-auth/cancel")
-def api_claude_auth_cancel():
-    return claude_auth.cancel()
-
-
-@app.get("/api/setup")
-def api_setup():
-    """What's set up on this computer (setup_check.py): model routes, extras,
-    and the first-run steps (manager, ready-made agents to suggest)."""
-    return {**setup_check.summary(), **setup_check.first_run()}
-
-
-@app.post("/api/setup/key")
-async def api_setup_key(request: Request):
-    """{provider: "anthropic"|"xai", key} -> checked, saved to OPENCLAVE_HOME/.env
-    and live without a restart. The body is read by hand so that no error
-    response (e.g. FastAPI's validation errors) ever echoes the key back."""
-    try:
-        req = await request.json()
-    except ValueError:
-        req = None
-    provider, key = (req.get("provider"), req.get("key")) if isinstance(req, dict) else (None, None)
-    if not isinstance(provider, str) or not isinstance(key, str):
-        raise HTTPException(status_code=400, detail="provider and key are needed")
-    from starlette.concurrency import run_in_threadpool
-    try:
-        return await run_in_threadpool(setup_check.save_key, provider, key)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-@app.get("/api/version")
-def api_version():
-    # Stale-deploy check (see deploy_state.py) — surfaced as a banner on the
-    # dashboard and Control Panel when backend code changed without a restart.
-    return {**deploy_state.status(), "version": VERSION, "manager_problem": agents_module.manager_problem()}
-
-
 @app.post("/api/agents/order")
 def api_set_agent_order(req: SetAgentOrderRequest):
     try:
@@ -1571,6 +1430,7 @@ app.include_router(library_routes.router)
 app.include_router(page_routes.router)
 app.include_router(model_routes.router)
 app.include_router(review_routes.router)
+app.include_router(setup_routes.router)
 
 
 for _agent_id in list(AGENTS):
