@@ -9,6 +9,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import llm_client
+import llm_usage
 
 
 class CodexIsolationTests(unittest.TestCase):
@@ -181,8 +182,8 @@ class CodexLogTests(unittest.TestCase):
             with patch.dict(os.environ, {"CODEX_HOME": source_home}, clear=False), \
                  patch.object(llm_client.vault, "agent_root", return_value=Path(agent_root)), \
                  patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-                 patch.object(llm_client, "CLI_QUOTA_FILE", Path(source_home) / "cli_quota.json"), \
-                 patch.object(llm_client, "log_usage") as logged:
+                 patch.object(llm_usage, "CLI_QUOTA_FILE", Path(source_home) / "cli_quota.json"), \
+                 patch.object(llm_usage, "log_usage") as logged:
                 llm_client._chat_codex_cli("reba", "gpt-5.6-terra", "system", [])
         logged.assert_called_once_with("reba", "codex-cli", "gpt-5.6-terra",
                                        {"input_tokens": 2481, "cache_read_input_tokens": 11008, "output_tokens": 78}, None)
