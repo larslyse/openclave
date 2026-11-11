@@ -5,15 +5,16 @@ import unittest
 
 import main
 from routes import library as library_routes
+from routes import pages as page_routes
 
 
 class MobileAssetTests(unittest.TestCase):
     def test_mobile_page_loads_nothing_from_other_hosts(self):
-        html = main.mobile_dashboard().body.decode()
+        html = page_routes.mobile_dashboard().body.decode()
         self.assertNotRegex(html, r'(src|href)="https?://', "an outside CDN blocks app start on a slow lookup")
 
     def test_every_local_script_and_stylesheet_is_versioned(self):
-        html = main.mobile_dashboard().body.decode()
+        html = page_routes.mobile_dashboard().body.decode()
         assets = re.findall(r'<(?:script|link rel="stylesheet")[^>]*(?:src|href)="(/static/[^"]+)"', html)
         self.assertGreaterEqual(len(assets), 6)
         for url in assets:
