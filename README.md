@@ -115,7 +115,7 @@ has exactly one. Open it first: it interviews you briefly. It starts with its
 initials as a picture: pick one in **Control Panel → Edit → Pick from
 library**, make your own, or ask it to draw one.
 
-1. To add more, click **Create new specialist**. You land on the **New
+1. To add more, click **New agent** on the dashboard. You land on the **New
    agent** form with a list of **ready-made agents** below it. (Installed by
    hand? Add the **Manager** from that list first and give it a name.)
 2. Add a few for the areas you care about most. Each comes with a
