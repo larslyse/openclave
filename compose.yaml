@@ -1,7 +1,9 @@
 # docker compose up -d   then open http://localhost:8777/
 # First run: put an openclave.toml in ./data (copy openclave.example.toml) with
 #   [paths] vault_root = "/vault"   and   [network] bind = "0.0.0.0"
-# and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY).
+# and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY). The container binds to
+# 0.0.0.0, so add OPENCLAVE_ACCESS_TOKEN=<long random string> to ./.env as well,
+# and always before changing the port below to listen beyond 127.0.0.1.
 services:
   openclave:
     build: .

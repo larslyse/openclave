@@ -268,6 +268,26 @@ agent, plus the notes it looks up, goes to the model provider you picked
 (Anthropic, xAI, OpenAI) to produce the reply, under that provider's terms. By
 default OpenClave only listens on this computer (`localhost`).
 
+Agents never read OpenClave's own files through their tools: the keys file
+(`.env`), `openclave.toml`, the `state` folder, hidden files and folders
+(such as `.obsidian`, `.trash`, `.git`) and key files are refused by
+`read_vault_file`, left out of `search_vault` and kept out of the search index,
+wherever your notes folder points. Folders you list in `[privacy]
+confidential_folders` are closed the same way: agents can't search, read,
+write or export notes in them, and a refused read tells the agent (and so
+you) why.
+
+One limit remains. On the Claude Code and Codex routes the CLI runs as your
+own user. Its reads of your notes go through OpenClave's tools and follow
+these rules, but the CLI's own built-in file access is only restricted for
+writing: Codex runs with `-s workspace-write` (it can read any file your user
+can, and write only in the agent's folder), and the Home Assistant agent runs
+Codex without `-s`, so Codex's default or configured sandbox applies. Claude
+Code gets no built-in tools except those an agent lists in its `cli_tools`
+(for web search), and those run without permission prompts. If a folder must
+stay away from those CLIs too, keep it outside what your user can read, or use
+the API routes for that work.
+
 ## Optional extras
 
 None of these are needed to start. `run.py --check` and **Control Panel →
@@ -373,7 +393,14 @@ personal use): a private network between your own devices.
    **Add to Home Screen**. Turn on notifications with the bell icon.
 
 Anyone on your tailnet can reach it. To require a password-like token as well,
-set `[network] access_token` (see `openclave.example.toml`).
+set `[network] access_token` (see `openclave.example.toml`). With `bind` set to
+anything but `127.0.0.1` and no token, OpenClave starts with a warning, and
+`run.py --check` and Control Panel → Setup show it.
+
+OpenClave only answers to addresses it knows (against DNS rebinding): localhost,
+IP addresses, the `public_url` host and the hosts in `extra_origins`. If a
+browser shows "OpenClave doesn't answer to the address ...", add that address
+as `public_url` or to `extra_origins`.
 
 ### Keep it running
 
@@ -432,7 +459,10 @@ vault_root = "/vault"
 bind = "0.0.0.0"
 ```
 
-and put your API keys in `./.env`. It runs as user id 1000 (the first user on
+and put your API keys in `./.env`. A container must bind to `0.0.0.0`, so
+also put `OPENCLAVE_ACCESS_TOKEN=<a long random string>` in `./.env` before you
+publish the port beyond `127.0.0.1` (compose.yaml keeps it local by default).
+It runs as user id 1000 (the first user on
 most Linux systems) so the files stay yours; if `id -u` says otherwise, add
 `UID=` and `GID=` lines with your ids to `./.env`. The container covers the API routes only:
 the Claude/Codex CLI routes, voice and note search need the normal install.

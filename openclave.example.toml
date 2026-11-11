@@ -19,7 +19,10 @@ pdf_tool = ""
 garmin_token_dir = "state/garmin"
 
 [privacy]
-# Vault-relative folder names that search and PDF export must exclude.
+# Vault-relative folders closed to agents: search_vault and automatic lookup
+# leave them out (and they are kept out of the search index), read_vault_file
+# refuses them, and agents never write or export PDFs there. The Claude Code
+# and Codex CLIs' own built-in file access is not covered (see README, Privacy).
 confidential_folders = []
 
 [search]
@@ -49,13 +52,16 @@ second_voice_id = ""
 bind = "127.0.0.1"
 port = 8777
 # Optional: require this token (asked once, then remembered by the browser)
-# for every request except plain local ones on this computer. Use a long
+# for every request except plain local ones on this computer. Set it whenever
+# bind is not 127.0.0.1 (OpenClave warns at startup otherwise). Use a long
 # random string, e.g. from `python3 -c "import secrets; print(secrets.token_urlsafe(24))"`.
 access_token = ""
 # Public base URL (scheme and host, optional path; omit trailing slash and /mobile).
 public_url = ""
 # More browser origins allowed to use the API, e.g. a second hostname.
 # localhost, the LAN address (when bind is 0.0.0.0) and public_url are added automatically.
+# Requests whose Host header is a name not in this list (or public_url) are
+# refused, against DNS rebinding; IP addresses and localhost always work.
 extra_origins = []
 
 [catalog]

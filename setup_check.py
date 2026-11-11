@@ -57,6 +57,29 @@ def ready_providers() -> set[str]:
     return {r["id"] for r in routes() if r["ready"]}
 
 
+def loopback_bind(address: str | None = None) -> bool:
+    """Whether [network] bind only listens on this computer."""
+    import ipaddress
+    address = (CONFIG.bind_address if address is None else address).strip().strip("[]").lower()
+    if address == "localhost":
+        return True
+    try:
+        return ipaddress.ip_address(address).is_loopback
+    except ValueError:
+        return False
+
+
+def open_network_warning() -> str:
+    """A warning when OpenClave listens beyond this computer without an
+    access token: then everyone who can reach the port can use it. A warning
+    only, since a private network (e.g. Tailscale) can make it a fair choice."""
+    if loopback_bind() or CONFIG.access_token:
+        return ""
+    return (f"OpenClave listens on {CONFIG.bind_address}:{CONFIG.port} without an access token: anyone who "
+            "can reach this port can use your agents and read your notes. Set [network] access_token in "
+            "openclave.toml (or OPENCLAVE_ACCESS_TOKEN), or bind to 127.0.0.1.")
+
+
 def extras() -> list[dict]:
     """Optional parts: off is fine, they just add features."""
     qmd = _which(CONFIG.qmd_bin)
@@ -75,6 +98,11 @@ def extras() -> list[dict]:
         {"id": "phone", "name": "Phone app over HTTPS", "ready": bool(CONFIG.public_url.startswith("https://")),
          "detail": CONFIG.public_url or "no [network] public_url; the phone app works on this computer only",
          "fix": "See README, \"Use it from your phone\"."},
+        {"id": "network", "name": "Network access", "ready": not open_network_warning(),
+         "detail": ("this computer only" if loopback_bind() else
+                    "token required" if CONFIG.access_token else
+                    f"open to the network on {CONFIG.bind_address} with no access token"),
+         "fix": "Set [network] access_token in openclave.toml (or OPENCLAVE_ACCESS_TOKEN), then restart."},
     ]
 
 
@@ -100,6 +128,8 @@ def print_report() -> int:
     print("\nOptional:")
     for x in s["extras"]:
         print(f"  [{'ok' if x['ready'] else '--'}] {x['name']}: {x['detail']}")
+        if x["id"] == "network" and not x["ready"]:
+            print(f"       {x['fix']}")
     print(f"\nOpen http://{'localhost' if CONFIG.bind_address in ('127.0.0.1', '0.0.0.0') else CONFIG.bind_address}:{CONFIG.port}/")
     if not s["ready"]:
         print("\nNo model is set up yet: agents can't answer until one is. The quickest is an API key (see README).")

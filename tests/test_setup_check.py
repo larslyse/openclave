@@ -57,5 +57,35 @@ class RefusedKeyTests(unittest.TestCase):
         self.assertIn(".env", msg)
 
 
+class OpenNetworkWarningTests(unittest.TestCase):
+    def _with(self, bind, token=""):
+        import dataclasses
+        return mock.patch.object(setup_check, "CONFIG",
+                                 dataclasses.replace(setup_check.CONFIG, bind_address=bind, access_token=token))
+
+    def row(self):
+        return next(x for x in setup_check.extras() if x["id"] == "network")
+
+    def test_loopback_is_fine(self):
+        for bind in ("127.0.0.1", "localhost", "::1", "127.0.0.2"):
+            with self._with(bind):
+                self.assertEqual(setup_check.open_network_warning(), "")
+                self.assertTrue(self.row()["ready"])
+
+    def test_open_bind_without_token_warns_but_is_optional(self):
+        for bind in ("0.0.0.0", "::", "192.168.1.5"):
+            with self._with(bind):
+                self.assertIn("access_token", setup_check.open_network_warning())
+                row = self.row()
+                self.assertFalse(row["ready"])
+                self.assertIn("access_token", row["fix"])
+                self.assertNotIn("network", [r["id"] for r in setup_check.routes()])
+
+    def test_token_silences_the_warning(self):
+        with self._with("0.0.0.0", "tok"):
+            self.assertEqual(setup_check.open_network_warning(), "")
+            self.assertTrue(self.row()["ready"])
+
+
 if __name__ == "__main__":
     unittest.main()

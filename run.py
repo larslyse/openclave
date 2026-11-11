@@ -13,6 +13,9 @@ def main() -> None:
         import setup_check
         sys.exit(setup_check.print_report())
     import uvicorn
+    import setup_check
+    if warning := setup_check.open_network_warning():
+        print(f"WARNING: {warning}", file=sys.stderr, flush=True)
     print(f"OpenClave: http://{'localhost' if CONFIG.bind_address in ('127.0.0.1', '0.0.0.0') else CONFIG.bind_address}:{CONFIG.port}/  (data: {CONFIG.home})", flush=True)
     uvicorn.run("main:app", host=CONFIG.bind_address, port=CONFIG.port)
 
