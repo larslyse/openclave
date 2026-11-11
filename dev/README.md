@@ -38,3 +38,33 @@ the installer's questions through a real terminal, from
 `dev/install-answers.txt` (or `ANSWERS=<file>`; format in
 `dev/install_driver.py`), and skips the Claude/Codex sign-in. It uses the host
 network, so port 8777 must be free.
+
+## Changing the data format (migrations)
+
+`OPENCLAVE_HOME/state/version.json` stores the data format version
+(`{"data_version": N}`). When a change needs existing data rewritten (a renamed
+field in `agent.json`, a moved state file, new chat front matter), add a step
+to `MIGRATIONS` in `migrations.py` instead of handling both formats forever:
+
+```python
+def _rename_route_field(config):
+    for agent_file in config.agents_root.glob("*/agent.json"):
+        ...  # read, change, state_io.save_json
+
+MIGRATIONS = [
+    (1, "baseline: the data format of release 0.1.0", None),
+    (2, "agent.json: route -> model_route", _rename_route_field),
+]
+```
+
+- Numbers go up by one; never change or remove a step that has been released.
+- A step must be idempotent (safe to run on data that is already new): a fresh
+  install is stamped with the newest version, but data the installer or an
+  older start wrote may already be in the new format.
+- At startup, pending steps run in order, once each, with one log line per
+  step. The state files are copied to `state/backups/<timestamp>/` before the
+  first step that has a function. A step that raises stops the run; the
+  version stays at the last good step and the app starts anyway.
+- Add a test with a temp `OPENCLAVE_HOME` holding the old format.
+- `python3 -m migrations --status` shows the stored and pending versions;
+  `--run` applies them without starting the app.

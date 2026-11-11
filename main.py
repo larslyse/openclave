@@ -31,6 +31,7 @@ import agent_tools
 import avatar_maker
 import deploy_state
 from version import VERSION
+import migrations
 import model_discovery
 import model_updater
 import provider_credits
@@ -262,6 +263,13 @@ def _asset_version(*relative_parts: str) -> int:
     """mtime-based cache-buster for one static file, in seconds — changes
     exactly when the file does, no content hashing needed at this scale."""
     return int((STATIC_DIR.joinpath(*relative_parts)).stat().st_mtime)
+
+
+@app.on_event("startup")
+def run_data_migrations():
+    # First startup hook, so the data is in the current format before chat
+    # jobs, reminders and the other background jobs read it. Never raises.
+    migrations.run(CONFIG)
 
 
 @app.on_event("startup")

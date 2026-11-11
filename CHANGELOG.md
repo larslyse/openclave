@@ -10,6 +10,8 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 - A release number (`VERSION`), shown by `/api/version`, `run.py --check`
   and the startup line.
+- A data format version (`state/version.json`) and migrations that run once
+  at startup, after a backup of the state files.
 
 ## [0.1.0]
 
