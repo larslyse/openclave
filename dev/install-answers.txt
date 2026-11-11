@@ -1,0 +1,10 @@
+# What a new user types in the default flow (see dev/install_driver.py):
+# Enter for the name, a timezone, the Anthropic key: a wrong one, then skip;
+# no note search. The manager and first agents are left to the browser's
+# welcome card. Full terminal flow: dev/install-answers-ask-all.txt.
+call you? =>
+timezone =>Europe/Oslo
+Your choice: =>1
+Paste your Anthropic key =>sk-ant-not-a-real-key
+Paste your Anthropic key =>
+note search =>n

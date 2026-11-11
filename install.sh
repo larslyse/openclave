@@ -4,11 +4,29 @@
 #   ./install.sh                     from a cloned openclave folder
 #   curl -fsSL <url>/install.sh | bash   downloads OpenClave to ~/openclave first
 #
+# It asks only what has to happen in a terminal (your name, timezone, a model,
+# note search, start at boot); naming your manager and picking the first
+# agents happen on the welcome card in the browser. To answer all of it here
+# instead, as earlier versions did:
+#   ./install.sh --ask-all
+#   curl -fsSL <url>/install.sh | bash -s -- --ask-all
+#   curl -fsSL <url>/install.sh | OPENCLAVE_ASK_ALL=1 bash
+#
 # Safe to run again: it keeps your settings and agents, updates the Python
 # packages, and lets you add a model. Ubuntu/Debian (and WSL) for now; on
 # anything else it points to the step-by-step guide in README.md.
 # OPENCLAVE_SKIP_LOGIN=1 skips the Claude/Codex sign-in (automated tests).
 set -euo pipefail
+
+ASK_ALL="${OPENCLAVE_ASK_ALL:-}"
+[ "$ASK_ALL" != 0 ] || ASK_ALL=""
+for arg in "$@"; do
+  case "$arg" in
+    --ask-all) ASK_ALL=1 ;;
+    -h|--help) sed -n '2,/^set -euo/p' "${BASH_SOURCE[0]:-$0}" 2>/dev/null | sed '$d; s/^# \{0,1\}//'; exit 0 ;;
+    *) printf 'Unknown option: %s (try --help)\n' "$arg" >&2; exit 2 ;;
+  esac
+done
 
 REPO_URL="https://github.com/larslyse/openclave.git"
 DATA="${OPENCLAVE_HOME:-$HOME/.openclave}"
@@ -48,9 +66,11 @@ yes_no() {  # yes_no "Question" Y|N  → exit status
 }
 
 # ── Checks ───────────────────────────────────────────────────────────────
-say "${B}OpenClave installer${N}"
-say "Sets up OpenClave on this computer in a few minutes. Press Enter to take"
-say "the suggested answer ${D}[in brackets]${N}. Your settings go in $DATA."
+if [ -z "${OPENCLAVE_INSTALL_REEXEC:-}" ]; then
+  say "${B}OpenClave installer${N}"
+  say "Sets up OpenClave on this computer in a few minutes. Press Enter to take"
+  say "the suggested answer ${D}[in brackets]${N}. Your settings go in $DATA."
+fi
 
 [ "$(id -u)" -ne 0 ] || die "Run this as your normal user, not as root (it asks for your password when it needs it)."
 
@@ -94,13 +114,26 @@ SELF_DIR="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")" 2>/dev/null && pwd || true)"
 if [ -n "$SELF_DIR" ] && [ -f "$SELF_DIR/run.py" ] && [ -f "$SELF_DIR/requirements.txt" ]; then
   REPO="$SELF_DIR"
 else
+  # Which version: the newest release, or main ([updates] channel), never
+  # backwards. updater.py holds that rule; plain python3 is enough for it.
   REPO="$HOME/openclave"
   if [ -f "$REPO/run.py" ]; then
     step "Updating OpenClave in $REPO"
-    git -C "$REPO" pull --ff-only -q || warn "Couldn't update $REPO (local changes?); using it as it is."
+    if grep -q first-checkout "$REPO/updater.py" 2>/dev/null; then
+      rc=0; (cd "$REPO" && python3 updater.py apply --code-only) || rc=$?
+      [ "$rc" -eq 0 ] || [ "$rc" -eq 4 ] || warn "Couldn't update $REPO; using it as it is."
+    else  # a copy from before releases: update it the old way once
+      git -C "$REPO" pull --ff-only -q || warn "Couldn't update $REPO (local changes?); using it as it is."
+    fi
   else
     step "Downloading OpenClave to $REPO"
     git clone -q "$REPO_URL" "$REPO"
+    (cd "$REPO" && python3 updater.py first-checkout) || warn "Using the newest code on main instead."
+  fi
+  # Carry on with the installer of the version just checked out, so its
+  # steps match its files.
+  if [ -f "$REPO/install.sh" ] && [ -z "${OPENCLAVE_INSTALL_REEXEC:-}" ]; then
+    OPENCLAVE_INSTALL_REEXEC=1 exec bash "$REPO/install.sh" "$@"
   fi
 fi
 cd "$REPO"
@@ -166,12 +199,16 @@ fi
 # ── Your manager ─────────────────────────────────────────────────────────
 # Every install has one manager agent (the ready-made manager template). The
 # user names it, picks or describes its personality and can change its job;
-# none of it has a default. Created after the model step.
-step "Your manager"
+# none of it has a default. By default that happens on the welcome card in
+# the browser; with --ask-all here, and it is created after the model step.
 MANAGER="" PERSONA="" MISSION_EXTRA="" EXTRAS=()
 if MGR_NAME="$(.venv/bin/python scripts/add_manager.py --status 2>/dev/null)"; then
+  step "Your manager"
   ok "Your manager is $MGR_NAME"
+elif [ -z "$ASK_ALL" ]; then
+  MGR_NAME=""
 else
+  step "Your manager"
   MGR_NAME=""
   say "Every OpenClave has one manager agent. It keeps OpenClave tidy, runs a weekly"
   say "review, and turns the other agents' bugs and ideas into a to-do list."
@@ -274,7 +311,7 @@ add_api_key() {  # add_api_key anthropic|xai
   while :; do
     ask_secret key "Paste your $label key (it won't show), or press Enter to skip:"
     key="$(printf '%s' "$key" | tr -d '[:space:]')"
-    [ -n "$key" ] || { warn "Skipped. You can run ./install.sh again later."; return 1; }
+    [ -n "$key" ] || { warn "Skipped. You can add a key in the browser (welcome card) or run ./install.sh again."; return 1; }
     local rc=0; check_key "$1" "$key" || rc=$?
     case $rc in
       0) ok "$label accepted the key"; set_key "$var" "$key"; return 0 ;;
@@ -348,7 +385,7 @@ if [ "$pick" = 1 ]; then
     2) setup_claude_cli || true ;;
     3) setup_codex_cli || true ;;
     4) add_api_key xai || true ;;
-    *) warn "No model yet. Agents can't answer until you add one: run ./install.sh again." ;;
+    *) warn "No model yet. Agents can't answer until you add one: on the welcome card in the browser, or run ./install.sh again." ;;
   esac
 fi
 
@@ -512,6 +549,14 @@ open_browser() {
   fi
 }
 wait_up() { for _ in $(seq 40); do is_openclave "$PORT" && return 0; sleep 0.5; done; return 1; }
+next_steps() {
+  if [ -n "$MGR_NAME" ]; then
+    say "Next: ${1:-}say hi to ${B}$MGR_NAME${N}, then add two or three agents for what you care about."
+  else
+    say "Next: ${1:-}follow the three steps on the welcome card: add a model (if you"
+    say "skipped it here), name your manager, and pick your first agents."
+  fi
+}
 
 step "Starting OpenClave"
 if [ -n "$BOOT" ]; then
@@ -521,7 +566,7 @@ if [ -n "$BOOT" ]; then
   say ""
   say "It keeps running in the background and starts with the computer."
   say "Log: $OC logs   ·   Restart: $OC restart   ·   Everything else: $OC help"
-  say "Next: open $URL, say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
+  next_steps "open $URL, "
 elif is_openclave "$PORT"; then
   ok "OpenClave is already running at ${B}$URL${N}."
   say "Stop it (Ctrl+C where it runs) and start it again so it picks up the changes:"
@@ -529,7 +574,7 @@ elif is_openclave "$PORT"; then
 else
   ok "Open ${B}$URL${N} in your browser (stop OpenClave with Ctrl+C)."
   far_away
-  say "Next: say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
+  next_steps
   say "To start it again later: $OC start   (all commands: $OC help)"
   ( wait_up && open_browser ) &
   exec .venv/bin/python run.py

@@ -14,7 +14,7 @@ For other manual launches, follow the same isolation rules: configure a fresh sc
 
 ## Working on OpenClave while you also use it
 
-Keep the checkout your service runs from clean: it only ever runs `main`, and updates with `git pull` plus a restart. Develop in a second clone (e.g. `git clone <repo> ~/openclave-dev`), test there with `bash dev/run-scratch.sh`, then push and pull into the live checkout. A half-finished change then never reaches your running agents.
+Keep the checkout your service runs from clean: it runs the newest release, or `main` with `[updates] channel = "main"` in its `openclave.toml`, and updates with `openclave update`. Develop in a second clone (e.g. `git clone <repo> ~/openclave-dev`), test there with `bash dev/run-scratch.sh`, then push and pull into the live checkout. A half-finished change then never reaches your running agents.
 
 ## Keeping personal details out
 
@@ -37,7 +37,8 @@ Use it after changing the README, requirements or first-run screens.
 the installer's questions through a real terminal, from
 `dev/install-answers.txt` (or `ANSWERS=<file>`; format in
 `dev/install_driver.py`), and skips the Claude/Codex sign-in. It uses the host
-network, so port 8777 must be free.
+network, so port 8777 must be free. For the full terminal flow:
+`ANSWERS=dev/install-answers-ask-all.txt INSTALL_ARGS=--ask-all bash dev/install-script-test.sh`.
 
 ## Changing the data format (migrations)
 

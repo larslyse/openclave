@@ -1,5 +1,6 @@
-# What a new user types (see dev/install_driver.py). Default run: Enter for the
-# name, a timezone; manager: no name (asked again), a bad one, then a name
+# What a new user types with ./install.sh --ask-all (see dev/install_driver.py;
+# run with ANSWERS=dev/install-answers-ask-all.txt INSTALL_ARGS=--ask-all).
+# Enter for the name, a timezone; manager: no name (asked again), a bad one, then a name
 # idea by number; personality: nothing, then "own words" with too few, then
 # enough; extra jobs: a wrong number, then 1; a job change; Anthropic key: a
 # wrong one, then skip; starter agents: a wrong number, then two; no search.

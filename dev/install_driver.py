@@ -1,7 +1,7 @@
 """Answer ./install.sh's questions like a person at a terminal: wait until a
 question appears, then type the answer. Used by dev/install-script-test.sh.
 
-    python3 install_driver.py answers.txt -- ./install.sh
+    python3 install_driver.py answers.txt -- ./install.sh [--ask-all]
 
 answers.txt: one "question text => answer" per line ("=>" alone: just Enter).
 After the last answer the installer keeps running (it starts OpenClave)."""
