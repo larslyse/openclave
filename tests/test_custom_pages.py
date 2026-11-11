@@ -228,7 +228,7 @@ class PageHistoryTests(unittest.TestCase):
         import page_history
         self.h = page_history
 
-    def test_built_in_page_then_agent_page_waits_for_lars_and_reverts(self):
+    def test_built_in_page_then_agent_page_waits_for_the_owner_and_reverts(self):
         self.h.snapshot("stash")
         self.assertEqual(self.h.versions("stash"), [], "nothing recorded while on the built-in page")
         self.write({"blocks": [{"type": "text", "text": "mine"}]})

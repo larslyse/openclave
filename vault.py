@@ -1244,9 +1244,8 @@ def add_feedback(agent_id: str, entry: str) -> None:
     running log of interaction-style corrections/confirmations from the user,
     kept separate from the free-prose personality body above it (only
     touched by the rare, full-rewrite update_persona) so one correction can
-    never accidentally wipe the rest of who the agent is. Mirrors OpenClaw's
-    own '## Cortex Preferences / Lessons' pattern in its MEMORY.md: simple
-    dated bullets, not a heavier structured format. Reuses the same
+    never accidentally wipe the rest of who the agent is. Simple dated
+    bullets, not a heavier structured format. Reuses the same
     section-split helpers as tracking.md/foundations.md."""
     f = persona_file(agent_id)
     if f.exists():

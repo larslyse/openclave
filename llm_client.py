@@ -2189,9 +2189,9 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
     # ANTHROPIC_API_KEY: a present API key can silently take precedence over
     # the OAuth/subscription login.
     env = {k: v for k, v in os.environ.items() if k != "OPENAI_API_KEY"}
-    # The system service inherits OpenClaw-specific XDG paths. Codex does not
-    # need them, and allowing them through makes its configuration depend on
-    # an unrelated service's environment.
+    # The service's environment may carry XDG paths meant for other programs.
+    # Codex does not need them, and allowing them through makes its
+    # configuration depend on an unrelated service's environment.
     env.pop("XDG_CONFIG_HOME", None)
     env.pop("XDG_CACHE_HOME", None)
 

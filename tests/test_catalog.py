@@ -48,7 +48,7 @@ class CatalogContentTests(unittest.TestCase):
     def test_templates_talk_about_the_user_not_one_owner(self):
         for t in catalog.templates():
             text = " ".join((t["folder"] / f).read_text() for f in ("mission.md", "persona.md", "onboarding.md"))
-            self.assertNotRegex(text, r"\bhis user\b|\bLars\b", t["id"])
+            self.assertNotRegex(text, r"\bhis user\b", t["id"])
 
 
 class CatalogInstallTests(unittest.TestCase):

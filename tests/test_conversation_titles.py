@@ -68,7 +68,7 @@ class ConversationTitleTests(_GregVault):
         self.assertEqual(gen.call_args.args[0].splitlines()[0], "lets integrate the panasonic heat pump")
         self.log_usage.assert_called_once()
 
-    def test_a_name_lars_gave_is_never_replaced(self):
+    def test_a_name_the_owner_gave_is_never_replaced(self):
         self.exchange("c1")
         vault.rename_conversation("greg", "c1", "My heat pump")
         new, gen = self.name("c1")
@@ -78,10 +78,10 @@ class ConversationTitleTests(_GregVault):
 
     def test_renamed_while_the_name_was_being_made(self):
         self.exchange("c1")
-        def lars_renames(*a):
+        def owner_renames(*a):
             vault.rename_conversation("greg", "c1", "Mine")
             return "Heat pump integration", USAGE
-        with patch.object(ct, "_generate", side_effect=lars_renames):
+        with patch.object(ct, "_generate", side_effect=owner_renames):
             self.assertIsNone(ct.name_now("greg", "c1"))
         self.assertEqual(self.title("c1"), "Mine")
 
@@ -112,7 +112,7 @@ class ConversationTitleTests(_GregVault):
             self.assertIsNone(ct.label_title(no_label), no_label)
 
     def test_clean(self):
-        self.assertEqual(ct.clean("Title: **Ducati parts**."), "Ducati parts")
+        self.assertEqual(ct.clean("Title: **Bike parts**."), "Bike parts")
         self.assertEqual(ct.clean("Tesla financial modeling\nextra line"), "Tesla financial modeling")
         long = ct.clean("Gear for outdoor leather belt and pouches and other assorted things")
         self.assertLessEqual(len(long), ct.MAX_LEN)
