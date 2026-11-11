@@ -1143,7 +1143,7 @@ def read_identity_body(agent_id: str, kind: str) -> dict:
     return {"body": body.strip(), "limit": IDENTITY_CHAR_LIMITS[kind], "frontmatter_chars": overhead}
 
 
-def set_identity_body_by_lars(agent_id: str, kind: str, body: str) -> None:
+def set_identity_body_by_owner(agent_id: str, kind: str, body: str) -> None:
     """The user editing in the Control Panel: frontmatter kept, Updated bumped.
     Over the limit is refused outright (not routed to the maintainer inbox as an
     agent's own over-limit edit is)."""

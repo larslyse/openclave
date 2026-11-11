@@ -94,7 +94,7 @@ class XaiStreamingTests(unittest.TestCase):
         fake_openai = MagicMock()
         fake_openai.OpenAI.return_value = client
         with patch.dict("sys.modules", {"openai": fake_openai}):
-            with self.assertRaises(llm_client.StoppedByLars):
+            with self.assertRaises(llm_client.StoppedByOwner):
                 llm_client._chat_xai(AGENT, "grok-4.3", "sys", [{"role": "user", "content": "hi"}])
         self.assertEqual(request_phase.get_text(AGENT), "partial ")
         self.assertFalse(llm_client.cancel_running(AGENT), "nothing left running")
@@ -180,7 +180,7 @@ class AnthropicStreamingTests(unittest.TestCase):
     def test_stop(self):
         stream = FakeAnthropicStream(["a", "b"], final_message("ab"),
                                      on_event=lambda t: t == "b" and llm_client.cancel_running(AGENT))
-        with self.assertRaises(llm_client.StoppedByLars):
+        with self.assertRaises(llm_client.StoppedByOwner):
             self.run_anthropic(stream)
         self.assertNotIn(AGENT, llm_client._API_STOPS)
 

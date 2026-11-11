@@ -72,13 +72,13 @@ class AgentEditTests(unittest.TestCase):
 
     def test_identity_edit_keeps_frontmatter_and_enforces_limit(self):
         before = vault.read_identity_body("spice", "persona")
-        vault.set_identity_body_by_lars("spice", "persona", "Short and quiet.\n\n## Feedback")
+        vault.set_identity_body_by_owner("spice", "persona", "Short and quiet.\n\n## Feedback")
         text = vault.persona_file("spice").read_text()
         self.assertTrue(text.startswith("---\n"))
         self.assertIn("Routing:", text)
         self.assertIn("Short and quiet.", text)
         with self.assertRaises(ValueError):
-            vault.set_identity_body_by_lars("spice", "persona", "x" * 2300)
+            vault.set_identity_body_by_owner("spice", "persona", "x" * 2300)
         self.assertIn("Short and quiet.", vault.persona_file("spice").read_text())
         self.assertEqual(before["limit"], 2200)
 

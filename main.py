@@ -1610,7 +1610,7 @@ def api_set_identity(agent_id: str, kind: str, req: IdentityBodyRequest):
     if kind not in ("mission", "persona"):
         raise HTTPException(status_code=404, detail="Unknown identity file")
     try:
-        vault.set_identity_body_by_lars(agent_id, kind, req.body)
+        vault.set_identity_body_by_owner(agent_id, kind, req.body)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return vault.read_identity_body(agent_id, kind)

@@ -101,7 +101,7 @@ class AttentionTests(unittest.TestCase):
         self.assertTrue(attention.is_due({"digest": "daily", "digest_time": "07:30"}, datetime(2026, 9, 29, 8, 0), None))
         self.assertFalse(attention.is_due({"digest": "off", "digest_time": "07:30"}, monday, None))
 
-    def test_send_digest_pushes_only_when_something_needs_lars(self):
+    def test_send_digest_pushes_only_when_something_needs_the_owner(self):
         self.write("plan.md", "2026-09-25", "")
         self.write("backlog.md", "2026-09-25", "")
         with patch.object(attention, "check_all", return_value={"spice": []}), \
