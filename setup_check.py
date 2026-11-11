@@ -13,6 +13,7 @@ import sys
 from pathlib import Path
 
 from config import CONFIG
+from version import VERSION
 
 # The model routes, in the order a new user is pointed to them.
 PROVIDERS = ("anthropic", "xai", "claude-cli", "codex-cli")
@@ -88,6 +89,7 @@ def summary() -> dict:
 def print_report() -> int:
     """`python3 run.py --check`: a plain-text report; exit 1 when no model can answer."""
     s = summary()
+    print(f"OpenClave version:     {VERSION}")
     print(f"OpenClave data folder: {s['home']}")
     print(f"Notes folder:          {s['notes_folder']}")
     print(f"Agents folder:         {s['agents_folder']}")

@@ -6,6 +6,7 @@
 import sys
 
 from config import CONFIG
+from version import VERSION
 
 
 def main() -> None:
@@ -13,7 +14,7 @@ def main() -> None:
         import setup_check
         sys.exit(setup_check.print_report())
     import uvicorn
-    print(f"OpenClave: http://{'localhost' if CONFIG.bind_address in ('127.0.0.1', '0.0.0.0') else CONFIG.bind_address}:{CONFIG.port}/  (data: {CONFIG.home})", flush=True)
+    print(f"OpenClave {VERSION}: http://{'localhost' if CONFIG.bind_address in ('127.0.0.1', '0.0.0.0') else CONFIG.bind_address}:{CONFIG.port}/  (data: {CONFIG.home})", flush=True)
     uvicorn.run("main:app", host=CONFIG.bind_address, port=CONFIG.port)
 
 

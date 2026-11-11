@@ -30,6 +30,7 @@ import vault_access
 import agent_tools
 import avatar_maker
 import deploy_state
+from version import VERSION
 import model_discovery
 import model_updater
 import provider_credits
@@ -1848,7 +1849,7 @@ def api_setup():
 def api_version():
     # Stale-deploy check (see deploy_state.py) — surfaced as a banner on the
     # dashboard and Control Panel when backend code changed without a restart.
-    return {**deploy_state.status(), "manager_problem": agents_module.manager_problem()}
+    return {**deploy_state.status(), "version": VERSION, "manager_problem": agents_module.manager_problem()}
 
 
 @app.get("/api/model-check")

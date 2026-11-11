@@ -63,6 +63,24 @@ HOME=$(mktemp -d) .venv/bin/python -m unittest discover -s tests
   OpenClave under other terms later) while you keep the copyright to your
   work.
 
+## Releases
+
+- `main` is the development branch: it should always pass its tests, but it
+  can change from one day to the next.
+- A release is a git tag `vX.Y.Z` on `main`. The number follows
+  `MAJOR.MINOR.PATCH`: a patch fixes bugs, a minor release adds features, a
+  major release needs you to do something when you update.
+- Every change that a user would notice gets a line under "Unreleased" in
+  [CHANGELOG.md](CHANGELOG.md), in the same pull request.
+
+To cut a release (maintainer):
+
+1. Put the new number in `VERSION`.
+2. In `CHANGELOG.md`, rename "Unreleased" to the new version and add an
+   empty "Unreleased" above it; update the compare links at the bottom.
+3. Commit both ("Release X.Y.Z"), then tag and push:
+   `git tag -a vX.Y.Z -m "OpenClave X.Y.Z" && git push origin main vX.Y.Z`.
+
 ## Licence
 
 OpenClave is licensed under the [AGPL-3.0](LICENSE). By contributing you
