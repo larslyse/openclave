@@ -30,6 +30,9 @@ import vault_access
 import agent_tools
 import avatar_maker
 import deploy_state
+import phone_setup
+import updater
+from urllib.parse import urlsplit
 import model_discovery
 import model_updater
 import provider_credits
@@ -303,6 +306,7 @@ def start_reminders():
     cleanup.start()  # Weekly maintainer cleanup suggestions.
     recaps.backfill(list(AGENTS))  # cards for archived chats that have none yet
     model_updater.start()  # first run 15 min after startup, then daily; background only
+    updater.start()  # [updates] check: git fetch at most every 6 hours, background only
 
 
 @app.on_event("startup")
@@ -1676,6 +1680,51 @@ def api_network():
         "secure_mobile_url": f"{CONFIG.public_url}/mobile/" if CONFIG.public_url else "",
         "voice_available": voice_engine.available(),
     }
+
+
+# Control Panel → Phone (phone_setup.py) and → Update (updater.py).
+@app.get("/api/phone")
+def api_phone():
+    saved = phone_setup.saved_public_url(CONFIG.home / "openclave.toml")
+    return {**phone_setup.status(CONFIG.port), "public_url": saved,
+            "https": saved.startswith("https://"), "port": CONFIG.port,
+            "restart_needed": saved != CONFIG.public_url}
+
+
+@app.post("/api/phone/setup")
+def api_phone_setup():
+    result = phone_setup.setup(CONFIG.port, CONFIG.home / "openclave.toml")
+    if result["ok"]:
+        # Trust the new address at once (the origin check reads this set on
+        # every request); other places that show public_url follow on restart.
+        public = urlsplit(result["url"])
+        TRUSTED_ORIGINS.add(f"{public.scheme}://{public.netloc}")
+    return result
+
+
+@app.get("/api/update")
+def api_update():
+    return {"current": updater.version(), "check": updater.cached(), "checking": updater.is_checking(),
+            "enabled": CONFIG.update_check, "restart": updater.restart_mode(),
+            "local_changes": updater.local_changes()}
+
+
+@app.post("/api/update/check")
+def api_update_check():
+    return {"started": updater.check_in_background()}
+
+
+@app.post("/api/update/apply")
+def api_update_apply():
+    mode = updater.restart_mode()
+    if not mode:
+        raise HTTPException(status_code=409, detail="OpenClave isn't running as a service that can restart "
+                            "itself. Run `openclave update` in a terminal instead.")
+    result = updater.apply()
+    if result["ok"] and result.get("changed"):
+        updater.restart_self(mode)
+        result["restarting"] = True
+    return result
 
 
 @app.post("/api/settings")

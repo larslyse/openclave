@@ -50,6 +50,9 @@ class FakeTailscale(unittest.TestCase):
         path = self.dir / "calls"
         return path.read_text().splitlines() if path.exists() else []
 
+
+class PhoneSetupTests(FakeTailscale):
+
     def test_status_reads_only(self):
         st = phone_setup.status(8777)
         self.assertTrue(st["installed"] and st["logged_in"] and st["https_certs"] and st["magic_dns"])
@@ -164,6 +167,48 @@ class TomlEditTests(unittest.TestCase):
         self.assertEqual(sorted(p.name for p in d.iterdir()), ["openclave.toml"])
         self.assertEqual(toml_edit.main([str(f), "network", "port", "8802", "--int"]), 0)
         self.assertEqual(tomllib.loads(f.read_text())["network"]["port"], 8802)
+
+
+class PhoneAndUpdateRouteTests(FakeTailscale):
+    """Control Panel → Phone and → Update routes, still on the fake tailscale."""
+
+    def setUp(self):
+        super().setUp()
+        import main
+        from fastapi.testclient import TestClient
+        self.main = main
+        self.client = TestClient(main.app)
+        # CONFIG is frozen: point the routes at the temp toml through phone_setup.
+        real_setup, real_saved = phone_setup.setup, phone_setup.saved_public_url
+        for name, fn in (("setup", lambda port, _p: real_setup(port, self.toml)),
+                         ("saved_public_url", lambda _p: real_saved(self.toml))):
+            p = mock.patch.object(main.phone_setup, name, fn)
+            p.start()
+            self.addCleanup(p.stop)
+        self.origins = set(main.TRUSTED_ORIGINS)
+        p = mock.patch.object(main, "TRUSTED_ORIGINS", self.origins)
+        p.start()
+        self.addCleanup(p.stop)
+
+    def test_setup_route_trusts_the_new_origin(self):
+        before = self.client.get("/api/phone").json()
+        self.assertFalse(before["https"])
+        self.assertTrue(before["logged_in"])
+        result = self.client.post("/api/phone/setup").json()
+        self.assertTrue(result["ok"], result)
+        self.assertIn("https://box.tail1234.ts.net", self.origins)
+        after = self.client.get("/api/phone").json()
+        self.assertTrue(after["https"])
+        self.assertTrue(after["restart_needed"])
+
+    def test_update_apply_needs_a_restartable_service(self):
+        with mock.patch.object(self.main.updater, "restart_mode", return_value=""), \
+             mock.patch.object(self.main.updater, "apply") as apply:
+            self.assertEqual(self.client.post("/api/update/apply").status_code, 409)
+            apply.assert_not_called()
+        d = self.client.get("/api/update").json()
+        self.assertIn("label", d["current"])
+        self.assertIn("enabled", d)
 
 
 if __name__ == "__main__":
