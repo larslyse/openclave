@@ -94,6 +94,7 @@ from routes.models import _model_option, _picker_options, _set_model
 from routes import models as model_routes
 from routes import review as review_routes
 from routes import setup as setup_routes
+from routes import tools as tool_routes
 
 app = FastAPI(title="OpenClave")
 
@@ -873,82 +874,6 @@ def _register_agent_routes(agent_id: str) -> None:
     app.get(f"/{agent_id}")(lambda: HTMLResponse(_agent_shell_html(agent_id)))
 
 
-# ── Reminders (agents' scheduled messages) and Web Push ──
-@app.get("/api/reminders")
-def api_reminders():
-    """Control Panel overview: every agent's upcoming reminders and recent sends."""
-    out = []
-    for agent_id in agent_order.get_order():
-        upcoming = reminders.list_for(agent_id)
-        sent = reminders.history_for(agent_id)[:10]
-        if upcoming or sent:
-            out.append({"agent_id": agent_id, "agent_name": AGENTS[agent_id].name, "upcoming": upcoming, "sent": sent})
-    return {"now": reminders.describe_now(), "agents": out}
-
-
-@app.delete("/api/reminders/{agent_id}/{reminder_id}")
-def api_cancel_reminder(agent_id: str, reminder_id: str):
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    if not reminders.cancel(agent_id, reminder_id):
-        raise HTTPException(status_code=404, detail="Reminder not found")
-    return {"cancelled": reminder_id}
-
-
-# ── Scheduled tasks (scheduled_tasks.py): agents' recurring jobs ──
-def _task_agent(agent_id: str) -> None:
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-
-
-@app.get("/api/tasks")
-def api_tasks():
-    """Control Panel overview: every agent's scheduled tasks with their last run."""
-    return scheduled_tasks.overview()
-
-
-@app.post("/api/tasks/{agent_id}")
-def api_add_task(agent_id: str, req: dict):
-    _task_agent(agent_id)
-    try:
-        return scheduled_tasks.add(agent_id, req)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-@app.post("/api/tasks/{agent_id}/{task_id}")
-def api_update_task(agent_id: str, task_id: str, req: dict):
-    _task_agent(agent_id)
-    try:
-        task = scheduled_tasks.update(agent_id, task_id, req)
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    return task
-
-
-@app.delete("/api/tasks/{agent_id}/{task_id}")
-def api_delete_task(agent_id: str, task_id: str):
-    _task_agent(agent_id)
-    if not scheduled_tasks.delete(agent_id, task_id):
-        raise HTTPException(status_code=404, detail="Task not found")
-    return {"deleted": task_id}
-
-
-@app.post("/api/tasks/{agent_id}/{task_id}/run")
-def api_run_task(agent_id: str, task_id: str):
-    """Run now, in the background; the result lands in the task's conversation."""
-    _task_agent(agent_id)
-    task = next((t for t in scheduled_tasks._load(agent_id)["tasks"] if t["id"] == task_id), None)
-    if task is None:
-        raise HTTPException(status_code=404, detail="Task not found")
-    if scheduled_tasks.get(agent_id, task_id)["running"]:
-        raise HTTPException(status_code=409, detail="This task is already running")
-    scheduled_tasks.run_in_background(agent_id, task, manual=True)
-    return {"started": task_id, "conversation_id": scheduled_tasks.conversation_id(task_id)}
-
-
 # ── Recaps (recaps.py): archived conversations as short cards ──
 @app.get("/api/agents/{agent_id}/recaps")
 def api_agent_recaps(agent_id: str):
@@ -994,60 +919,6 @@ def api_agent_recap_restore(agent_id: str, conversation_id: str):
     except (ValueError, FileExistsError) as exc:
         raise HTTPException(status_code=400, detail=str(exc))
     return {"restored": conversation_id}
-
-
-# ── Skills (skills.py): know-how agents load on demand ──
-
-
-@app.get("/api/agents/{agent_id}/skills")
-def api_agent_skills(agent_id: str):
-    _skill_agent(agent_id)
-    return {"skills": skills.list_for(agent_id)}
-
-
-@app.get("/api/agents/{agent_id}/skills/{scope}/{name}")
-def api_skill_text(agent_id: str, scope: str, name: str):
-    _skill_agent(agent_id)
-    try:
-        return {"key": f"{scope}/{name}", "text": skills.text(agent_id, f"{scope}/{name}")}
-    except (skills.SkillError, OSError) as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
-
-
-@app.post("/api/agents/{agent_id}/skills/{scope}/{name}")
-def api_skill_action(agent_id: str, scope: str, name: str, req: dict):
-    """{"on": bool} switches it for this agent; {"approve": true} enables an import."""
-    _skill_agent(agent_id)
-    key = f"{scope}/{name}"
-    try:
-        if req.get("approve"):
-            return skills.approve(agent_id, key)
-        return skills.set_enabled(agent_id, key, bool(req.get("on")))
-    except skills.SkillError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
-@app.delete("/api/agents/{agent_id}/skills/{scope}/{name}")
-def api_skill_delete(agent_id: str, scope: str, name: str):
-    _skill_agent(agent_id)
-    try:
-        skills.delete(agent_id, f"{scope}/{name}")
-    except skills.SkillError as exc:
-        raise HTTPException(status_code=404, detail=str(exc))
-    return {"deleted": f"{scope}/{name}"}
-
-
-@app.post("/api/skills/import")
-def api_skill_import(req: dict):
-    """{source | text, target: "shared" | agent id, name?, preview?, replace?}"""
-    try:
-        return skills.import_skill(str(req.get("source") or ""), pasted=req.get("text"),
-                                   target=str(req.get("target") or "shared"), name=req.get("name") or None,
-                                   preview=bool(req.get("preview")), replace=bool(req.get("replace")))
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-    except OSError as exc:
-        raise HTTPException(status_code=400, detail=f"couldn't fetch it: {exc}")
 
 
 @app.get("/api/push/key")
@@ -1185,8 +1056,6 @@ def api_channel_delete(channel_id: str):
 
 
 # ── Claves (claves.py): groups of agents, each with its own group chat ──
-
-
 @app.get("/api/claves")
 def api_claves():
     return claves.overview()
@@ -1376,40 +1245,6 @@ def api_set_identity(agent_id: str, kind: str, req: IdentityBodyRequest):
     return vault.read_identity_body(agent_id, kind)
 
 
-@app.get("/api/tools")
-def api_tools():
-    """Tool catalog for the Control Panel's per-agent tool editor."""
-    return {
-        "core": list(agent_tools.CORE_TOOLS),
-        "optional": [
-            {"name": t["function"]["name"], "summary": t["function"]["description"].split(". ")[0].rstrip(".") + "."}
-            for t in llm_client.TOOLS if t["function"]["name"] in agent_tools.OPTIONAL_TOOLS
-        ] + [{"name": name, "summary": text.split(". ")[0] + "."} for name, text in agent_tools.CAPABILITIES.items()],
-    }
-
-
-@app.get("/api/agents/{agent_id}/tools")
-def api_agent_tools(agent_id: str):
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    chosen = agent_tools.selected_optional(agent_id)
-    available = list(agent_tools.optional_for(agent_id))
-    return {"available": available, "selected": available if chosen is None else chosen,
-            "customized": chosen is not None, "onboarding": agents_module.is_onboarding(agent_id),
-            "connections": connections.status(agent_id), "connection_hint": connections.route_hint(agent_id),
-            "writes": f"Only its own folder (Agents/{AGENTS[agent_id].name}/)"}
-
-
-@app.post("/api/agents/{agent_id}/tools")
-def api_set_agent_tools(agent_id: str, req: SetAgentToolsRequest):
-    if agent_id not in AGENTS:
-        raise HTTPException(status_code=404, detail="Agent not found")
-    try:
-        return {"selected": agent_tools.set_optional(agent_id, req.tools)}
-    except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc))
-
-
 def sort_conversations(items: list[dict]) -> list[dict]:
     """Control Panel → Sorting. The vault lists newest first."""
     if service_settings.load()["sort_conversations"] == "alphabetical":
@@ -1431,6 +1266,7 @@ app.include_router(page_routes.router)
 app.include_router(model_routes.router)
 app.include_router(review_routes.router)
 app.include_router(setup_routes.router)
+app.include_router(tool_routes.router)
 
 
 for _agent_id in list(AGENTS):
