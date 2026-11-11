@@ -11,6 +11,7 @@ import ha_guard
 import llm_client
 import llm_models
 import main
+from routes import library as library_routes
 import model_discovery
 import service_settings
 import web_push
@@ -39,7 +40,7 @@ class RuntimeStatePathTests(unittest.TestCase):
             with self.subTest(path=path.name):
                 self.assertEqual(path.parent, CONFIG.state_dir)
         self.assertEqual(agent_factory.AVATAR_DIR, CONFIG.state_dir / "custom_avatars")
-        self.assertEqual(main.AVATAR_DIR, CONFIG.state_dir / "custom_avatars")
+        self.assertEqual(library_routes.AVATAR_DIR, CONFIG.state_dir / "custom_avatars")
 
 
 if __name__ == "__main__":

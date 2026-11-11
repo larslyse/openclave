@@ -4,6 +4,7 @@ import re
 import unittest
 
 import main
+from routes import library as library_routes
 
 
 class MobileAssetTests(unittest.TestCase):
@@ -19,16 +20,16 @@ class MobileAssetTests(unittest.TestCase):
             self.assertRegex(url, r"\?v=\d+$", f"{url} would be re-downloaded on every open")
 
     def test_versioned_avatar_is_cached_and_others_are_not(self):
-        agent = next(a for a in main.AGENTS if main._avatar_file(a))
-        v = main._avatar_version(agent)
-        self.assertIn("immutable", main.agent_avatar(agent, v=v).headers["cache-control"])
-        self.assertEqual(main.agent_avatar(agent).headers["cache-control"], "no-store")
-        self.assertEqual(main.agent_avatar(agent, v=v - 1).headers["cache-control"], "no-store", "stale version")
+        agent = next(a for a in main.AGENTS if library_routes._avatar_file(a))
+        v = library_routes._avatar_version(agent)
+        self.assertIn("immutable", library_routes.agent_avatar(agent, v=v).headers["cache-control"])
+        self.assertEqual(library_routes.agent_avatar(agent).headers["cache-control"], "no-store")
+        self.assertEqual(library_routes.agent_avatar(agent, v=v - 1).headers["cache-control"], "no-store", "stale version")
 
     def test_agent_list_carries_avatar_version(self):
         listed = {a.id: a.avatar_v for a in main.api_agents()}
         for agent_id, v in listed.items():
-            self.assertEqual(v, main._avatar_version(agent_id))
+            self.assertEqual(v, library_routes._avatar_version(agent_id))
 
 
 if __name__ == "__main__":
