@@ -404,6 +404,60 @@ async def enforce_trusted_origin(request: Request, call_next):
     return await call_next(request)
 
 
+# Host header check against DNS rebinding: a web page whose DNS name is
+# switched to 127.0.0.1 (or this machine's LAN address) becomes "same origin"
+# with OpenClave, sends no Origin header on GETs and could read the API. Its
+# requests still carry the page's own name in Host, so only names OpenClave
+# knows are served: loopback names, the hosts of TRUSTED_ORIGINS (public_url,
+# extra_origins, the bind and LAN addresses) and any IP literal (rebinding
+# needs a DNS name). Ports are ignored, so a Docker port mapping or a
+# reverse proxy on another port still matches. `tailscale serve` passes the
+# public name through as Host, which is the public_url host.
+# "testserver" is the Host Starlette's TestClient sends; it never travels a network.
+_LOOPBACK_HOSTS = {"localhost", "testserver"}
+
+
+def _host_name(host: str) -> str:
+    from urllib.parse import urlsplit
+
+    try:
+        return (urlsplit(f"//{host.strip()}").hostname or "").rstrip(".")
+    except ValueError:
+        return ""
+
+
+def _trusted_hosts(origins: set[str]) -> set[str]:
+    from urllib.parse import urlsplit
+
+    return _LOOPBACK_HOSTS | {(urlsplit(o).hostname or "").rstrip(".") for o in origins} - {""}
+
+
+def host_allowed(host: str | None, trusted: set[str] | None = None) -> bool:
+    import ipaddress
+
+    name = _host_name(host or "")
+    if not name:
+        return False
+    try:
+        ipaddress.ip_address(name)
+        return True
+    except ValueError:
+        pass
+    return name in (trusted if trusted is not None else _trusted_hosts(TRUSTED_ORIGINS)) or name.endswith(".localhost")
+
+
+@app.middleware("http")
+async def enforce_trusted_host(request: Request, call_next):
+    host = request.headers.get("host")
+    if not host_allowed(host):
+        name = _host_name(host or "") or "(none)"
+        return JSONResponse(status_code=421, content={"detail": (
+            f"OpenClave doesn't answer to the address '{name}'. If this is your own address for it, "
+            f"add it to openclave.toml: [network] public_url = \"https://{name}\" (the address you open "
+            f"it at), or extra_origins = [\"http://{name}:{CONFIG.port}\"]; then restart OpenClave.")})
+    return await call_next(request)
+
+
 def _model_option(m, agent_id: str | None = None, times: dict | None = None,
                   shown: list | None = None) -> ModelOption:
     price_in, price_out = llm_models.api_prices(m)
