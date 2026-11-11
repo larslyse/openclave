@@ -46,7 +46,6 @@ import svg_avatar
 import attention
 import claude_auth
 import cleanup
-import threading
 import connections
 import web_push
 import vault
@@ -1867,9 +1866,10 @@ def api_weekly_review():
 
 @app.post("/api/weekly-review/run")
 def api_weekly_review_run():
-    """Run it now (cleanup, then the audit) instead of waiting for Monday."""
-    threading.Thread(target=cleanup.run_weekly, name="openclave-weekly-review", daemon=True).start()
-    return {"started": True}
+    """Run it now (cleanup, then the audit) instead of waiting for Monday.
+    Waits for the cleanup, so the page can show its result straight away; the
+    audit is the manager's own chat run and only gets queued here."""
+    return {"started": True, **cleanup.run_weekly()}
 
 
 @app.post("/api/audit/run")
@@ -1894,8 +1894,28 @@ def api_cleanup_unarchive(req: UnarchiveRequest):
 
 @app.get("/api/setup")
 def api_setup():
-    """What's set up on this computer (setup_check.py): model routes, extras."""
-    return {**setup_check.summary(), "agents": len(AGENTS)}
+    """What's set up on this computer (setup_check.py): model routes, extras,
+    and the first-run steps (manager, ready-made agents to suggest)."""
+    return {**setup_check.summary(), **setup_check.first_run()}
+
+
+@app.post("/api/setup/key")
+async def api_setup_key(request: Request):
+    """{provider: "anthropic"|"xai", key} -> checked, saved to OPENCLAVE_HOME/.env
+    and live without a restart. The body is read by hand so that no error
+    response (e.g. FastAPI's validation errors) ever echoes the key back."""
+    try:
+        req = await request.json()
+    except ValueError:
+        req = None
+    provider, key = (req.get("provider"), req.get("key")) if isinstance(req, dict) else (None, None)
+    if not isinstance(provider, str) or not isinstance(key, str):
+        raise HTTPException(status_code=400, detail="provider and key are needed")
+    from starlette.concurrency import run_in_threadpool
+    try:
+        return await run_in_threadpool(setup_check.save_key, provider, key)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.get("/api/version")
@@ -2037,7 +2057,7 @@ def mobile_dashboard():
     html = (STATIC_DIR / "mobile" / "index.html").read_text(encoding="utf-8")
     # Every local script/stylesheet gets its cache-buster, so the phone keeps
     # them between opens instead of re-downloading ~200 KB each time.
-    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",),
+    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",), ("first_run.js",),
                   ("vendor", "marked-15.0.12.min.js"), ("vendor", "purify-3.2.6.min.js")):
         path = "/static/" + "/".join(parts)
         html = html.replace(f'{path}"', f'{path}?v={_asset_version(*parts)}"')

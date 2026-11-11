@@ -45,7 +45,14 @@
 <div id="claude-banner" style="display:none;margin:0 0 18px;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:14px">Claude CLI is signed out: agents on a Claude CLI model can't answer. <a href="#claude-login" style="color:#E8877A;font-weight:600">Sign in again</a></div>
 <div id="stale-banner" style="display:none;margin:0 0 18px;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:13px"></div>
 <a href="/" id="back-link">← Dashboard</a><h1>Control Panel</h1><p>Agents, models and usage across OpenClave.</p>
-<section id="setup" hidden><h2>Setup</h2><p class="muted" id="setup-intro"></p><table><tbody id="setup-rows"></tbody></table><p class="muted">Run <code>.venv/bin/python run.py --check</code> in the OpenClave folder for the same check in a terminal. The README has every step.</p></section>
+<section id="setup" hidden><h2>Setup</h2><p class="muted" id="setup-intro"></p><table><tbody id="setup-rows"></tbody></table>
+<h3 style="font-size:15px;margin:18px 0 4px">Add an API key</h3><p class="muted">Create one at <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style="color:#9dd6b9">console.anthropic.com</a> or <a href="https://console.x.ai/" target="_blank" rel="noopener" style="color:#9dd6b9">console.x.ai</a> (add a little credit; a monthly spending limit is a good idea). OpenClave checks it with the provider, saves it in your keys file and uses it straight away.</p>
+<form id="key-form" class="new-agent" autocomplete="off">
+<label>Provider<select name="provider"><option value="anthropic">Anthropic (Claude)</option><option value="xai">xAI (Grok)</option></select></label>
+<label>API key<input name="key" type="password" required autocomplete="off" autocapitalize="off" spellcheck="false" maxlength="300" placeholder="Paste the key"></label>
+<button type="submit">Check and save</button>
+</form><p id="key-msg" role="status"></p>
+<p class="muted">Run <code>.venv/bin/python run.py --check</code> in the OpenClave folder for the same check in a terminal. The README has every step.</p></section>
 <section><h2>Agents</h2><table><thead><tr><th></th><th>Agent</th><th>Last used</th><th>Model</th><th>Edit</th><th>Tools</th></tr></thead><tbody id="agents"><tr><td colspan="6">Loading…</td></tr></tbody></table></section>
 <section id="new-agent"><h2>New agent</h2>
 <p id="roster-warn" class="roster-warn" hidden></p>
@@ -84,7 +91,7 @@
 <section id="inbox"><h2>Maintainer inbox</h2><p class="muted">Bugs and ideas the agents flag to the manager (<code>flag_to_maintainer</code>). The manager triages them into the project backlog; close one here when it's dealt with.</p><table><thead><tr><th>Status</th><th>From</th><th>What</th><th>When</th><th></th></tr></thead><tbody id="inbox-list"><tr><td colspan="5">Loading…</td></tr></tbody></table><p><button class="link" type="button" id="inbox-show-closed">Show closed</button></p></section>
 <section id="weekly-review"><h2>Weekly review</h2><p class="muted">Every Monday the manager tidies up and looks through the week. Tick what it should do. Everything here only <b>suggests</b>: the suggestions land on <a data-manager href="/mobile/">the manager's page</a> in the phone app, and nothing changes until you say yes.</p>
 <div class="review-grid" id="review-items"><p class="muted">Loading…</p></div>
-<p><button class="link" type="button" id="review-run">Run the review now</button> <span class="muted" id="review-status"></span></p></section>
+<p><button class="link" type="button" id="review-run">Run a review now</button> <span class="muted" id="review-status"></span></p></section>
 <section><h2>Available models</h2><table><thead><tr><th>Model</th><th>Best suited to</th><th>Measured reply time</th><th>Images</th><th>API $/M input · output</th></tr></thead><tbody id="models"><tr><td colspan="5">Loading…</td></tr></tbody></table><p>API list prices are informational; CLI subscription access follows its own allowance.</p>
 <h3 style="font-size:15px;margin:22px 0 6px">Model updates</h3>
 <p class="muted">Once a day OpenClave checks the providers. A model newer than everything it has from that provider gets a test reply; if it answers, the weekly review suggests adding it (<i>Suggest adding new models</i> above). Old models, and ones the provider dropped, are suggested for removal (<i>Suggest removing old models</i>). Nothing is added or hidden until you say yes, and models an agent uses are never suggested. Nothing is deleted: Restore brings a model back, Remove hides one for good.</p>
@@ -346,6 +353,16 @@ async function loadCatalog(){
       try{const d=await postJson(`/api/catalog/${encodeURIComponent(row.dataset.id)}/install`,{model_id:document.querySelector('#new-agent-model').value,name:row.querySelector('.cat-name').value,...managerFields(row),...(newAgentClave?{clave:newAgentClave}:{})});location.href=`/${d.id}`}
       catch(x){err.textContent=x.message;b.disabled=false;b.textContent='Add'}
     });
+    // From the home page's first steps: #manager or #add-<template id> goes
+    // straight to that ready-made agent, with its name box ready to type in.
+    const want=location.hash==='#manager'?templates.find(t=>t.manager)?.id:location.hash.startsWith('#add-')?decodeURIComponent(location.hash.slice(5)):null;
+    const row=want&&body.querySelector(`tr[data-id="${CSS.escape(want)}"]`);
+    if(row){
+      row.style.background='#7FD1AE14';row.style.outline='2px solid #7FD1AE';row.style.outlineOffset='-2px';
+      const show=()=>row.scrollIntoView({block:'start'});
+      show();row.querySelector('.cat-name').focus({preventScroll:true});
+      setTimeout(show,600);  // the sections above are still filling in
+    }
   }catch(error){body.innerHTML=`<tr><td colspan="4">${esc(error.message)}</td></tr>`}
 }
 async function load(){
@@ -390,8 +407,11 @@ async function loadWeeklyReview(){
   });
   document.querySelector('#review-run').onclick=async e=>{
     e.target.disabled=true;
-    try{await fetch('/api/weekly-review/run',{method:'POST'});document.querySelector('#review-status').textContent=`Started: suggestions arrive on ${d.manager||'the manager'}'s page in a minute or two`}
-    catch{document.querySelector('#review-status').textContent='Could not start'}
+    document.querySelector('#review-status').textContent='Running…';
+    try{const r=await postJson('/api/weekly-review/run',{});
+      document.querySelector('#review-status').textContent=(r.suggestions?`Done: ${r.suggestions} suggestion${r.suggestions===1?'':'s'}`:'Done: nothing to tidy yet')+` on ${d.manager||'the manager'}'s page`+(r.audit?.queued?'; its audit adds more in a minute or two.':'.')}
+    catch(x){document.querySelector('#review-status').textContent=x.message||'Could not run it'}
+    e.target.disabled=false;
   };
 }
 async function loadInbox(){
@@ -684,18 +704,36 @@ document.querySelector('#claude-login-start').onclick=async e=>{
 async function loadSetup(){
   try{
     const d=await (await fetch('/api/setup')).json(),sec=document.querySelector('#setup');
-    const row=(x,opt)=>`<tr><td style="width:28px;color:${x.ready?'#9dd6b9':(opt?'#7d8484':'#E8A33D')}">${x.ready?'✓':'–'}</td><td>${esc(x.name)}<div class="muted" style="font-size:12px">${esc(x.detail)}</div></td><td class="muted" style="font-size:13px">${x.ready?'':esc(x.fix)}</td></tr>`;
+    // Claude CLI installed but not signed in: point at Claude sign-in below.
+    const fix=x=>x.needs_sign_in?`<a href="#claude-login" style="color:#9dd6b9;font-weight:600">Sign in to Claude</a>`:esc(x.fix);
+    const row=(x,opt)=>`<tr><td style="width:28px;color:${x.ready?'#9dd6b9':(opt?'#7d8484':'#E8A33D')}">${x.ready?'✓':'–'}</td><td>${esc(x.name)}<div class="muted" style="font-size:12px">${esc(x.detail)}</div></td><td class="muted" style="font-size:13px">${x.ready?'':fix(x)}</td></tr>`;
     document.querySelector('#setup-rows').innerHTML=`<tr class="group-row"><td colspan="3">Models: at least one</td></tr>${d.routes.map(x=>row(x,false)).join('')}<tr class="group-row"><td colspan="3">Optional</td></tr>${d.extras.map(x=>row(x,true)).join('')}`;
     const keeper=`<img src="/static/mobile/icons/keeper-${d.ready?'done':'error'}.svg" alt="" width="36" height="36" style="vertical-align:middle;margin-right:10px">`;
     document.querySelector('#setup-intro').innerHTML=keeper+(d.ready?`Data folder <code>${esc(d.home)}</code>, keys file <code>${esc(d.env_file)}</code>.`
-      :`<b style="color:#E8A33D">No model is set up yet, so agents can't answer.</b> The quickest start is an API key: put it in <code>${esc(d.env_file)}</code> and restart OpenClave.`);
+      :`<b style="color:#E8A33D">No model is set up yet, so agents can't answer.</b> The quickest start is an API key: paste it below.`);
     if(d.ready)document.querySelector('#access').after(sec);
     sec.hidden=false;
     // No Claude CLI on this computer: nothing to sign in to.
     const claudeCli=d.routes.find(x=>x.id==='claude-cli');
-    if(claudeCli&&!claudeCli.ready)document.querySelector('#claude-login').hidden=true;
+    if(claudeCli&&!claudeCli.ready&&!claudeCli.needs_sign_in)document.querySelector('#claude-login').hidden=true;
+    // The section was hidden while loading, so the browser couldn't jump to it.
+    if(['#setup','#claude-login'].includes(location.hash)&&!setupShown)document.querySelector(location.hash).scrollIntoView();
+    setupShown=true;
   }catch{}
 }
+let setupShown=false;
+document.querySelector('#key-form').onsubmit=async e=>{
+  e.preventDefault();
+  const form=e.target,msg=document.querySelector('#key-msg'),button=form.querySelector('button');
+  button.disabled=true;msg.style.color='';msg.textContent='Checking the key…';
+  try{
+    const r=await postJson('/api/setup/key',{provider:form.provider.value,key:form.key.value});
+    msg.style.color=r.saved?'#9dd6b9':'#E8877A';msg.textContent=(r.saved?'✓ ':'')+r.message;
+    // With a model ready, Setup moves further down the page: keep the answer in view.
+    if(r.saved){form.key.value='';load();await loadSetup();msg.scrollIntoView({block:'center'})}
+  }catch(x){msg.style.color='#E8877A';msg.textContent=x.message}
+  button.disabled=false;
+};
 loadSetup();
 loadClaudeAuth();
 load();

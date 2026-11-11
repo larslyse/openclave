@@ -175,6 +175,9 @@
   .open-dashboard{ background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:12px; font:inherit; font-size:15px; font-weight:600; padding:10px 20px; cursor:pointer; }
   .open-dashboard:hover{ border-color: var(--text-muted); }
   .open-dashboard:disabled{ opacity:.6; cursor:default; }
+  /* Nothing to open or organize with no agents; no group chat with one (setAgentCount). */
+  body[data-agents="none"] .open-dashboard, body[data-agents="none"] .clave-row,
+  body[data-agents="none"] .view-box, body[data-agents="one"] .view-box{ display:none; }
   .view-switch{ display:inline-flex; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden; }
   .view-switch button{ background:none; border:0; color: var(--text-muted); font:inherit; font-size:13px; padding:6px 14px; cursor:pointer; }
   .view-switch button[aria-pressed="true"]{ background: var(--panel); color: var(--text); }
@@ -340,10 +343,10 @@
 <div id="stale-banner" style="display:none;margin:0 130px 18px 0;padding:10px 14px;border:1px solid #C4573D;border-radius:8px;background:#C4573D22;color:#E8877A;font-size:13px"></div>
 <header>
   <h1>OpenClave</h1>
-  <div class="sub">A gathering of specialists. Chat below, or click through for full history and settings.</div>
+  <div class="sub">All your agents. Chat below, or open an agent's page for its full history and settings.</div>
   <div class="sub" style="margin-top:10px"><a href="/mobile/" style="color:inherit">Open mobile chat</a> · <a href="/control/" style="color:inherit">Control Panel</a></div>
   <div class="view-row">
-    <button type="button" class="open-dashboard" data-open-dashboard title="The full page of the agent you used last; switch agents with the tabs at the top">Dashboard →</button>
+    <button type="button" class="open-dashboard" data-open-dashboard title="Opens the page of the agent you used last; switch agents with the tabs at the top">Open agent page →</button>
     <fieldset class="hbox view-box">
       <legend>View</legend>
       <div class="view-switch" role="group" aria-label="Overview">
@@ -379,6 +382,7 @@
 <script src="/static/chat_core.js"></script>
 <script src="/static/room_core.js"></script>
 <script src="/static/avatar_maker.js"></script>
+<script src="/static/first_run.js"></script>
 <script>
 function escapeHtml(s) {
   const d = document.createElement('div');
@@ -568,7 +572,9 @@ async function load() {
     if (!agentsRes.ok) throw new Error(agentsRes.status);
     await clavePickerReady;
     const only = activeMembers();
-    const agents = (await agentsRes.json()).filter(a => !only || only.has(a.id));
+    const all = await agentsRes.json();
+    setAgentCount(all.length);
+    const agents = all.filter(a => !only || only.has(a.id));
     grid.innerHTML = '';
     for (const a of agents) {
       const tile = document.createElement('div');
@@ -604,34 +610,29 @@ async function load() {
     addTile.className = 'add-tile';
     // With a clave picked, a new agent joins it (like its "+ New agent" box).
     addTile.href = homeClaves?.active && only ? `/control/?clave=${encodeURIComponent(homeClaves.active)}#new-agent` : '/control/#new-agent';
-    addTile.innerHTML = '<span class="plus">+</span><span>Create new specialist</span>';
+    addTile.innerHTML = '<span class="plus">+</span><span>New agent</span>';
     grid.appendChild(addTile);
     markAttention(grid);
-    showWelcome(grid, agents.length);
+    showWelcome(grid);
   } catch (e) {
     grid.innerHTML = '<div class="empty">Failed to load agents.</div>';
   }
 }
 
-// First run (setup_check.py): no model set up yet, or no agents yet.
-async function showWelcome(grid, agentCount) {
+// First steps on a new install (first_run.js, shared with the phone).
+async function showWelcome(grid) {
+  const card = await OpenClaveFirstRun.card();
   document.querySelector('#welcome')?.remove();
-  let d;
-  try { d = await (await fetch('/api/setup')).json(); } catch { return; }
-  if (d.ready && (d.agents || agentCount)) return;
-  const card = document.createElement('div');
-  card.id = 'welcome';
-  card.style.cssText = 'border:1px solid #30373a;border-radius:12px;background:#1a1e22;padding:18px 22px;margin:0 0 18px;line-height:1.55;max-width:760px';
-  const step1 = d.ready
-    ? '<li style="color:#9dd6b9">A model is set up. ✓</li>'
-    : `<li><b>Set up a model.</b> None can answer yet. Quickest: an Anthropic or xAI API key in <code>${escapeHtml(d.env_file)}</code>, e.g. <code>ANTHROPIC_API_KEY=sk-ant-…</code>, then restart OpenClave. A Claude or ChatGPT subscription works too, through its CLI. <a href="/control/#setup">Setup check</a></li>`;
-  const pose = d.ready ? 'done' : 'thinking';  // the Keeper: happy once a model can answer
-  card.innerHTML = `<h2 style="margin:0 0 6px;font-size:18px;display:flex;align-items:center;gap:10px"><img src="/static/mobile/icons/keeper-${pose}.svg" alt="" width="40" height="40">Welcome to OpenClave</h2>
-    <ol style="margin:6px 0 0;padding-left:20px">${step1}
-      <li><b>Add your first agents</b> from <a href="/control/#new-agent">ready-made agents</a>: start with the <b>Manager</b> (give it any name; every install needs one) plus two to four areas you care about. Each one interviews you for a few minutes to fit itself to you.</li>
-      <li><b>Chat</b> here, or open an agent for its full page. Everything it learns is kept as plain Markdown files in <code>${escapeHtml(d.agents_folder)}</code>.</li></ol>`;
-  card.querySelectorAll('a').forEach(a => { a.style.color = '#9dd6b9'; });
-  grid.before(card);
+  if (card) grid.before(card);
+}
+
+// What an install with no agents can't use yet stays hidden (CSS on
+// body[data-agents]): the agent-page button and Claves need one agent, the
+// group chat view needs two.
+function setAgentCount(n) {
+  document.body.dataset.agents = n === 0 ? 'none' : n === 1 ? 'one' : 'many';
+  const view = document.body.dataset.view;
+  if ((view === 'chat' && n < 2) || (view === 'claves' && n < 1)) setView('tiles');
 }
 
 // ── Chat view: agents left, group chat or a direct chat right ─────────────
@@ -699,7 +700,7 @@ function drawSide() {
     <button type="button" class="cv-item" data-channel-new><span class="cv-hash">+</span><span class="cv-name">Add channel</span></button>
     <div class="cv-section">Agents – private chat</div>
     ${cvAgents.map(agentRow).join('')}
-    <a class="cv-item" href="/control/#new-agent"><span class="cv-hash">+</span><span class="cv-name">New specialist</span></a>
+    <a class="cv-item" href="/control/#new-agent"><span class="cv-hash">+</span><span class="cv-name">New agent</span></a>
     <div class="cv-section">Between agents</div>
     ${cvThreads.map(threadRow).join('') || '<div class="cv-empty">Messages agents send each other show up here.</div>'}`;
 }
@@ -1039,7 +1040,7 @@ document.getElementById('clave-pick').addEventListener('click', async e => {
   if (document.body.dataset.view === 'tiles') { tilesLoaded = true; load(); }
 });
 const clavePickerReady = loadClavePicker();
-// "Dashboard" (2026-11-04): the same as clicking an agent's box, for the
+// "Open agent page": the same as clicking an agent's box, for the
 // agent used most recently (its page has tabs for all the others).
 document.querySelector('[data-open-dashboard]').onclick = async e => {
   e.target.disabled = true;
@@ -1052,6 +1053,7 @@ document.querySelector('[data-open-dashboard]').onclick = async e => {
   e.target.disabled = false;
 };
 setView(['chat', 'claves'].includes(store.get(VIEW_KEY)) ? store.get(VIEW_KEY) : 'tiles');
+tileApi('/api/agents').then(list => setAgentCount(list.length)).catch(() => {});
 // Stale-deploy banner: backend code changed on disk but openclave.service
 // wasn't restarted (see deploy_state.py). Hidden unless /api/version says stale.
 async function checkDeployState() {

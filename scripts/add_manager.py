@@ -25,7 +25,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import agent_factory  # noqa: E402
 import agents  # noqa: E402
 import catalog  # noqa: E402
-import llm_models  # noqa: E402
 import setup_check  # noqa: E402
 
 TEMPLATE = "rick"  # the manager template's folder in catalog/agents
@@ -37,14 +36,7 @@ def existing_manager() -> str | None:
 
 
 def pick_model() -> str:
-    ready = setup_check.ready_providers()
-    default = llm_models.get(llm_models.DEFAULT_MODEL_ID)
-    if default.provider in ready:
-        return default.id
-    for m in llm_models.picker_models():
-        if m.provider in ready:
-            return m.id
-    return default.id
+    return setup_check.ready_model_id()
 
 
 def main(argv: list[str]) -> int:
