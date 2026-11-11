@@ -13,6 +13,7 @@ import chat_service
 import connections
 import llm_models
 import main
+from routes import models as model_routes
 from schemas import SetModelRequest
 
 CLI = next(m.id for m in llm_models.CATALOG if m.provider == "claude-cli")
@@ -47,16 +48,16 @@ class ConnectionsTests(unittest.TestCase):
 
     def test_switching_never_blocks(self):
         self.selection.write_text(json.dumps({"r2": CLI}))
-        result = main._set_model("r2", SetModelRequest(model_id=CODEX))
+        result = model_routes._set_model("r2", SetModelRequest(model_id=CODEX))
         self.assertEqual(result["loses"], [])
         self.assertEqual(llm_models.selected_model_id("r2"), CODEX)
         with self.assertRaises(HTTPException) as bad:
-            main._set_model("r2", SetModelRequest(model_id="no-such-model"))
+            model_routes._set_model("r2", SetModelRequest(model_id="no-such-model"))
         self.assertEqual(bad.exception.status_code, 400)
 
     def test_pickers_attention_and_prompt_all_say_it(self):
-        self.assertEqual(main._model_option(llm_models.get(CLI), "r2").supports, ["HA"])
-        self.assertEqual(main._model_option(llm_models.get(CODEX), "r2").supports, ["HA"])
+        self.assertEqual(model_routes._model_option(llm_models.get(CLI), "r2").supports, ["HA"])
+        self.assertEqual(model_routes._model_option(llm_models.get(CODEX), "r2").supports, ["HA"])
         findings = attention.check("r2")
         self.assertNotIn("connection", {f["kind"] for f in findings})
         line = chat_service._connections_line("r2")
