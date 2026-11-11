@@ -824,6 +824,12 @@ class UiSmokeTest(unittest.TestCase):
             self.assertEqual(await br.eval("return document.querySelector('#console-body').firstElementChild.id;"), "cleanup", "cleanup is at the top of Rick's page")
             await br.eval("document.querySelector('#cleanup [data-run-review]').click(); return 1;")
             await asyncio.sleep(3)
+            # The run posts in Rick's Cleanup and Audit chats; drop them so
+            # tests that count Rick's conversations don't depend on order.
+            await asyncio.sleep(3)
+            for f in (self.tmp / ".openclave" / "agents" / "Rick" / "conversations").glob("*.md"):
+                if f.stem in ("cleanup", "audit"):
+                    f.unlink()
             rows = await br.eval("return [...document.querySelectorAll('.cleanup-item')].filter(r=>r.dataset.id.includes(':greg:')).map(r=>r.innerText);")
             self.assertEqual(len(rows), 2, rows)
             self.assertIn("no activity for 40 days", rows[0])

@@ -2003,7 +2003,7 @@ def mobile_dashboard():
     html = (STATIC_DIR / "mobile" / "index.html").read_text(encoding="utf-8")
     # Every local script/stylesheet gets its cache-buster, so the phone keeps
     # them between opens instead of re-downloading ~200 KB each time.
-    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",),
+    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",), ("first_run.js",),
                   ("vendor", "marked-15.0.12.min.js"), ("vendor", "purify-3.2.6.min.js")):
         path = "/static/" + "/".join(parts)
         html = html.replace(f'{path}"', f'{path}?v={_asset_version(*parts)}"')
