@@ -14,9 +14,14 @@ import agents
 import config
 import request_phase
 import vault
-from llm_runs import MCP_VAULT_SERVER, READ_ONLY_RUNS, RUN_ENV, _cli_diagnostic, _cli_timeout, _expand_server_env, _format_transcript, _mark_run, _stopped_reply, _unmark_run, cancel_running
+from llm_runs import (
+    MCP_VAULT_SERVER, READ_ONLY_RUNS, RUN_ENV, _cli_diagnostic, _cli_timeout,
+    _expand_server_env, _format_transcript, _mark_run, _stopped_reply, _unmark_run,
+    cancel_running,
+)
 from llm_tools import _has_web_search, tool_phase
 from llm_usage import _log_codex_usage, _record_codex_rate_limits
+from providers.base import Provider
 
 
 # Same reasoning, same fix, for the OpenAI Codex CLI (subscription path via
@@ -388,3 +393,11 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
         return reply or "(codex-cli returned no final message)"
     finally:
         Path(last_message_path).unlink(missing_ok=True)
+
+
+class CodexCliProvider(Provider):
+    id = "codex-cli"
+    route = "CLI"
+
+    def chat(self, agent_id, model, system_prompt, messages, *, max_tokens=None, effort=None):
+        return _chat_codex_cli(agent_id, model.id, system_prompt, messages)

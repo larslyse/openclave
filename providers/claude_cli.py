@@ -12,9 +12,13 @@ from pathlib import Path
 import claude_auth
 import config
 import request_phase
-from llm_runs import MCP_VAULT_SERVER, _cli_diagnostic, _cli_timeout, _cli_tools, _extra_servers, _format_transcript, _mark_run, _stopped_reply, _unmark_run, cancel_running
+from llm_runs import (
+    MCP_VAULT_SERVER, _cli_diagnostic, _cli_timeout, _cli_tools, _extra_servers,
+    _format_transcript, _mark_run, _stopped_reply, _unmark_run, cancel_running,
+)
 from llm_tools import _has_web_search, tool_phase
 from llm_usage import log_usage
+from providers.base import Provider
 
 
 CLAUDE_CLI_TIMEOUT_S = 300
@@ -239,3 +243,15 @@ def _chat_claude_cli(agent_id: str, model_id: str, system_prompt: str, messages:
 
     claude_auth.mark_ok()
     return (payload.get("result") or "").strip()
+
+
+class ClaudeCliProvider(Provider):
+    id = "claude-cli"
+    route = "CLI"
+
+    def chat(self, agent_id, model, system_prompt, messages, *, max_tokens=None, effort=None):
+        # The timeout follows the catalog entry (its speed), not the API id it
+        # runs under: claude-opus-5-5-cli is slow, claude-opus-5-5 is not, which
+        # cut R2's big HA builds off at 5 minutes instead of 10 (2026-10-17).
+        return _chat_claude_cli(agent_id, model.api_model_id or model.id, system_prompt, messages,
+                                timeout_s=_cli_timeout(model.id, CLAUDE_CLI_TIMEOUT_S))

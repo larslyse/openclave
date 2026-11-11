@@ -6,6 +6,7 @@ import request_phase
 from llm_runs import _api_run, _check_stop
 from llm_tools import MAX_TOOL_ROUNDS, _run_tool, tools_for
 from llm_usage import log_usage
+from providers.base import Provider
 
 
 def _anthropic_tools(agent_id: str) -> list[dict]:
@@ -135,3 +136,13 @@ def _anthropic_rounds(agent_id, client, model_id, system, tools, convo, usage_to
 
     log_usage(agent_id, "anthropic", model_id, usage_total, None)
     return "(reached tool-use round limit without a final reply)"
+
+
+class AnthropicApiProvider(Provider):
+    id = "anthropic"
+    route = "API"
+    streams_text = True
+    in_process_tools = True
+
+    def chat(self, agent_id, model, system_prompt, messages, *, max_tokens=None, effort=None):
+        return _chat_anthropic(agent_id, model.id, system_prompt, messages, max_tokens=max_tokens, effort=effort)

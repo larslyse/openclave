@@ -37,33 +37,20 @@ import claude_auth
 import config
 import agents
 import llm_models
+import providers
 import request_phase
 import vault
 from state_io import load_json, save_json
-from llm_compaction import (  # noqa: F401 (re-exported)
-    COMPACTION_CHAR_THRESHOLD, COMPACTION_KEEP_RECENT_TURNS, COMPACTION_MODEL,
-    _summarize_transcript, maybe_compact_conversation,
-)
-from providers.codex_cli import (  # noqa: F401 (re-exported)
-    CODEX_BIN, CODEX_CLI_TIMEOUT_S, CODEX_WRITE_GUIDANCE, _CODEX_PHASES, _chat_codex_cli, _toml_str,
-    _watch_codex_phase, codex_phase_for, codex_steps_done,
-)
-from providers.claude_cli import (  # noqa: F401 (re-exported)
-    CLAUDE_BIN, CLAUDE_CLI_TIMEOUT_S, _chat_claude_cli, _claude_stream_error, _split_images,
-    _watch_claude_phase, claude_phase_for, claude_steps_done,
-)
-from providers.anthropic_api import (  # noqa: F401 (re-exported)
-    _anthropic_content, _anthropic_rounds, _anthropic_tools, _chat_anthropic,
-)
-from providers.xai_api import (  # noqa: F401 (re-exported)
-    XAI_BASE_URL, _chat_xai, _read_openai_stream,
-)
-from llm_tools import (  # noqa: F401 (re-exported)
-    MAX_DASHBOARD_CHARS, MAX_TOOL_ROUNDS, READ_ONLY_TOOLS, SOFT_FILE_SIZE_LIMIT, _TOOLS_RUN,
-    _has_web_search, _run_tool, _size_note, start_tool_log, tool_phase, tools_for, tools_run,
-)
-from llm_tool_defs import (  # noqa: F401 (re-exported)
-    TOOLS,
+
+# llm_client is the public facade: the code lives in the modules below, and
+# every name stays importable as llm_client.<name> (same objects, so shared
+# state such as READ_ONLY_RUNS or TOOLS is one object). Patch a name in the
+# module that uses it, not here, except chat/maybe_compact_conversation/
+# log_usage/TOOLS as read by callers through llm_client.
+from llm_usage import (  # noqa: F401 (re-exported)
+    CLI_QUOTA_FILE, USAGE_LOG, USAGE_WINDOWS, _log_codex_usage, _read_usage_entries,
+    _record_codex_rate_limits, api_equivalent_usd, codex_rate_limits_from_log, codex_usage_from_log,
+    log_usage, usage_summary,
 )
 from llm_runs import (  # noqa: F401 (re-exported)
     MCP_VAULT_SERVER, READ_ONLY_RUNS, RUN_ENV, SLOW_MODEL_CLI_TIMEOUT_S, StoppedByOwner, _API_STOPS,
@@ -71,10 +58,30 @@ from llm_runs import (  # noqa: F401 (re-exported)
     _cli_tools, _expand_server_env, _extra_servers, _format_transcript, _mark_run, _stopped_reply,
     _timeout_reply, _unmark_run, cancel_running,
 )
-from llm_usage import (  # noqa: F401 (re-exported)
-    CLI_QUOTA_FILE, USAGE_LOG, USAGE_WINDOWS, _log_codex_usage, _read_usage_entries,
-    _record_codex_rate_limits, api_equivalent_usd, codex_rate_limits_from_log, codex_usage_from_log,
-    log_usage, usage_summary,
+from llm_tool_defs import (  # noqa: F401 (re-exported)
+    TOOLS,
+)
+from llm_tools import (  # noqa: F401 (re-exported)
+    MAX_DASHBOARD_CHARS, MAX_TOOL_ROUNDS, READ_ONLY_TOOLS, SOFT_FILE_SIZE_LIMIT, _TOOLS_RUN,
+    _has_web_search, _run_tool, _size_note, start_tool_log, tool_phase, tools_for, tools_run,
+)
+from llm_compaction import (  # noqa: F401 (re-exported)
+    COMPACTION_CHAR_THRESHOLD, COMPACTION_KEEP_RECENT_TURNS, COMPACTION_MODEL,
+    _summarize_transcript, maybe_compact_conversation,
+)
+from providers.xai_api import (  # noqa: F401 (re-exported)
+    XAI_BASE_URL, _chat_xai, _read_openai_stream,
+)
+from providers.anthropic_api import (  # noqa: F401 (re-exported)
+    _anthropic_content, _anthropic_rounds, _anthropic_tools, _chat_anthropic,
+)
+from providers.claude_cli import (  # noqa: F401 (re-exported)
+    CLAUDE_BIN, CLAUDE_CLI_TIMEOUT_S, _chat_claude_cli, _claude_stream_error, _split_images,
+    _watch_claude_phase, claude_phase_for, claude_steps_done,
+)
+from providers.codex_cli import (  # noqa: F401 (re-exported)
+    CODEX_BIN, CODEX_CLI_TIMEOUT_S, CODEX_WRITE_GUIDANCE, _CODEX_PHASES, _chat_codex_cli, _toml_str,
+    _watch_codex_phase, codex_phase_for, codex_steps_done,
 )
 
 
@@ -98,19 +105,5 @@ def chat(agent_id: str, system_prompt: str, messages: list[dict], *, model_id: s
     effort sets output_config.effort (anthropic provider only) — the voice path
     uses "low" so adaptive thinking can't eat its small max_tokens budget."""
     model = llm_models.get(model_id or llm_models.selected_model_id(agent_id))
-    if model.provider == "claude-cli":
-        # The timeout follows the catalog entry (its speed), not the API id it
-        # runs under: claude-opus-5-5-cli is slow, claude-opus-5-5 is not, which
-        # cut R2's big HA builds off at 5 minutes instead of 10 (2026-10-17).
-        return _chat_claude_cli(agent_id, model.api_model_id or model.id, system_prompt, messages,
-                                timeout_s=_cli_timeout(model.id, CLAUDE_CLI_TIMEOUT_S))
-    if model.provider == "codex-cli":
-        return _chat_codex_cli(agent_id, model.id, system_prompt, messages)
-    if model.provider == "anthropic":
-        return _chat_anthropic(agent_id, model.id, system_prompt, messages, max_tokens=max_tokens, effort=effort)
-    return _chat_xai(
-        agent_id, model.id, system_prompt, messages,
-        api_model_id=model.api_model_id, reasoning_effort=model.reasoning_effort,
-    )
-
-
+    return providers.get(model.provider).chat(agent_id, model, system_prompt, messages,
+                                              max_tokens=max_tokens, effort=effort)

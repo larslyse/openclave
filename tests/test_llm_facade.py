@@ -12,7 +12,10 @@ from pathlib import Path
 from unittest.mock import patch
 
 import llm_client
+import llm_models
+import providers
 import vault
+from providers import anthropic_api, claude_cli, codex_cli, xai_api
 
 FIXTURES = Path(__file__).parent / "fixtures"
 SURFACE_FILE = FIXTURES / "llm_client_surface.json"
@@ -118,6 +121,55 @@ class CliCallTests(unittest.TestCase):
         for key in expected:
             with self.subTest(case=key):
                 self.assertEqual(actual[key], expected[key])
+
+
+class DispatchTests(unittest.TestCase):
+    """chat() picks the provider by the model's provider id and calls each
+    route's function with exactly the arguments the old if/elif chain used."""
+    MESSAGES = [{"role": "user", "content": "hi"}]
+
+    def model(self, provider):
+        return next(m for m in llm_models.CATALOG if m.provider == provider)
+
+    def test_each_provider_id_reaches_its_class(self):
+        expected = {"anthropic": anthropic_api.AnthropicApiProvider, "xai": xai_api.XaiApiProvider,
+                    "claude-cli": claude_cli.ClaudeCliProvider, "codex-cli": codex_cli.CodexCliProvider}
+        self.assertEqual(set(providers.PROVIDERS), set(expected))
+        for provider_id, cls in expected.items():
+            with self.subTest(provider=provider_id):
+                provider = providers.PROVIDERS[provider_id]
+                self.assertIs(type(provider), cls)
+                model = self.model(provider_id)
+                self.assertEqual(provider.route, model.route)
+                with patch.object(cls, "chat", return_value="reply") as chat:
+                    self.assertEqual(llm_client.chat("rick", "sys", self.MESSAGES, model_id=model.id,
+                                                     max_tokens=7, effort="low"), "reply")
+                chat.assert_called_once_with("rick", model, "sys", self.MESSAGES, max_tokens=7, effort="low")
+
+    def test_unknown_provider_ids_go_to_xai_as_before(self):
+        odd = llm_models.ModelOption(id="odd-1", provider="something-else", display_name="Odd", tier="t")
+        with patch.object(llm_models, "get", return_value=odd), \
+                patch.object(xai_api, "_chat_xai", return_value="x") as run:
+            self.assertEqual(llm_client.chat("rick", "sys", self.MESSAGES, model_id="odd-1"), "x")
+        run.assert_called_once_with("rick", "odd-1", "sys", self.MESSAGES, api_model_id=None, reasoning_effort=None)
+
+    def test_route_functions_get_the_same_arguments_as_before(self):
+        grok = llm_models.get("grok-4.6-fast")
+        cases = [
+            (xai_api, "_chat_xai", grok.id, ("rick", grok.id, "sys", self.MESSAGES),
+             {"api_model_id": grok.api_model_id, "reasoning_effort": grok.reasoning_effort}),
+            (anthropic_api, "_chat_anthropic", "claude-sonnet-5", ("rick", "claude-sonnet-5", "sys", self.MESSAGES),
+             {"max_tokens": 7, "effort": "low"}),
+            (claude_cli, "_chat_claude_cli", "claude-opus-5-5-cli", ("rick", "claude-opus-5-5", "sys", self.MESSAGES),
+             {"timeout_s": llm_client.SLOW_MODEL_CLI_TIMEOUT_S}),
+            (claude_cli, "_chat_claude_cli", "claude-sonnet-4-6", ("rick", "claude-sonnet-4-6", "sys", self.MESSAGES),
+             {"timeout_s": llm_client._cli_timeout("claude-sonnet-4-6", llm_client.CLAUDE_CLI_TIMEOUT_S)}),
+            (codex_cli, "_chat_codex_cli", "gpt-5.6-terra", ("rick", "gpt-5.6-terra", "sys", self.MESSAGES), {}),
+        ]
+        for module, name, model_id, args, kwargs in cases:
+            with self.subTest(model=model_id), patch.object(module, name, return_value="ok") as run:
+                llm_client.chat("rick", "sys", self.MESSAGES, model_id=model_id, max_tokens=7, effort="low")
+                run.assert_called_once_with(*args, **kwargs)
 
 
 if __name__ == "__main__":

@@ -8,6 +8,7 @@ import request_phase
 from llm_runs import _api_run, _check_stop
 from llm_tools import MAX_TOOL_ROUNDS, _run_tool, tools_for
 from llm_usage import log_usage
+from providers.base import Provider
 
 
 XAI_BASE_URL = "https://api.x.ai/v1"
@@ -100,3 +101,16 @@ def _read_openai_stream(agent_id: str, stream, usage_total: dict, stop: threadin
         if close:
             close()
     return text, [calls[i] for i in sorted(calls)], finish_reason
+
+
+class XaiApiProvider(Provider):
+    id = "xai"
+    route = "API"
+    streams_text = True
+    in_process_tools = True
+
+    def chat(self, agent_id, model, system_prompt, messages, *, max_tokens=None, effort=None):
+        return _chat_xai(
+            agent_id, model.id, system_prompt, messages,
+            api_model_id=model.api_model_id, reasoning_effort=model.reasoning_effort,
+        )
