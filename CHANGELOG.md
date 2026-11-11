@@ -6,12 +6,7 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## [Unreleased]
 
-### Added
-
-- A release number (`VERSION`), shown by `/api/version`, `run.py --check`
-  and the startup line.
-- A data format version (`state/version.json`) and migrations that run once
-  at startup, after a backup of the state files.
+Nothing yet.
 
 ## [0.1.0]
 
@@ -41,6 +36,9 @@ The first public release.
   speech), Home Assistant tools whose changes wait for your OK.
 - `install.sh`, a guided installer, plus install by hand, a systemd unit
   example and a Docker image for the API routes.
+- A release number (`VERSION`), shown by `/api/version`, `run.py --check`
+  and the startup line, and a data format version (`state/version.json`)
+  with migrations that run once at startup.
 
 [Unreleased]: https://github.com/larslyse/openclave/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/larslyse/openclave/releases/tag/v0.1.0
