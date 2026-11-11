@@ -72,6 +72,9 @@ class Settings:
     voice_second_voice: dict | None = None
     # [updates] check: look for a newer OpenClave every few hours (updater.py).
     update_check: bool = True
+    # [updates] channel: "release" (the newest vX.Y.Z tag) or "main" (every
+    # change on the main branch, for developers). See updater.py.
+    update_channel: str = "release"
 
     @property
     def qmd_env(self) -> dict[str, str]:
@@ -142,6 +145,9 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
     update_check = section("updates").get("check", True)
     if not isinstance(update_check, bool):
         raise ValueError("updates.check must be true or false")
+    update_channel = section("updates").get("channel", "release")
+    if update_channel not in ("release", "main"):
+        raise ValueError('updates.channel must be "release" or "main"')
     catalog_sources = section("catalog").get("sources", [])
     if not isinstance(catalog_sources, list) or not all(isinstance(s, str) and s for s in catalog_sources):
         raise ValueError("catalog.sources must be a list of folder paths")
@@ -211,6 +217,7 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
         note_languages=_languages(owner.get("note_languages", [])),
         access_token=str(env.get("OPENCLAVE_ACCESS_TOKEN") or network.get("access_token", "") or "").strip(),
         update_check=update_check,
+        update_channel=update_channel,
         **_second_language(voice),
     )
 

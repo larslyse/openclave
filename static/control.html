@@ -812,8 +812,8 @@ async function loadUpdate(){
     const when=c.checked_at?` <span class="muted">(checked ${esc(claudeWhen(c.checked_at))})</span>`:'';
     let html=`<p>Running: <b>${esc(d.current.label)}</b>${d.current.version&&d.current.commit?` <span class="muted">commit ${esc(d.current.commit)}</span>`:''}</p>`;
     if(c.error)html+=`<p style="color:#E8A33D">Couldn't check: ${esc(c.error)}${when}</p>`;
-    else if(c.available)html+=`<p style="color:#9dd6b9">A newer version is available: ${esc(c.latest)}${c.behind?` (${c.behind} changes)`:''}${when}</p>`;
-    else if(c.checked_at)html+=`<p>You have the latest version.${when}</p>`;
+    else if(c.available)html+=`<p style="color:#9dd6b9">${c.summary?esc(c.summary):`A newer version is available: ${esc(c.latest)}${c.behind?` (${c.behind} changes)`:''}`}${when}</p>`;
+    else if(c.checked_at)html+=`<p>${esc(c.summary||'You have the latest version.')}${when}</p>`;
     else html+=`<p class="muted">${d.enabled?'Not checked yet.':'Automatic checks are off.'}</p>`;
     html+=`<p><button type="button" class="link" id="update-check">${d.checking?'Checking…':'Check now'}</button></p>`;
     if(d.local_changes.length)html+=`<p style="color:#E8A33D">This OpenClave folder has local changes (${esc(d.local_changes.slice(0,5).join(', '))}), so it won't update over them.</p>`;

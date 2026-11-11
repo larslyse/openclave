@@ -65,6 +65,16 @@ class ConfigTests(unittest.TestCase):
             with self.assertRaisesRegex(ValueError, "extra_origins"):
                 load_config(environ={"OPENCLAVE_HOME": str(home)})
 
+    def test_update_channel(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            home = Path(tmp)
+            self.assertEqual(load_config(environ={"OPENCLAVE_HOME": str(home)}).update_channel, "release")
+            (home / "openclave.toml").write_text('[updates]\nchannel = "main"\n', encoding="utf-8")
+            self.assertEqual(load_config(environ={"OPENCLAVE_HOME": str(home)}).update_channel, "main")
+            (home / "openclave.toml").write_text('[updates]\nchannel = "nightly"\n', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "updates.channel"):
+                load_config(environ={"OPENCLAVE_HOME": str(home)})
+
     def test_invalid_port_and_timezone_are_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
             home = Path(tmp)

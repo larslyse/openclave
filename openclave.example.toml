@@ -83,3 +83,7 @@ note_languages = []
 # repository you installed from), shown in Control Panel → Update. Besides
 # your model provider, this is the only call OpenClave makes on its own.
 check = true
+# What an update installs: "release" (the default) moves to the newest
+# release (a vX.Y.Z tag); "main" follows every change on the main branch, for
+# developers. Updates only ever move forward, never back to an older version.
+# channel = "release"

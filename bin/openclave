@@ -230,7 +230,7 @@ openclave: manage OpenClave ($REPO, data in $HOME_DIR)
   openclave status     is it running, which version
   openclave logs       follow its log (service only)
   openclave check      show what is set up: models, search, voice
-  openclave update     get the latest version and restart
+  openclave update     get the newest release (or main, see [updates] channel) and restart
   openclave backup     save your settings, agents and chats to $BACKUPS
   openclave url        print its addresses
   openclave uninstall  remove the program (never your agents or chats)

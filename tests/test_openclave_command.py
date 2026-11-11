@@ -151,7 +151,10 @@ class CommandTests(Checkout):
         self.assertIn("config.py", result.stdout)
 
 
-class UpdaterTests(Checkout):
+class UpstreamCheckout(Checkout):
+    """The checkout cloned from a local bare "upstream", on main tracking
+    origin/main, with updater.py pointed at it."""
+
     def setUp(self):
         super().setUp()
         self.upstream = self.tmp / "upstream.git"
@@ -165,7 +168,13 @@ class UpdaterTests(Checkout):
         state = mock.patch.object(updater, "_state_file", return_value=self.tmp / "update_check.json")
         state.start()
         self.addCleanup(state.stop)
+        self.channel = "release"
+        chan = mock.patch.object(updater, "channel", side_effect=lambda: self.channel)
+        chan.start()
+        self.addCleanup(chan.stop)
 
+
+class UpdaterTests(UpstreamCheckout):
     def push_upstream_commit(self, tag=None):
         work = self.tmp / "work"
         subprocess.run(["git", "clone", "-q", str(self.upstream), str(work)], check=True)
@@ -218,10 +227,154 @@ class UpdaterTests(Checkout):
         self.assertIn("requirements.txt", (self.tmp / "pip-calls").read_text())
         self.assertNotIn("requirements-voice.txt", (self.tmp / "pip-calls").read_text())
 
+    def test_version_names_the_release_tag(self):
+        self.assertEqual(updater.version()["tag"], "")
+        _git(self.repo, "tag", "v0.1.0")
+        self.assertEqual(updater.version()["tag"], "v0.1.0")
+
     def test_restart_mode_needs_systemd(self):
         with mock.patch.dict(os.environ, {}, clear=False):
             os.environ.pop("INVOCATION_ID", None)
             self.assertEqual(updater.restart_mode(), "")
+
+
+class ChannelTests(UpstreamCheckout):
+    """The channel rule: releases (vX.Y.Z tags) by default, the branch while
+    there are none or with channel "main", and never backwards."""
+
+    def setUp(self):
+        super().setUp()
+        self.work = self.tmp / "maintainer"
+        subprocess.run(["git", "clone", "-q", str(self.upstream), str(self.work)], check=True)
+
+    def publish(self, name, tag=None):
+        """The maintainer pushes one commit (and maybe a tag) upstream."""
+        (self.work / f"{name}.md").write_text(name)
+        _git(self.work, "add", ".")
+        _git(self.work, "commit", "-q", "-m", name)
+        if tag:
+            _git(self.work, "tag", "-a", tag, "-m", tag)
+        _git(self.work, "push", "-q", "origin", "main", "--tags")
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.work, capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+    def head(self):
+        return subprocess.run(["git", "rev-parse", "HEAD"], cwd=self.repo, capture_output=True,
+                              text=True, check=True).stdout.strip()
+
+    def branch(self):
+        return subprocess.run(["git", "symbolic-ref", "--short", "-q", "HEAD"], cwd=self.repo,
+                              capture_output=True, text=True).stdout.strip()
+
+    def test_without_tags_it_follows_the_branch(self):
+        tip = self.publish("a")
+        result = updater.apply(packages=False)
+        self.assertTrue(result["ok"], result)
+        self.assertTrue(result["changed"])
+        self.assertEqual(self.head(), tip)
+        self.assertEqual(self.branch(), "main")
+
+    def test_with_tags_it_moves_to_the_newest_release_not_the_tip(self):
+        self.publish("a", tag="v0.9.0")
+        release = self.publish("b", tag="v0.10.0")
+        self.publish("c")  # unreleased work on main
+        check = updater.check()
+        self.assertTrue(check["available"])
+        self.assertEqual(check["latest"], "v0.10.0")  # version order, not text order
+        self.assertEqual(check["behind"], 2)
+        result = updater.apply(packages=False)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(self.head(), release)
+        self.assertEqual(self.branch(), "")  # detached on the tag
+        self.assertEqual(updater.version()["tag"], "v0.10.0")
+        self.assertEqual(updater.apply(packages=False)["message"], "Already up to date.")
+
+    def test_it_never_moves_backwards(self):
+        # An install that followed main is ahead of the first release.
+        self.publish("a", tag="v0.1.0")
+        tip = self.publish("b")
+        _git(self.repo, "pull", "-q", "--ff-only")  # what updates did before channels
+        self.assertEqual(self.head(), tip)
+        check = updater.check()
+        self.assertFalse(check["available"])
+        self.assertTrue(check["ahead"])
+        self.assertIn("ahead of the latest release", check["summary"])
+        result = updater.apply(packages=False)
+        self.assertTrue(result["ok"], result)
+        self.assertFalse(result["changed"])
+        self.assertIn("ahead of the latest release", result["message"])
+        self.assertEqual(self.head(), tip)
+        self.assertEqual(self.branch(), "main")
+        # A newer release on top of it is taken.
+        release = self.publish("c", tag="v0.2.0")
+        self.assertTrue(updater.apply(packages=False)["changed"])
+        self.assertEqual(self.head(), release)
+
+    def test_channel_main_ignores_tags(self):
+        self.channel = "main"
+        self.publish("a", tag="v0.1.0")
+        tip = self.publish("b")
+        check = updater.check()
+        self.assertEqual(check["channel"], "main")
+        self.assertEqual(check["behind"], 2)
+        self.assertTrue(updater.apply(packages=False)["ok"])
+        self.assertEqual(self.head(), tip)
+        self.assertEqual(self.branch(), "main")
+
+    def test_detached_release_updates_to_the_next_release(self):
+        self.publish("a", tag="v0.1.0")
+        _git(self.repo, "fetch", "-q", "--tags", "origin")
+        _git(self.repo, "checkout", "-q", "--detach", "v0.1.0")
+        self.assertFalse(updater.check()["available"])
+        release = self.publish("b", tag="v0.2.0")
+        result = updater.apply(packages=False)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(self.head(), release)
+        self.assertEqual(self.branch(), "")
+
+    def test_detached_release_switched_to_channel_main_goes_back_onto_the_branch(self):
+        self.publish("a", tag="v0.1.0")
+        _git(self.repo, "fetch", "-q", "--tags", "origin")
+        _git(self.repo, "checkout", "-q", "--detach", "v0.1.0")
+        tip = self.publish("b")
+        self.channel = "main"
+        result = updater.apply(packages=False)
+        self.assertTrue(result["ok"], result)
+        self.assertEqual(self.head(), tip)
+        self.assertEqual(self.branch(), "main")
+
+    def test_detached_head_refuses_local_changes(self):
+        self.publish("a", tag="v0.1.0")
+        _git(self.repo, "fetch", "-q", "--tags", "origin")
+        _git(self.repo, "checkout", "-q", "--detach", "v0.1.0")
+        self.publish("b", tag="v0.2.0")
+        (self.repo / "config.py").write_text("changed")
+        before = self.head()
+        result = updater.apply(packages=False)
+        self.assertFalse(result["ok"])
+        self.assertIn("local changes", result["message"])
+        self.assertEqual(self.head(), before)
+        self.assertEqual(updater.local_changes(), ["config.py"])
+
+    def test_first_checkout_of_a_fresh_clone(self):
+        self.publish("a", tag="v0.1.0")
+        self.publish("b")
+        clone = self.tmp / "fresh"
+        subprocess.run(["git", "clone", "-q", str(self.upstream), str(clone)], check=True)
+        with mock.patch.object(updater, "ROOT", clone):
+            self.assertTrue(updater.first_checkout()["ok"])
+            self.assertEqual(updater.version()["tag"], "v0.1.0")
+        # Without tags it stays on the branch.
+        bare = self.tmp / "notags.git"
+        subprocess.run(["git", "clone", "-q", "--bare", "--no-tags", str(self.repo), str(bare)], check=True)
+        clone2 = self.tmp / "fresh2"
+        subprocess.run(["git", "clone", "-q", str(bare), str(clone2)], check=True)
+        with mock.patch.object(updater, "ROOT", clone2):
+            result = updater.first_checkout()
+            self.assertTrue(result["ok"], result)
+            self.assertIn("no release yet", result["message"])
+            self.assertEqual(subprocess.run(["git", "symbolic-ref", "--short", "HEAD"], cwd=clone2,
+                                            capture_output=True, text=True).stdout.strip(), "main")
 
 
 if __name__ == "__main__":
