@@ -6,16 +6,7 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## [Unreleased]
 
-### Changed
-
-- Installs and updates follow releases: the installer, `openclave update` and
-  Control Panel → Update move to the newest release (a `vX.Y.Z` tag) instead
-  of the newest change on `main`, and never go back to an older version. Set
-  `[updates] channel = "main"` in `openclave.toml` to follow `main` instead.
-- The installer asks less: your name, timezone, a model, note search and
-  start at boot. You name your manager and pick your first agents on the
-  welcome card in the browser. `./install.sh --ask-all` (or
-  `OPENCLAVE_ASK_ALL=1`) asks everything in the terminal as before.
+Nothing yet.
 
 ## [0.1.0]
 
@@ -48,6 +39,14 @@ The first public release.
 - A release number (`VERSION`), shown by `/api/version`, `run.py --check`
   and the startup line, and a data format version (`state/version.json`)
   with migrations that run once at startup.
+- Installs and updates follow releases: the installer, `openclave update` and
+  Control Panel → Update move to the newest release (a `vX.Y.Z` tag) instead
+  of the newest change on `main`, and never go back to an older version. Set
+  `[updates] channel = "main"` in `openclave.toml` to follow `main` instead.
+- The installer asks less: your name, timezone, a model, note search and
+  start at boot. You name your manager and pick your first agents on the
+  welcome card in the browser. `./install.sh --ask-all` (or
+  `OPENCLAVE_ASK_ALL=1`) asks everything in the terminal as before.
 
 [Unreleased]: https://github.com/larslyse/openclave/compare/v0.1.0...HEAD
 [0.1.0]: https://github.com/larslyse/openclave/releases/tag/v0.1.0
