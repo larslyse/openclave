@@ -92,7 +92,7 @@ cmd_start() {
     return 0
   fi
   if has_service; then
-    sudo systemctl start openclave
+    service_active || sudo systemctl start openclave  # already starting (at boot): just wait
     if wait_up; then ok "OpenClave is running: $URL"; else warn "It didn't answer yet: openclave logs shows why."; fi
     [ -z "$stay_open" ] || stay
   else
