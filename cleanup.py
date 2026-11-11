@@ -22,7 +22,6 @@ conversation, with a push.
 import json
 from concurrent.futures import ThreadPoolExecutor
 import threading
-import time
 from datetime import datetime, timedelta
 
 import conversation_titles
@@ -288,14 +287,22 @@ def is_due(now: datetime, last_week: str | None) -> bool:
     return last_week != week and now.weekday() >= RUN_WEEKDAY and RUN_HOUR <= now.hour < LAST_HOUR
 
 
-def start(interval_s: int = 300) -> None:
-    def loop():
-        while True:
-            try:
-                now = reminders.now_local()
-                if is_due(now, _load().get("last_week")):
-                    run_weekly(now)
-            except Exception:  # noqa: BLE001
-                pass
-            time.sleep(interval_s)
-    threading.Thread(target=loop, name="openclave-cleanup", daemon=True).start()
+CHECK_EVERY_S = 300
+
+
+def run_due_once() -> bool:
+    """Runs the weekly cleanup when it's due (Monday window, once per ISO
+    week, caught up later in the week if the computer was off)."""
+    now = reminders.now_local()
+    if not is_due(now, _load().get("last_week")):
+        return False
+    run_weekly(now)
+    return True
+
+
+def start(interval_s: int = CHECK_EVERY_S) -> None:
+    """Registers the weekly cleanup check with the scheduler: every
+    interval_s seconds. A due run makes model calls, so it runs in the
+    worker pool."""
+    import scheduler
+    scheduler.register("weekly-cleanup", "Weekly cleanup and review", run_due_once, every=interval_s, worker=True)

@@ -20,7 +20,6 @@ in the configured timezone.
 import json
 import re
 import threading
-import time
 import uuid
 from datetime import datetime, timedelta
 
@@ -401,18 +400,12 @@ def overview() -> dict:
     return {"now": reminders.describe_now(), "tasks": out}
 
 
-_started = False
+CHECK_EVERY_S = 30
 
 
-def start(interval_s: int = 30) -> None:
-    global _started
-    if _started:
-        return
-    _started = True
-
-    def loop():
-        while True:
-            run_due_once()
-            time.sleep(interval_s)
-
-    threading.Thread(target=loop, name="openclave-tasks", daemon=True).start()
+def start(interval_s: int = CHECK_EVERY_S) -> None:
+    """Registers the scheduled-task check with the scheduler: every
+    interval_s seconds from startup. The check itself is quick (each due task
+    runs in its own thread), so it runs inline."""
+    import scheduler
+    scheduler.register("scheduled-tasks", "Start due scheduled tasks", run_due_once, every=interval_s)
