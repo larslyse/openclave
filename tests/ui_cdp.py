@@ -5,7 +5,12 @@ sandboxed agent-page iframe stays in-process and reachable."""
 import asyncio, base64, json, os, shutil, signal, socket, subprocess, time, urllib.request
 import websockets
 
-# The snap Chromium can only write under ~/snap/chromium/common.
+# The browser and where its profiles and screenshots go. The defaults suit the
+# snap Chromium, which can only write under ~/snap/chromium/common; CI points
+# OPENCLAVE_UI_CHROMIUM at the Chrome it installs and OPENCLAVE_UI_DIR at a
+# temp folder.
+CHROMIUM = os.environ.get("OPENCLAVE_UI_CHROMIUM") or "chromium"
+UI_DIR = os.environ.get("OPENCLAVE_UI_DIR") or os.path.expanduser("~/snap/chromium/common")
 
 
 def _free_port():
@@ -15,8 +20,8 @@ def _free_port():
     with socket.socket() as sock:
         sock.bind(("127.0.0.1", 0))
         return sock.getsockname()[1]
-PROFILE = os.path.expanduser("~/snap/chromium/common/openclave-ui-test-profile")
-SHOTS = os.path.expanduser("~/snap/chromium/common/openclave-ui-test-shots")
+PROFILE = os.path.join(UI_DIR, "openclave-ui-test-profile")
+SHOTS = os.path.join(UI_DIR, "openclave-ui-test-shots")
 
 
 class Browser:
@@ -29,7 +34,7 @@ class Browser:
         shutil.rmtree(self.profile, ignore_errors=True)
         os.makedirs(self.profile, exist_ok=True); os.makedirs(SHOTS, exist_ok=True)
         self.proc = subprocess.Popen([
-            "chromium", "--headless=new", "--no-sandbox", "--disable-gpu", f"--remote-debugging-port={port}",
+            CHROMIUM, "--headless=new", "--no-sandbox", "--disable-gpu", f"--remote-debugging-port={port}",
             f"--user-data-dir={self.profile}", "--use-fake-ui-for-media-stream", "--use-fake-device-for-media-stream",
             "--autoplay-policy=no-user-gesture-required", "--disable-site-isolation-trials", "--disable-features=IsolateOrigins,site-per-process", f"--window-size={width},{height}", "about:blank",
         ], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, start_new_session=True)  # own group, see stop()

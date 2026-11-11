@@ -1,5 +1,8 @@
-# Unit tests on every push and pull request. The UI smoke tests skip
-# themselves here (no Chromium); run them locally before a release.
+# Tests on every push and pull request.
+# - unit: the unit tests (required by branch protection; keep the job name).
+#   The UI smoke tests are switched off here, they run in the ui job.
+# - ui: the UI smoke tests in headless Chrome. Not required yet, so a flaky
+#   browser run doesn't block a merge.
 name: tests
 on:
   push:
@@ -17,6 +20,42 @@ jobs:
           node-version: "22"
       - run: pip install -r requirements.txt
       - name: Unit tests (empty HOME, no real provider calls)
+        env:
+          OPENCLAVE_SKIP_UI_TESTS: "1"
         run: |
           export HOME="$(mktemp -d)"
           python -m unittest discover -s tests
+      - name: Known vulnerabilities in the pinned packages (report only)
+        continue-on-error: true
+        run: |
+          pip install pip-audit
+          pip-audit -r requirements.txt
+
+  ui:
+    runs-on: ubuntu-24.04
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - uses: browser-actions/setup-chrome@v1
+        id: chrome
+      - run: pip install -r requirements.txt
+      - name: UI smoke tests (headless Chrome)
+        env:
+          OPENCLAVE_UI_CHROMIUM: ${{ steps.chrome.outputs.chrome-path }}
+          OPENCLAVE_UI_DIR: ${{ runner.temp }}/ui-test
+        run: |
+          export HOME="$(mktemp -d)"
+          python -m unittest discover -s tests -p test_ui_smoke.py
+      - name: Keep the screenshots of a failed run
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-screenshots
+          path: ${{ runner.temp }}/ui-test/openclave-ui-test-shots
+          if-no-files-found: ignore

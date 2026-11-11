@@ -1,0 +1,22 @@
+# Once a week (and on demand): run ./install.sh in a fresh Ubuntu 24.04
+# container as a new user would (dev/install-script-test.sh), then check that
+# the installed OpenClave answers. Catches an installer broken by a new
+# package version or a changed download. Not a required check.
+name: install test
+on:
+  schedule:
+    - cron: "17 4 * * 1"
+  workflow_dispatch:
+jobs:
+  install:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run the installer in a container
+        run: bash dev/install-script-test.sh
+      - name: OpenClave answers
+        run: curl -fsS http://localhost:8777/api/version
+      - name: Installer log
+        if: always()
+        run: docker logs openclave-install 2>&1 | tail -n 200 || true

@@ -31,8 +31,9 @@ FIXTURE_ROOT = HERE / "fixtures" / "Agents"
 try:
     import websockets  # noqa: F401
     sys.path.insert(0, str(HERE))
-    from ui_cdp import Browser
-    HAVE_DEPS = bool(shutil.which("chromium"))
+    from ui_cdp import CHROMIUM, Browser
+    # OPENCLAVE_SKIP_UI_TESTS=1: the CI unit job; the ui job runs these.
+    HAVE_DEPS = bool(shutil.which(CHROMIUM)) and not os.environ.get("OPENCLAVE_SKIP_UI_TESTS")
 except ImportError:
     HAVE_DEPS = False
 
