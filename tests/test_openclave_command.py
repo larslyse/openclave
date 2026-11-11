@@ -45,7 +45,7 @@ class Checkout(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.tmp, ignore_errors=True)
         self.repo = self.tmp / "openclave"
         (self.repo / "bin").mkdir(parents=True)
-        for name in ("config.py", "updater.py", "toml_edit.py"):
+        for name in ("config.py", "updater.py", "toml_edit.py", "state_io.py"):
             shutil.copy(ROOT / name, self.repo / name)
         shutil.copy(ROOT / "bin" / "openclave", self.repo / "bin" / "openclave")
         (self.repo / "requirements.txt").write_text("")
