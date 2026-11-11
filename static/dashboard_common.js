@@ -344,7 +344,7 @@ function newFolderButton(className = 'folder-add') {
     const name = prompt('Topic name');
     if (!name || !name.trim()) return;
     try { await api(`/${AGENT_ID}/folders`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name.trim() }) }); }
-    catch (err) { alert(err.message || 'Could not make the folder.'); }
+    catch (err) { alert(err.message || 'Could not make the topic.'); }
     loadConversations();
   };
   return b;

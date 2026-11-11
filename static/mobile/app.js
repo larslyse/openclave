@@ -431,7 +431,9 @@ function managerFields(el) {
           extras: [...el.querySelectorAll('.mgr-extra input:checked')].map(c => c.value)};
 }
 
-async function renderCreateAgent(token) {
+// `focus`: a ready-made agent's id, or "manager", to jump straight to its
+// card (from the first steps on the agent list).
+async function renderCreateAgent(token, focus = null) {
   shell('New agent', '#/agents', '<div class="center-state">Loading models…</div>');
   let models;
   try { models = await api('/api/models'); }
@@ -440,8 +442,10 @@ async function renderCreateAgent(token) {
   const order = ['API · fast', 'API · slow', 'CLI · fast', 'CLI · slow'];
   const groups = new Map(order.map(g => [g, []]));
   for (const m of models) { if (!groups.has(m.group)) groups.set(m.group, []); groups.get(m.group).push(m); }
+  // Default: Sonnet 5 if its route is set up, else the first model that can answer (as in the Control Panel).
+  const firstReady = (models.find(m => m.id === 'claude-sonnet-5' && m.ready) || models.find(m => m.ready) || {}).id || 'claude-sonnet-5';
   const options = [...groups].filter(([, ms]) => ms.length).map(([g, ms]) =>
-    `<optgroup label="${escapeHtml(g || 'Other')}">${ms.map(m => `<option value="${escapeHtml(m.id)}"${m.id === 'claude-sonnet-5' ? ' selected' : ''}>${escapeHtml(m.display_name)}${m.cost_label ? ` · ${escapeHtml(m.cost_label)}` : ''}</option>`).join('')}</optgroup>`).join('');
+    `<optgroup label="${escapeHtml(g || 'Other')}">${ms.map(m => `<option value="${escapeHtml(m.id)}"${m.id === firstReady ? ' selected' : ''}>${escapeHtml(m.display_name)}${m.cost_label ? ` · ${escapeHtml(m.cost_label)}` : ''}</option>`).join('')}</optgroup>`).join('');
   let templates = [];
   try { ({templates} = await api('/api/catalog')); } catch { /* the blank form still works */ }
   if (token !== renderToken) return;
@@ -495,6 +499,13 @@ async function renderCreateAgent(token) {
       }
     };
   });
+  const target = focus && templates.find(t => (focus === 'manager' ? t.manager : t.id === focus));
+  const focusCard = target && document.querySelector(`.template[data-id="${CSS.escape(target.id)}"]`);
+  if (focusCard) {
+    focusCard.classList.add('focused');
+    focusCard.scrollIntoView({block: 'start'});
+    focusCard.querySelector('.template-add input').focus({preventScroll: true});
+  }
   const form = document.querySelector('#create-agent');
   const showCost = () => { const m = models.find(x => x.id === form.model_id.value); document.querySelector('#create-cost').innerHTML = costDot(m) + costLabel(m); };
   form.model_id.onchange = showCost; showCost();
@@ -622,6 +633,7 @@ async function markAttention(token) {
   } catch { /* optional */ }
 }
 
+let firstRunCard = null;
 function renderAgents(token, fresh = false) {
   const seen = loadSeen() || {};
   // Unread first, then most recent conversation; agents with no
@@ -635,9 +647,18 @@ function renderAgents(token, fresh = false) {
   </button>`;
   }).join('');
   const addRow = `<button type="button" class="row add-agent-row" id="add-agent"><span class="avatar add-avatar">+</span><span class="row-main"><span class="row-title">New agent</span><span class="row-sub">Set one up from here</span></span><span class="chev">›</span></button>`;
-  const roomRow = `<button type="button" class="row room-row" id="open-room" aria-label="Group chat with all agents"><span class="avatar room-avatar-hash">#</span><span class="row-main"><span class="row-title">everyone</span><span class="row-sub">Group chat with all agents</span></span><span class="chev">›</span></button>`;
-  shell('OpenClave', null, `<section class="content"><p class="intro">Who do you want to talk to?</p><div id="clave-switch" class="clave-switch">${claveSwitch()}</div><div class="list">${roomRow}<div id="clave-rows" style="display:contents">${claveRows()}</div>${rows}${addRow}</div></section>`);
-  document.querySelector('#open-room').onclick = () => go('#/room');
+  // Group chats need two agents and Claves one, so a new install shows
+  // neither (the desktop home page does the same).
+  const roomRow = agents.length < 2 ? '' : `<button type="button" class="row room-row" id="open-room" aria-label="Group chat with all agents"><span class="avatar room-avatar-hash">#</span><span class="row-main"><span class="row-title">everyone</span><span class="row-sub">Group chat with all agents</span></span><span class="chev">›</span></button>`;
+  shell('OpenClave', null, `<section class="content"><div id="first-run-slot">${firstRunCard?.outerHTML || ''}</div>${agents.length ? '<p class="intro">Who do you want to talk to?</p>' : ''}<div id="clave-switch" class="clave-switch">${claveSwitch()}</div><div class="list">${roomRow}<div id="clave-rows" style="display:contents">${claveRows()}</div>${rows}${addRow}</div></section>`);
+  if (roomRow) document.querySelector('#open-room').onclick = () => go('#/room');
+  // First steps on a new install (first_run.js, the same card as the desktop home page).
+  // Redrawn from the last copy at once, then refreshed.
+  if (fresh || !agents.length) window.OpenClaveFirstRun?.card({phone: true}).then(card => {
+    firstRunCard = card;
+    const slot = token === renderToken && document.querySelector('#first-run-slot');
+    if (slot) slot.replaceChildren(...(card ? [card] : []));
+  });
   Promise.all([api('/api/claves').catch(() => ({enabled: false})), api('/api/channels').catch(() => [])]).then(([data, chans]) => {
     const fresh = data.enabled ? data.claves : [];
     claveOverview = data;
@@ -743,15 +764,20 @@ async function drawCleanup(body, token) {
   const box = document.createElement('section');
   box.className = 'cleanup-box';
   box.id = 'cleanup';
-  box.innerHTML = '<h2>Weekly cleanup</h2><p class="muted">Loading…</p>';
+  box.innerHTML = '<h2>Weekly review</h2><p class="muted">Loading…</p>';
   body.prepend(box);
   const post = (path, payload) => api(path, {method: 'POST', body: JSON.stringify(payload)});
-  const draw = data => {
+  // With nothing to tidy, say what the review looks for (cleanup.py's rules)
+  // instead of an empty list.
+  const nothingYet = r => `<p class="cleanup-empty">Nothing to tidy yet. I suggest archiving chats that have been quiet for ${r.stale_days} days, deleting ones that never got going after ${r.small_idle_days} days, and keeping each agent to about ${r.target_active} active chats. Nothing changes until you say yes.</p>`;
+  const draw = (data, note = '') => {
     if (token !== renderToken) return;
     const items = [...data.suggestions].sort((a, b) => a.agent_name.localeCompare(b.agent_name) || a.kind.localeCompare(b.kind));
-    const when = data.generated_at ? `Checked ${escapeHtml(data.generated_at.replace('T', ' ').slice(0, 16))}` : 'Not checked yet';
-    box.innerHTML = `<h2>Weekly cleanup</h2>
-      <p class="muted cleanup-when">${when} · <button type="button" class="link-btn" data-check>Check now</button></p>
+    const when = data.generated_at ? `Last run ${escapeHtml(data.generated_at.replace('T', ' ').slice(0, 16))}` : 'Runs every Monday';
+    box.innerHTML = `<h2>Weekly review</h2>
+      <p class="muted cleanup-when">${when}</p>
+      <button type="button" class="primary cleanup-run" data-run-review>Run a review now</button>
+      ${note ? `<p class="cleanup-note">${escapeHtml(note)}</p>` : ''}
       ${data.agents.map(n => `<p class="cleanup-note"><b>${escapeHtml(n.agent_name)}</b>: ${escapeHtml(n.text)}</p>`).join('')}
       <div class="cleanup-list">${items.map(c => `<div class="page-card cleanup-item" data-id="${escapeHtml(c.id)}">
         <div class="cleanup-head"><span class="cleanup-kind ${escapeHtml(c.kind)}">${CLEANUP_KIND[c.kind] || escapeHtml(c.kind)}</span><span class="cleanup-agent">${escapeHtml(c.agent_name)}</span></div>
@@ -760,7 +786,7 @@ async function drawCleanup(body, token) {
         <div class="page-card-meta">${escapeHtml(c.reason)}</div>
         ${c.kind === 'rename' ? `<input class="page-form-input cleanup-name" type="text" maxlength="120" aria-label="New name" value="${escapeHtml(c.suggested_title || '')}">` : ''}
         <div class="cleanup-actions"><button type="button" class="cleanup-apply ${escapeHtml(c.kind)}" data-apply>${CLEANUP_KIND[c.kind] || 'Apply'}</button><button type="button" class="cleanup-keep" data-keep>Keep</button></div>
-        <p class="cleanup-error" role="status"></p></div>`).join('') || '<p class="muted">Nothing to tidy.</p>'}</div>
+        <p class="cleanup-error" role="status"></p></div>`).join('') || nothingYet(data.rules)}</div>
       <details class="cleanup-archived"><summary>Archived conversations (${data.archived.length})</summary>${data.archived.map(c => `<div class="cleanup-archived-row"><span><b>${escapeHtml(c.agent_name)}</b> ${escapeHtml(c.title)} <span class="muted">${escapeHtml(c.date)}</span></span><button type="button" class="link-btn" data-restore="${escapeHtml(c.agent_id)}/${escapeHtml(c.id)}">Restore</button></div>`).join('') || '<p class="muted">None.</p>'}</details>`;
     // Read a suggested chat in place before Archive/Delete/Rename: the
     // report and any half-typed name stay as they are (backlog 2026-10-20).
@@ -781,9 +807,14 @@ async function drawCleanup(body, token) {
         panel.dataset.loaded = '1';
       } catch (error) { panel.textContent = error.message || 'Could not load the chat.'; }
     });
-    box.querySelector('[data-check]').onclick = async event => {
-      event.target.disabled = true; event.target.textContent = 'Checking…';
-      try { draw(await post('/api/cleanup/check', {})); } catch (error) { event.target.textContent = error.message; }
+    // The whole weekly review (cleanup, then the audit), as on Monday.
+    box.querySelector('[data-run-review]').onclick = async event => {
+      event.target.disabled = true; event.target.textContent = 'Running…';
+      try {
+        const result = await post('/api/weekly-review/run', {});
+        draw(await api('/api/cleanup'), result.audit?.queued
+          ? "I'm also reading what your agents wrote lately. My suggestions arrive below and in my Audit chat in a minute or two." : '');
+      } catch (error) { event.target.disabled = false; event.target.textContent = error.message || 'Could not run it'; }
     };
     box.querySelectorAll('.cleanup-item').forEach(card => {
       const item = items.find(c => c.id === card.dataset.id), error = card.querySelector('.cleanup-error');
@@ -1441,7 +1472,7 @@ function drawConversations(agent, token, conversations, fromCache) {
     const rowHtml = item => `<div class="conversation-item"><button class="row" data-conversation="${escapeHtml(item.id)}"><span class="row-main"><span class="row-title has-tags"><span class="title-text">${escapeHtml(item.title)}</span>${!fromCache && conversationUnread(agent.id, item, convoSeen) ? NEW_LIGHT : ''}${localStorage.getItem(draftKey(agent.id, item.id))?.trim() ? '<span class="draft-tag">draft</span>' : ''}</span><span class="row-sub">${escapeHtml(item.date || '')}</span></span><span class="chev">›</span></button><div class="conversation-actions"><button data-handover="${escapeHtml(item.id)}" title="Move the chat to another agent, with any related files">Move / hand over</button><button data-folder-move="${escapeHtml(item.id)}">Topic</button><button data-rename="${escapeHtml(item.id)}">Rename</button><button data-autoname="${escapeHtml(item.id)}" title="A short name from the conversation">Auto-name</button><button data-archive="${escapeHtml(item.id)}" title="Out of the list, into Recaps as a short card">Archive</button><button data-purge="${escapeHtml(item.id)}" title="Keep the chat and a short summary, drop the transcript">Purge…</button><button class="danger" data-delete="${escapeHtml(item.id)}">Delete</button></div></div>`;
     const rows = groupedConversationRows(agent, conversations, rowHtml);
     shell(agent.name, '#/agents', `<section class="content"><div class="new-row"><button class="primary" id="new-chat">New chat</button><button type="button" class="primary" id="new-folder">New topic</button></div>${conversations.length ? '<input type="search" class="search-input" id="convo-search" placeholder="Search conversations" aria-label="Search conversations" autocomplete="off">' : ''}<div class="list" id="search-results" hidden></div><div class="list" id="convo-list">${rows || '<div class="center-state">No conversations yet.</div>'}</div></section>
-      <div class="list-footer"><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button><button type="button" class="switch-btn home-btn" data-home aria-label="Conclave: back to all agents">Conclave</button></div>`, modelBadge(agent), agent);
+      <div class="list-footer"><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button><button type="button" class="switch-btn home-btn" data-home aria-label="All agents">All agents</button></div>`, modelBadge(agent), agent);
     wireModelBadge(agent);
     // Quick jump here too (Rick's backlog, 2026-10-04): same menu, unread
     // markers and order as in chat, but an agent opens its conversation list.
@@ -1540,11 +1571,11 @@ async function renderChat(agent, conversationId, token) {
     audio: mobileAudio,
     store: chatStore,
     pendingKey: PENDING_KEY,
-    // "Conclave" (back to the agent list) just left of Quick jump on the same
+    // "All agents" (back to the agent list) just left of Quick jump on the same
     // row; compact, so Quick jump stays a long bar (2026-10-04).
     // Quick jump is the core way to multitask (2026-10-12): a big
-    // orange bar taking the rest of the row; Conclave shrinks to an icon.
-    subHtml: `<button type="button" class="switch-btn home-btn" data-home aria-label="Conclave: back to all agents" title="Conclave">${CONCLAVE_ICON}</button><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button>`,
+    // orange bar taking the rest of the row; All agents shrinks to an icon.
+    subHtml: `<button type="button" class="switch-btn home-btn" data-home aria-label="All agents" title="All agents">${CONCLAVE_ICON}</button><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button>`,
     isCurrent: () => token === renderToken,
     notify: name => window.openclaveNotifyReply?.(name),
     onConversationChange: id => history.replaceState(null, '', `#/agents/${agent.id}/conversations/${id}`),
@@ -1577,7 +1608,7 @@ async function renderChat(agent, conversationId, token) {
 let claveOverview = null;
 function claveSwitch() {
   const data = claveOverview;
-  if (!data) return '';
+  if (!data || !agents.length) return '';
   if (!data.enabled || !data.claves.length) {
     return '<button type="button" class="clave-chip" id="claves-info" aria-expanded="false">Claves</button>'
       + '<p class="clave-note" id="claves-note" hidden>Claves are set up in the desktop version: open the Claves view on the desktop home page.</p>';
@@ -1612,7 +1643,7 @@ function applyClaveFilter() {
 function claveRows() {
   return claveList.map(c => `<button type="button" class="row room-row" data-clave-room="${escapeHtml(c.id)}" aria-label="Group chat of the ${escapeHtml(c.name)} clave"><span class="avatar room-avatar-hash">#</span><span class="row-main"><span class="row-title">${escapeHtml(c.name)}</span><span class="row-sub">Clave · ${c.members.length} agents</span></span><span class="chev">›</span></button>`).join('')
     + channelList.map(c => `<button type="button" class="row room-row" data-clave-room="${escapeHtml(c.id)}" aria-label="Channel ${escapeHtml(c.name)}"><span class="avatar room-avatar-hash">#</span><span class="row-main"><span class="row-title">${escapeHtml(c.name)}</span><span class="row-sub">Channel · ${c.members.length} agents</span></span><span class="chev">›</span></button>`).join('')
-    + `<button type="button" class="row room-row" data-channel-new aria-label="Add a channel"><span class="avatar room-avatar-hash">+</span><span class="row-main"><span class="row-title">Add channel</span><span class="row-sub">A group chat with the agents you pick</span></span><span class="chev">›</span></button>`
+    + (agents.length < 2 ? '' : `<button type="button" class="row room-row" data-channel-new aria-label="Add a channel"><span class="avatar room-avatar-hash">+</span><span class="row-main"><span class="row-title">Add channel</span><span class="row-sub">A group chat with the agents you pick</span></span><span class="chev">›</span></button>`)
     + `<p class="list-label">Agents – private chat</p>`;
 }
 async function editChannelMobile(channel) {
@@ -1685,7 +1716,7 @@ async function render() {
     if (!parts.length) { go(localStorage.getItem(LAST_ROUTE) || '#/agents'); return; }
     localStorage.setItem(LAST_ROUTE, location.hash);
   }
-  if (parts[0] === 'create-agent') { trackVisit(null); renderCreateAgent(token); return; }
+  if (parts[0] === 'create-agent') { trackVisit(null); renderCreateAgent(token, parts[1] ? decodeURIComponent(parts[1]) : null); return; }
   if (parts[0] === 'room') { trackVisit(null); renderRoom(token, parts[1] ? decodeURIComponent(parts[1]) : null); return; }
   if (parts[0] !== 'agents') { go('#/agents'); return; }
   trackVisit(parts.length > 1 ? parts[1] : null);

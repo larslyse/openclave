@@ -31,7 +31,11 @@ def fake_chat(agent_id, system_prompt, messages, **kw):
     return f"Fake reply from {agent_id}."
 
 
+import phone_setup, updater  # noqa: E402
+
 for p in (
+    patch.object(phone_setup, "_tailscale", lambda: None),  # never the real tailscale
+    patch.object(updater, "start", lambda: None),
     patch.object(llm_client, "chat", fake_chat),
     patch.object(llm_client, "maybe_compact_conversation", lambda *a, **k: None),
     patch.object(llm_client, "log_usage", lambda *a, **k: None),

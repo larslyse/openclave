@@ -30,7 +30,8 @@ def _allowed(path: Path) -> bool:
     if CONFIDENTIAL is not None and CONFIDENTIAL not in confidential:
         confidential += (CONFIDENTIAL.resolve(),)
     return (vault.VAULT_ROOT in path.parents and not any(p == path or p in path.parents for p in confidential)
-            and not _SKIP_PARTS & set(path.relative_to(vault.VAULT_ROOT).parts))
+            and not _SKIP_PARTS & set(path.relative_to(vault.VAULT_ROOT).parts)
+            and vault.read_refusal(path) is None)
 
 
 def resolve_note(note: str) -> Path:

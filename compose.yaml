@@ -3,7 +3,9 @@
 # no note search in this image. Use the normal install (README) for those.
 # First run: put an openclave.toml in ./data (copy openclave.example.toml) with
 #   [paths] vault_root = "/vault"   and   [network] bind = "0.0.0.0"
-# and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY).
+# and API keys in ./.env (XAI_API_KEY, ANTHROPIC_API_KEY). The container binds to
+# 0.0.0.0, so add OPENCLAVE_ACCESS_TOKEN=<long random string> to ./.env as well,
+# and always before changing the port below to listen beyond 127.0.0.1.
 services:
   openclave:
     build: .
@@ -14,9 +16,7 @@ services:
         required: false
     environment:
       OPENCLAVE_DISABLE_BACKGROUND_JOBS: "0"
-      # Set a login token: inside the container OpenClave listens on 0.0.0.0, so
-      # every request arrives from the network, not from this computer. Better
-      # still, put OPENCLAVE_ACCESS_TOKEN=... in ./.env instead of here.
+      # Set this (or put it in ./.env): the container binds 0.0.0.0 (see above).
       # OPENCLAVE_ACCESS_TOKEN: "a-long-random-string"
     volumes:
       - ./data:/data

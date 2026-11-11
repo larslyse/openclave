@@ -188,6 +188,10 @@ def report() -> dict:
         "agents": [{**n, "agent_name": names.get(n["agent_id"], n["agent_id"])}
                    for n in state.get("agents", []) if n["agent_id"] in names],
         "archived": archived,
+        # The thresholds, so an empty report can say what the review looks for.
+        "rules": {"stale_days": STALE_DAYS, "small_idle_days": SMALL_IDLE_DAYS,
+                  "single_idle_days": SINGLE_IDLE_DAYS, "target_active": TARGET_ACTIVE},
+        "last_week": state.get("last_week"),
     }
 
 

@@ -32,6 +32,9 @@ import avatar_maker
 import deploy_state
 from version import VERSION
 import migrations
+import phone_setup
+import updater
+from urllib.parse import urlsplit
 import model_discovery
 import model_updater
 import provider_credits
@@ -48,7 +51,6 @@ import svg_avatar
 import attention
 import claude_auth
 import cleanup
-import threading
 import connections
 import web_push
 import vault
@@ -312,6 +314,7 @@ def start_reminders():
     cleanup.start()  # Weekly maintainer cleanup suggestions.
     recaps.backfill(list(AGENTS))  # cards for archived chats that have none yet
     model_updater.start()  # first run 15 min after startup, then daily; background only
+    updater.start()  # [updates] check: git fetch at most every 6 hours, background only
 
 
 @app.on_event("startup")
@@ -410,6 +413,60 @@ async def enforce_trusted_origin(request: Request, call_next):
     origin = request.headers.get("origin")
     if origin is not None and origin not in TRUSTED_ORIGINS:
         return JSONResponse(status_code=403, content={"detail": "cross-origin request blocked"})
+    return await call_next(request)
+
+
+# Host header check against DNS rebinding: a web page whose DNS name is
+# switched to 127.0.0.1 (or this machine's LAN address) becomes "same origin"
+# with OpenClave, sends no Origin header on GETs and could read the API. Its
+# requests still carry the page's own name in Host, so only names OpenClave
+# knows are served: loopback names, the hosts of TRUSTED_ORIGINS (public_url,
+# extra_origins, the bind and LAN addresses) and any IP literal (rebinding
+# needs a DNS name). Ports are ignored, so a Docker port mapping or a
+# reverse proxy on another port still matches. `tailscale serve` passes the
+# public name through as Host, which is the public_url host.
+# "testserver" is the Host Starlette's TestClient sends; it never travels a network.
+_LOOPBACK_HOSTS = {"localhost", "testserver"}
+
+
+def _host_name(host: str) -> str:
+    from urllib.parse import urlsplit
+
+    try:
+        return (urlsplit(f"//{host.strip()}").hostname or "").rstrip(".")
+    except ValueError:
+        return ""
+
+
+def _trusted_hosts(origins: set[str]) -> set[str]:
+    from urllib.parse import urlsplit
+
+    return _LOOPBACK_HOSTS | {(urlsplit(o).hostname or "").rstrip(".") for o in origins} - {""}
+
+
+def host_allowed(host: str | None, trusted: set[str] | None = None) -> bool:
+    import ipaddress
+
+    name = _host_name(host or "")
+    if not name:
+        return False
+    try:
+        ipaddress.ip_address(name)
+        return True
+    except ValueError:
+        pass
+    return name in (trusted if trusted is not None else _trusted_hosts(TRUSTED_ORIGINS)) or name.endswith(".localhost")
+
+
+@app.middleware("http")
+async def enforce_trusted_host(request: Request, call_next):
+    host = request.headers.get("host")
+    if not host_allowed(host):
+        name = _host_name(host or "") or "(none)"
+        return JSONResponse(status_code=421, content={"detail": (
+            f"OpenClave doesn't answer to the address '{name}'. If this is your own address for it, "
+            f"add it to openclave.toml: [network] public_url = \"https://{name}\" (the address you open "
+            f"it at), or extra_origins = [\"http://{name}:{CONFIG.port}\"]; then restart OpenClave.")})
     return await call_next(request)
 
 
@@ -1687,6 +1744,51 @@ def api_network():
     }
 
 
+# Control Panel → Phone (phone_setup.py) and → Update (updater.py).
+@app.get("/api/phone")
+def api_phone():
+    saved = phone_setup.saved_public_url(CONFIG.home / "openclave.toml")
+    return {**phone_setup.status(CONFIG.port), "public_url": saved,
+            "https": saved.startswith("https://"), "port": CONFIG.port,
+            "restart_needed": saved != CONFIG.public_url}
+
+
+@app.post("/api/phone/setup")
+def api_phone_setup():
+    result = phone_setup.setup(CONFIG.port, CONFIG.home / "openclave.toml")
+    if result["ok"]:
+        # Trust the new address at once (the origin check reads this set on
+        # every request); other places that show public_url follow on restart.
+        public = urlsplit(result["url"])
+        TRUSTED_ORIGINS.add(f"{public.scheme}://{public.netloc}")
+    return result
+
+
+@app.get("/api/update")
+def api_update():
+    return {"current": updater.version(), "check": updater.cached(), "checking": updater.is_checking(),
+            "enabled": CONFIG.update_check, "restart": updater.restart_mode(),
+            "local_changes": updater.local_changes()}
+
+
+@app.post("/api/update/check")
+def api_update_check():
+    return {"started": updater.check_in_background()}
+
+
+@app.post("/api/update/apply")
+def api_update_apply():
+    mode = updater.restart_mode()
+    if not mode:
+        raise HTTPException(status_code=409, detail="OpenClave isn't running as a service that can restart "
+                            "itself. Run `openclave update` in a terminal instead.")
+    result = updater.apply()
+    if result["ok"] and result.get("changed"):
+        updater.restart_self(mode)
+        result["restarting"] = True
+    return result
+
+
 @app.post("/api/settings")
 def api_update_settings(changes: dict):
     try:
@@ -1822,9 +1924,10 @@ def api_weekly_review():
 
 @app.post("/api/weekly-review/run")
 def api_weekly_review_run():
-    """Run it now (cleanup, then the audit) instead of waiting for Monday."""
-    threading.Thread(target=cleanup.run_weekly, name="openclave-weekly-review", daemon=True).start()
-    return {"started": True}
+    """Run it now (cleanup, then the audit) instead of waiting for Monday.
+    Waits for the cleanup, so the page can show its result straight away; the
+    audit is the manager's own chat run and only gets queued here."""
+    return {"started": True, **cleanup.run_weekly()}
 
 
 @app.post("/api/audit/run")
@@ -1849,8 +1952,28 @@ def api_cleanup_unarchive(req: UnarchiveRequest):
 
 @app.get("/api/setup")
 def api_setup():
-    """What's set up on this computer (setup_check.py): model routes, extras."""
-    return {**setup_check.summary(), "agents": len(AGENTS)}
+    """What's set up on this computer (setup_check.py): model routes, extras,
+    and the first-run steps (manager, ready-made agents to suggest)."""
+    return {**setup_check.summary(), **setup_check.first_run()}
+
+
+@app.post("/api/setup/key")
+async def api_setup_key(request: Request):
+    """{provider: "anthropic"|"xai", key} -> checked, saved to OPENCLAVE_HOME/.env
+    and live without a restart. The body is read by hand so that no error
+    response (e.g. FastAPI's validation errors) ever echoes the key back."""
+    try:
+        req = await request.json()
+    except ValueError:
+        req = None
+    provider, key = (req.get("provider"), req.get("key")) if isinstance(req, dict) else (None, None)
+    if not isinstance(provider, str) or not isinstance(key, str):
+        raise HTTPException(status_code=400, detail="provider and key are needed")
+    from starlette.concurrency import run_in_threadpool
+    try:
+        return await run_in_threadpool(setup_check.save_key, provider, key)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
 
 
 @app.get("/api/version")
@@ -1992,7 +2115,7 @@ def mobile_dashboard():
     html = (STATIC_DIR / "mobile" / "index.html").read_text(encoding="utf-8")
     # Every local script/stylesheet gets its cache-buster, so the phone keeps
     # them between opens instead of re-downloading ~200 KB each time.
-    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",),
+    for parts in (("mobile", "styles.css"), ("mobile", "app.js"), ("chat_core.js",), ("room_core.js",), ("reply_notifications.js",), ("model_picker.js",), ("first_run.js",),
                   ("vendor", "marked-15.0.12.min.js"), ("vendor", "purify-3.2.6.min.js")):
         path = "/static/" + "/".join(parts)
         html = html.replace(f'{path}"', f'{path}?v={_asset_version(*parts)}"')
