@@ -5,6 +5,7 @@ import unittest
 
 import llm_models
 import main
+from routes import models as model_routes
 from llm_models import ModelOption, cost_tier
 
 
@@ -43,7 +44,7 @@ class CostTierTests(unittest.TestCase):
         self.assertEqual([m.id for m in llm_models.BUILTIN if cost_tier(m) is None], [])
 
     def test_models_api_carries_the_tier(self):
-        rows = [option.model_dump() for option in main.api_models()]
+        rows = [option.model_dump() for option in model_routes.api_models()]
         self.assertTrue(rows)
         for row in rows:
             m = llm_models.get(row["id"])

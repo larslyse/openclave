@@ -1,0 +1,1309 @@
+# routes: methods path handler
+GET,HEAD /openapi.json openapi
+GET,HEAD /docs swagger_ui_html
+GET,HEAD /docs/oauth2-redirect swagger_ui_redirect
+GET,HEAD /redoc redoc_html
+GET /api/agents/{agent_id}/avatar agent_avatar
+POST /api/agents/{agent_id}/avatar set_agent_avatar
+GET /api/avatar-library api_avatar_library
+GET /api/avatar-library/{avatar_id}.svg api_avatar_library_svg
+POST /api/agents/{agent_id}/avatar/library api_pick_library_avatar
+POST /api/avatar/fetch avatar_fetch
+POST /api/avatar/cartoon avatar_cartoon
+GET /login login_form
+POST /login login_submit
+GET /api/maintainer/inbox maintainer_inbox
+GET /api/maintainer/inbox/{item_id} maintainer_inbox_item
+POST /api/maintainer/inbox/{item_id} update_maintainer_inbox_item
+GET /api/reminders api_reminders
+DELETE /api/reminders/{agent_id}/{reminder_id} api_cancel_reminder
+GET /api/tasks api_tasks
+POST /api/tasks/{agent_id} api_add_task
+POST /api/tasks/{agent_id}/{task_id} api_update_task
+DELETE /api/tasks/{agent_id}/{task_id} api_delete_task
+POST /api/tasks/{agent_id}/{task_id}/run api_run_task
+GET /api/catalog api_catalog
+GET /api/catalog/{template_id}/avatar api_catalog_avatar
+POST /api/catalog/{template_id}/install api_catalog_install
+GET /api/agents/{agent_id}/recaps api_agent_recaps
+GET /api/agents/{agent_id}/recaps/{conversation_id} api_agent_recap_chat
+POST /api/agents/{agent_id}/recaps/{conversation_id}/write api_agent_recap_write
+POST /api/agents/{agent_id}/recaps/{conversation_id}/restore api_agent_recap_restore
+GET /api/agents/{agent_id}/skills api_agent_skills
+GET /api/agents/{agent_id}/skills/{scope}/{name} api_skill_text
+POST /api/agents/{agent_id}/skills/{scope}/{name} api_skill_action
+DELETE /api/agents/{agent_id}/skills/{scope}/{name} api_skill_delete
+POST /api/skills/import api_skill_import
+GET /api/push/key api_push_key
+POST /api/push/subscribe api_push_subscribe
+POST /api/push/unsubscribe api_push_unsubscribe
+GET /api/push/status api_push_status
+POST /api/push/test api_push_test
+POST /api/files/move move_workspace_file
+POST /api/conversations/move move_conversation
+POST /api/conversations/handover handover_conversation
+GET /api/room api_room
+POST /api/room api_room_post
+GET /api/channels api_channels
+POST /api/channels api_channel_create
+PATCH /api/channels/{channel_id} api_channel_update
+DELETE /api/channels/{channel_id} api_channel_delete
+GET /api/claves api_claves
+POST /api/claves/enabled api_claves_enabled
+POST /api/claves api_create_clave
+PATCH /api/claves/{clave_id} api_update_clave
+DELETE /api/claves/{clave_id} api_archive_clave
+POST /api/claves/active api_active_clave
+POST /api/claves/place api_place_agent
+POST /api/claves/clone api_clone_agent
+POST /api/claves/remove api_remove_from_clave
+GET /api/agents/{agent_id}/claves api_agent_claves
+POST /api/agents/{agent_id}/claves api_set_agent_clave
+GET /api/agent-messages api_agent_messages
+GET /api/agents api_agents
+GET /api/usage api_usage
+GET /api/replies api_recent_replies
+POST /api/agents api_create_agent
+GET /api/agents/{agent_id}/profile api_agent_profile
+POST /api/agents/{agent_id}/vault-write api_agent_vault_write
+POST /api/agents/{agent_id}/name api_rename_agent
+POST /api/agents/{agent_id}/color api_agent_color
+PUT /api/agents/{agent_id}/identity/{kind} api_set_identity
+GET /api/tools api_tools
+GET /api/agents/{agent_id}/tools api_agent_tools
+POST /api/agents/{agent_id}/tools api_set_agent_tools
+GET /api/settings api_get_settings
+GET /api/access api_access
+GET /api/network api_network
+GET /api/phone api_phone
+POST /api/phone/setup api_phone_setup
+GET /api/update api_update
+POST /api/update/check api_update_check
+POST /api/update/apply api_update_apply
+POST /api/settings api_update_settings
+GET /api/attention api_attention
+POST /api/attention/digest-test api_attention_digest_test
+GET /api/claude-auth api_claude_auth
+POST /api/claude-auth/login api_claude_auth_login
+POST /api/claude-auth/code api_claude_auth_code
+POST /api/claude-auth/cancel api_claude_auth_cancel
+GET /api/cleanup api_cleanup
+POST /api/cleanup/check api_cleanup_check
+POST /api/cleanup/apply api_cleanup_apply
+POST /api/cleanup/dismiss api_cleanup_dismiss
+GET /api/proposals api_proposals
+POST /api/proposals/{item_id}/approve api_proposal_approve
+POST /api/proposals/{item_id}/decline api_proposal_decline
+POST /api/proposals/{item_id}/discuss api_proposal_discuss
+GET /api/weekly-review api_weekly_review
+POST /api/weekly-review/run api_weekly_review_run
+POST /api/audit/run api_audit_run
+POST /api/cleanup/unarchive api_cleanup_unarchive
+GET /api/setup api_setup
+POST /api/setup/key api_setup_key
+GET /api/version api_version
+GET /api/model-check api_model_check
+POST /api/model-check api_model_check_now
+GET /api/model-updates api_model_updates
+POST /api/model-updates/run api_model_updates_run
+POST /api/model-updates/enabled api_model_updates_enabled
+POST /api/model-updates/{action} api_model_updates_review
+GET /api/credits api_credits
+GET /api/quota api_quota
+GET /api/model-response-times api_model_response_times
+GET /api/models api_models
+POST /api/agents/{agent_id}/model api_set_agent_model
+POST /api/agents/order api_set_agent_order
+GET / dashboard
+GET /control/ control_panel
+GET /mobile/sw.js mobile_service_worker
+GET /mobile mobile_redirect
+GET /mobile/ mobile_dashboard
+POST /fresh/chat chat
+GET /fresh/voice/languages voice_languages
+POST /fresh/voice/transcribe voice_transcribe
+POST /fresh/voice/reply voice_reply
+GET /fresh/phase get_phase
+POST /fresh/chat-requests create_chat_request
+POST /fresh/attachments upload_attachment
+GET /fresh/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /fresh/chat-requests/{request_id} get_chat_request
+POST /fresh/chat-requests/{request_id}/cancel cancel_chat_request
+GET /fresh/agent-tabs agent_tabs
+GET /fresh/claves agent_page_claves
+POST /fresh/claves/active agent_page_set_clave
+POST /fresh/agent-tabs/order set_agent_tabs_order
+GET /fresh/move-targets move_targets
+GET /fresh/conversations list_conversations
+GET /fresh/conversation-search search_conversations
+GET /fresh/conversations/{conversation_id} get_conversation
+GET /fresh/conversations/{conversation_id}/handover-files handover_files
+DELETE /fresh/conversations/{conversation_id} delete_conversation
+PATCH /fresh/conversations/{conversation_id} rename_conversation
+GET /fresh/folders list_folders
+POST /fresh/folders create_folder
+PATCH /fresh/folders/{name} rename_folder
+POST /fresh/folders/{name}/conversations new_folder_conversation
+DELETE /fresh/folders/{name} delete_folder
+POST /fresh/conversations/{conversation_id}/purge/preview purge_preview
+POST /fresh/conversations/{conversation_id}/purge purge_apply
+POST /fresh/conversations/{conversation_id}/purge/undo purge_undo
+POST /fresh/conversations/{conversation_id}/archive archive_conversation
+GET /fresh/recaps agent_recaps
+POST /fresh/conversations/{conversation_id}/recap write_recap
+POST /fresh/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /fresh/page get_page
+POST /fresh/page/keep keep_page
+POST /fresh/page/revert revert_page
+POST /fresh/page/add add_page_item
+GET /fresh/page/html/{rel_path:path} get_page_html
+GET /fresh/plan get_plan
+GET /fresh/backlog get_backlog
+GET /fresh/kanban get_kanban
+POST /fresh/kanban set_kanban
+GET /fresh/usage get_usage
+GET /fresh/tracking get_tracking
+POST /fresh/tracking post_tracking
+POST /fresh/tracking/batch post_tracking_batch
+GET /fresh/dashboard-src get_dashboard_src
+GET /fresh/avatar-data get_avatar_data
+GET /fresh/files list_files
+POST /fresh/files create_file
+POST /fresh/files/rename rename_file
+DELETE /fresh/files/content delete_file
+GET /fresh/files/content read_file
+PUT /fresh/files/content write_file
+GET /fresh/model get_agent_model
+GET /fresh/models list_agent_models
+GET /fresh/model-response-times model_response_times
+POST /fresh/model set_agent_model
+GET /fresh <lambda>
+POST /greg/chat chat
+GET /greg/voice/languages voice_languages
+POST /greg/voice/transcribe voice_transcribe
+POST /greg/voice/reply voice_reply
+GET /greg/phase get_phase
+POST /greg/chat-requests create_chat_request
+POST /greg/attachments upload_attachment
+GET /greg/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /greg/chat-requests/{request_id} get_chat_request
+POST /greg/chat-requests/{request_id}/cancel cancel_chat_request
+GET /greg/agent-tabs agent_tabs
+GET /greg/claves agent_page_claves
+POST /greg/claves/active agent_page_set_clave
+POST /greg/agent-tabs/order set_agent_tabs_order
+GET /greg/move-targets move_targets
+GET /greg/conversations list_conversations
+GET /greg/conversation-search search_conversations
+GET /greg/conversations/{conversation_id} get_conversation
+GET /greg/conversations/{conversation_id}/handover-files handover_files
+DELETE /greg/conversations/{conversation_id} delete_conversation
+PATCH /greg/conversations/{conversation_id} rename_conversation
+GET /greg/folders list_folders
+POST /greg/folders create_folder
+PATCH /greg/folders/{name} rename_folder
+POST /greg/folders/{name}/conversations new_folder_conversation
+DELETE /greg/folders/{name} delete_folder
+POST /greg/conversations/{conversation_id}/purge/preview purge_preview
+POST /greg/conversations/{conversation_id}/purge purge_apply
+POST /greg/conversations/{conversation_id}/purge/undo purge_undo
+POST /greg/conversations/{conversation_id}/archive archive_conversation
+GET /greg/recaps agent_recaps
+POST /greg/conversations/{conversation_id}/recap write_recap
+POST /greg/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /greg/page get_page
+POST /greg/page/keep keep_page
+POST /greg/page/revert revert_page
+POST /greg/page/add add_page_item
+GET /greg/page/html/{rel_path:path} get_page_html
+GET /greg/plan get_plan
+GET /greg/backlog get_backlog
+GET /greg/kanban get_kanban
+POST /greg/kanban set_kanban
+GET /greg/usage get_usage
+GET /greg/tracking get_tracking
+POST /greg/tracking post_tracking
+POST /greg/tracking/batch post_tracking_batch
+GET /greg/dashboard-src get_dashboard_src
+GET /greg/avatar-data get_avatar_data
+GET /greg/files list_files
+POST /greg/files create_file
+POST /greg/files/rename rename_file
+DELETE /greg/files/content delete_file
+GET /greg/files/content read_file
+PUT /greg/files/content write_file
+GET /greg/model get_agent_model
+GET /greg/models list_agent_models
+GET /greg/model-response-times model_response_times
+POST /greg/model set_agent_model
+GET /greg <lambda>
+POST /r2/chat chat
+GET /r2/voice/languages voice_languages
+POST /r2/voice/transcribe voice_transcribe
+POST /r2/voice/reply voice_reply
+GET /r2/phase get_phase
+POST /r2/chat-requests create_chat_request
+POST /r2/attachments upload_attachment
+GET /r2/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /r2/chat-requests/{request_id} get_chat_request
+POST /r2/chat-requests/{request_id}/cancel cancel_chat_request
+GET /r2/agent-tabs agent_tabs
+GET /r2/claves agent_page_claves
+POST /r2/claves/active agent_page_set_clave
+POST /r2/agent-tabs/order set_agent_tabs_order
+GET /r2/move-targets move_targets
+GET /r2/conversations list_conversations
+GET /r2/conversation-search search_conversations
+GET /r2/conversations/{conversation_id} get_conversation
+GET /r2/conversations/{conversation_id}/handover-files handover_files
+DELETE /r2/conversations/{conversation_id} delete_conversation
+PATCH /r2/conversations/{conversation_id} rename_conversation
+GET /r2/folders list_folders
+POST /r2/folders create_folder
+PATCH /r2/folders/{name} rename_folder
+POST /r2/folders/{name}/conversations new_folder_conversation
+DELETE /r2/folders/{name} delete_folder
+POST /r2/conversations/{conversation_id}/purge/preview purge_preview
+POST /r2/conversations/{conversation_id}/purge purge_apply
+POST /r2/conversations/{conversation_id}/purge/undo purge_undo
+POST /r2/conversations/{conversation_id}/archive archive_conversation
+GET /r2/recaps agent_recaps
+POST /r2/conversations/{conversation_id}/recap write_recap
+POST /r2/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /r2/page get_page
+POST /r2/page/keep keep_page
+POST /r2/page/revert revert_page
+POST /r2/page/add add_page_item
+GET /r2/page/html/{rel_path:path} get_page_html
+GET /r2/plan get_plan
+GET /r2/backlog get_backlog
+GET /r2/kanban get_kanban
+POST /r2/kanban set_kanban
+GET /r2/usage get_usage
+GET /r2/tracking get_tracking
+POST /r2/tracking post_tracking
+POST /r2/tracking/batch post_tracking_batch
+GET /r2/dashboard-src get_dashboard_src
+GET /r2/avatar-data get_avatar_data
+GET /r2/files list_files
+POST /r2/files create_file
+POST /r2/files/rename rename_file
+DELETE /r2/files/content delete_file
+GET /r2/files/content read_file
+PUT /r2/files/content write_file
+GET /r2/model get_agent_model
+GET /r2/models list_agent_models
+GET /r2/model-response-times model_response_times
+POST /r2/model set_agent_model
+GET /r2 <lambda>
+POST /reba/chat chat
+GET /reba/voice/languages voice_languages
+POST /reba/voice/transcribe voice_transcribe
+POST /reba/voice/reply voice_reply
+GET /reba/phase get_phase
+POST /reba/chat-requests create_chat_request
+POST /reba/attachments upload_attachment
+GET /reba/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /reba/chat-requests/{request_id} get_chat_request
+POST /reba/chat-requests/{request_id}/cancel cancel_chat_request
+GET /reba/agent-tabs agent_tabs
+GET /reba/claves agent_page_claves
+POST /reba/claves/active agent_page_set_clave
+POST /reba/agent-tabs/order set_agent_tabs_order
+GET /reba/move-targets move_targets
+GET /reba/conversations list_conversations
+GET /reba/conversation-search search_conversations
+GET /reba/conversations/{conversation_id} get_conversation
+GET /reba/conversations/{conversation_id}/handover-files handover_files
+DELETE /reba/conversations/{conversation_id} delete_conversation
+PATCH /reba/conversations/{conversation_id} rename_conversation
+GET /reba/folders list_folders
+POST /reba/folders create_folder
+PATCH /reba/folders/{name} rename_folder
+POST /reba/folders/{name}/conversations new_folder_conversation
+DELETE /reba/folders/{name} delete_folder
+POST /reba/conversations/{conversation_id}/purge/preview purge_preview
+POST /reba/conversations/{conversation_id}/purge purge_apply
+POST /reba/conversations/{conversation_id}/purge/undo purge_undo
+POST /reba/conversations/{conversation_id}/archive archive_conversation
+GET /reba/recaps agent_recaps
+POST /reba/conversations/{conversation_id}/recap write_recap
+POST /reba/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /reba/page get_page
+POST /reba/page/keep keep_page
+POST /reba/page/revert revert_page
+POST /reba/page/add add_page_item
+GET /reba/page/html/{rel_path:path} get_page_html
+GET /reba/plan get_plan
+GET /reba/backlog get_backlog
+GET /reba/kanban get_kanban
+POST /reba/kanban set_kanban
+GET /reba/usage get_usage
+GET /reba/tracking get_tracking
+POST /reba/tracking post_tracking
+POST /reba/tracking/batch post_tracking_batch
+GET /reba/dashboard-src get_dashboard_src
+GET /reba/avatar-data get_avatar_data
+GET /reba/files list_files
+POST /reba/files create_file
+POST /reba/files/rename rename_file
+DELETE /reba/files/content delete_file
+GET /reba/files/content read_file
+PUT /reba/files/content write_file
+GET /reba/model get_agent_model
+GET /reba/models list_agent_models
+GET /reba/model-response-times model_response_times
+POST /reba/model set_agent_model
+GET /reba <lambda>
+POST /rick/chat chat
+GET /rick/voice/languages voice_languages
+POST /rick/voice/transcribe voice_transcribe
+POST /rick/voice/reply voice_reply
+GET /rick/phase get_phase
+POST /rick/chat-requests create_chat_request
+POST /rick/attachments upload_attachment
+GET /rick/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /rick/chat-requests/{request_id} get_chat_request
+POST /rick/chat-requests/{request_id}/cancel cancel_chat_request
+GET /rick/agent-tabs agent_tabs
+GET /rick/claves agent_page_claves
+POST /rick/claves/active agent_page_set_clave
+POST /rick/agent-tabs/order set_agent_tabs_order
+GET /rick/move-targets move_targets
+GET /rick/conversations list_conversations
+GET /rick/conversation-search search_conversations
+GET /rick/conversations/{conversation_id} get_conversation
+GET /rick/conversations/{conversation_id}/handover-files handover_files
+DELETE /rick/conversations/{conversation_id} delete_conversation
+PATCH /rick/conversations/{conversation_id} rename_conversation
+GET /rick/folders list_folders
+POST /rick/folders create_folder
+PATCH /rick/folders/{name} rename_folder
+POST /rick/folders/{name}/conversations new_folder_conversation
+DELETE /rick/folders/{name} delete_folder
+POST /rick/conversations/{conversation_id}/purge/preview purge_preview
+POST /rick/conversations/{conversation_id}/purge purge_apply
+POST /rick/conversations/{conversation_id}/purge/undo purge_undo
+POST /rick/conversations/{conversation_id}/archive archive_conversation
+GET /rick/recaps agent_recaps
+POST /rick/conversations/{conversation_id}/recap write_recap
+POST /rick/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /rick/page get_page
+POST /rick/page/keep keep_page
+POST /rick/page/revert revert_page
+POST /rick/page/add add_page_item
+GET /rick/page/html/{rel_path:path} get_page_html
+GET /rick/plan get_plan
+GET /rick/backlog get_backlog
+GET /rick/kanban get_kanban
+POST /rick/kanban set_kanban
+GET /rick/usage get_usage
+GET /rick/tracking get_tracking
+POST /rick/tracking post_tracking
+POST /rick/tracking/batch post_tracking_batch
+GET /rick/dashboard-src get_dashboard_src
+GET /rick/avatar-data get_avatar_data
+GET /rick/files list_files
+POST /rick/files create_file
+POST /rick/files/rename rename_file
+DELETE /rick/files/content delete_file
+GET /rick/files/content read_file
+PUT /rick/files/content write_file
+GET /rick/model get_agent_model
+GET /rick/models list_agent_models
+GET /rick/model-response-times model_response_times
+POST /rick/model set_agent_model
+GET /rick <lambda>
+POST /rocky/chat chat
+GET /rocky/voice/languages voice_languages
+POST /rocky/voice/transcribe voice_transcribe
+POST /rocky/voice/reply voice_reply
+GET /rocky/phase get_phase
+POST /rocky/chat-requests create_chat_request
+POST /rocky/attachments upload_attachment
+GET /rocky/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /rocky/chat-requests/{request_id} get_chat_request
+POST /rocky/chat-requests/{request_id}/cancel cancel_chat_request
+GET /rocky/agent-tabs agent_tabs
+GET /rocky/claves agent_page_claves
+POST /rocky/claves/active agent_page_set_clave
+POST /rocky/agent-tabs/order set_agent_tabs_order
+GET /rocky/move-targets move_targets
+GET /rocky/conversations list_conversations
+GET /rocky/conversation-search search_conversations
+GET /rocky/conversations/{conversation_id} get_conversation
+GET /rocky/conversations/{conversation_id}/handover-files handover_files
+DELETE /rocky/conversations/{conversation_id} delete_conversation
+PATCH /rocky/conversations/{conversation_id} rename_conversation
+GET /rocky/folders list_folders
+POST /rocky/folders create_folder
+PATCH /rocky/folders/{name} rename_folder
+POST /rocky/folders/{name}/conversations new_folder_conversation
+DELETE /rocky/folders/{name} delete_folder
+POST /rocky/conversations/{conversation_id}/purge/preview purge_preview
+POST /rocky/conversations/{conversation_id}/purge purge_apply
+POST /rocky/conversations/{conversation_id}/purge/undo purge_undo
+POST /rocky/conversations/{conversation_id}/archive archive_conversation
+GET /rocky/recaps agent_recaps
+POST /rocky/conversations/{conversation_id}/recap write_recap
+POST /rocky/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /rocky/page get_page
+POST /rocky/page/keep keep_page
+POST /rocky/page/revert revert_page
+POST /rocky/page/add add_page_item
+GET /rocky/page/html/{rel_path:path} get_page_html
+GET /rocky/plan get_plan
+GET /rocky/backlog get_backlog
+GET /rocky/kanban get_kanban
+POST /rocky/kanban set_kanban
+GET /rocky/usage get_usage
+GET /rocky/tracking get_tracking
+POST /rocky/tracking post_tracking
+POST /rocky/tracking/batch post_tracking_batch
+GET /rocky/dashboard-src get_dashboard_src
+GET /rocky/avatar-data get_avatar_data
+GET /rocky/files list_files
+POST /rocky/files create_file
+POST /rocky/files/rename rename_file
+DELETE /rocky/files/content delete_file
+GET /rocky/files/content read_file
+PUT /rocky/files/content write_file
+GET /rocky/model get_agent_model
+GET /rocky/models list_agent_models
+GET /rocky/model-response-times model_response_times
+POST /rocky/model set_agent_model
+GET /rocky <lambda>
+POST /spice/chat chat
+GET /spice/voice/languages voice_languages
+POST /spice/voice/transcribe voice_transcribe
+POST /spice/voice/reply voice_reply
+GET /spice/phase get_phase
+POST /spice/chat-requests create_chat_request
+POST /spice/attachments upload_attachment
+GET /spice/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /spice/chat-requests/{request_id} get_chat_request
+POST /spice/chat-requests/{request_id}/cancel cancel_chat_request
+GET /spice/agent-tabs agent_tabs
+GET /spice/claves agent_page_claves
+POST /spice/claves/active agent_page_set_clave
+POST /spice/agent-tabs/order set_agent_tabs_order
+GET /spice/move-targets move_targets
+GET /spice/conversations list_conversations
+GET /spice/conversation-search search_conversations
+GET /spice/conversations/{conversation_id} get_conversation
+GET /spice/conversations/{conversation_id}/handover-files handover_files
+DELETE /spice/conversations/{conversation_id} delete_conversation
+PATCH /spice/conversations/{conversation_id} rename_conversation
+GET /spice/folders list_folders
+POST /spice/folders create_folder
+PATCH /spice/folders/{name} rename_folder
+POST /spice/folders/{name}/conversations new_folder_conversation
+DELETE /spice/folders/{name} delete_folder
+POST /spice/conversations/{conversation_id}/purge/preview purge_preview
+POST /spice/conversations/{conversation_id}/purge purge_apply
+POST /spice/conversations/{conversation_id}/purge/undo purge_undo
+POST /spice/conversations/{conversation_id}/archive archive_conversation
+GET /spice/recaps agent_recaps
+POST /spice/conversations/{conversation_id}/recap write_recap
+POST /spice/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /spice/page get_page
+POST /spice/page/keep keep_page
+POST /spice/page/revert revert_page
+POST /spice/page/add add_page_item
+GET /spice/page/html/{rel_path:path} get_page_html
+GET /spice/plan get_plan
+GET /spice/backlog get_backlog
+GET /spice/kanban get_kanban
+POST /spice/kanban set_kanban
+GET /spice/usage get_usage
+GET /spice/tracking get_tracking
+POST /spice/tracking post_tracking
+POST /spice/tracking/batch post_tracking_batch
+GET /spice/dashboard-src get_dashboard_src
+GET /spice/avatar-data get_avatar_data
+GET /spice/files list_files
+POST /spice/files create_file
+POST /spice/files/rename rename_file
+DELETE /spice/files/content delete_file
+GET /spice/files/content read_file
+PUT /spice/files/content write_file
+GET /spice/model get_agent_model
+GET /spice/models list_agent_models
+GET /spice/model-response-times model_response_times
+POST /spice/model set_agent_model
+GET /spice <lambda>
+POST /stash/chat chat
+GET /stash/voice/languages voice_languages
+POST /stash/voice/transcribe voice_transcribe
+POST /stash/voice/reply voice_reply
+GET /stash/phase get_phase
+POST /stash/chat-requests create_chat_request
+POST /stash/attachments upload_attachment
+GET /stash/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /stash/chat-requests/{request_id} get_chat_request
+POST /stash/chat-requests/{request_id}/cancel cancel_chat_request
+GET /stash/agent-tabs agent_tabs
+GET /stash/claves agent_page_claves
+POST /stash/claves/active agent_page_set_clave
+POST /stash/agent-tabs/order set_agent_tabs_order
+GET /stash/move-targets move_targets
+GET /stash/conversations list_conversations
+GET /stash/conversation-search search_conversations
+GET /stash/conversations/{conversation_id} get_conversation
+GET /stash/conversations/{conversation_id}/handover-files handover_files
+DELETE /stash/conversations/{conversation_id} delete_conversation
+PATCH /stash/conversations/{conversation_id} rename_conversation
+GET /stash/folders list_folders
+POST /stash/folders create_folder
+PATCH /stash/folders/{name} rename_folder
+POST /stash/folders/{name}/conversations new_folder_conversation
+DELETE /stash/folders/{name} delete_folder
+POST /stash/conversations/{conversation_id}/purge/preview purge_preview
+POST /stash/conversations/{conversation_id}/purge purge_apply
+POST /stash/conversations/{conversation_id}/purge/undo purge_undo
+POST /stash/conversations/{conversation_id}/archive archive_conversation
+GET /stash/recaps agent_recaps
+POST /stash/conversations/{conversation_id}/recap write_recap
+POST /stash/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /stash/page get_page
+POST /stash/page/keep keep_page
+POST /stash/page/revert revert_page
+POST /stash/page/add add_page_item
+GET /stash/page/html/{rel_path:path} get_page_html
+GET /stash/plan get_plan
+GET /stash/backlog get_backlog
+GET /stash/kanban get_kanban
+POST /stash/kanban set_kanban
+GET /stash/usage get_usage
+GET /stash/tracking get_tracking
+POST /stash/tracking post_tracking
+POST /stash/tracking/batch post_tracking_batch
+GET /stash/dashboard-src get_dashboard_src
+GET /stash/avatar-data get_avatar_data
+GET /stash/files list_files
+POST /stash/files create_file
+POST /stash/files/rename rename_file
+DELETE /stash/files/content delete_file
+GET /stash/files/content read_file
+PUT /stash/files/content write_file
+GET /stash/model get_agent_model
+GET /stash/models list_agent_models
+GET /stash/model-response-times model_response_times
+POST /stash/model set_agent_model
+GET /stash <lambda>
+MOUNT /static static
+POST /zz-runtime/chat chat
+GET /zz-runtime/voice/languages voice_languages
+POST /zz-runtime/voice/transcribe voice_transcribe
+POST /zz-runtime/voice/reply voice_reply
+GET /zz-runtime/phase get_phase
+POST /zz-runtime/chat-requests create_chat_request
+POST /zz-runtime/attachments upload_attachment
+GET /zz-runtime/conversations/{conversation_id}/attachments/{attachment_id} get_attachment
+GET /zz-runtime/chat-requests/{request_id} get_chat_request
+POST /zz-runtime/chat-requests/{request_id}/cancel cancel_chat_request
+GET /zz-runtime/agent-tabs agent_tabs
+GET /zz-runtime/claves agent_page_claves
+POST /zz-runtime/claves/active agent_page_set_clave
+POST /zz-runtime/agent-tabs/order set_agent_tabs_order
+GET /zz-runtime/move-targets move_targets
+GET /zz-runtime/conversations list_conversations
+GET /zz-runtime/conversation-search search_conversations
+GET /zz-runtime/conversations/{conversation_id} get_conversation
+GET /zz-runtime/conversations/{conversation_id}/handover-files handover_files
+DELETE /zz-runtime/conversations/{conversation_id} delete_conversation
+PATCH /zz-runtime/conversations/{conversation_id} rename_conversation
+GET /zz-runtime/folders list_folders
+POST /zz-runtime/folders create_folder
+PATCH /zz-runtime/folders/{name} rename_folder
+POST /zz-runtime/folders/{name}/conversations new_folder_conversation
+DELETE /zz-runtime/folders/{name} delete_folder
+POST /zz-runtime/conversations/{conversation_id}/purge/preview purge_preview
+POST /zz-runtime/conversations/{conversation_id}/purge purge_apply
+POST /zz-runtime/conversations/{conversation_id}/purge/undo purge_undo
+POST /zz-runtime/conversations/{conversation_id}/archive archive_conversation
+GET /zz-runtime/recaps agent_recaps
+POST /zz-runtime/conversations/{conversation_id}/recap write_recap
+POST /zz-runtime/conversations/{conversation_id}/auto-name auto_name_conversation
+GET /zz-runtime/page get_page
+POST /zz-runtime/page/keep keep_page
+POST /zz-runtime/page/revert revert_page
+POST /zz-runtime/page/add add_page_item
+GET /zz-runtime/page/html/{rel_path:path} get_page_html
+GET /zz-runtime/plan get_plan
+GET /zz-runtime/backlog get_backlog
+GET /zz-runtime/kanban get_kanban
+POST /zz-runtime/kanban set_kanban
+GET /zz-runtime/usage get_usage
+GET /zz-runtime/tracking get_tracking
+POST /zz-runtime/tracking post_tracking
+POST /zz-runtime/tracking/batch post_tracking_batch
+GET /zz-runtime/dashboard-src get_dashboard_src
+GET /zz-runtime/avatar-data get_avatar_data
+GET /zz-runtime/files list_files
+POST /zz-runtime/files create_file
+POST /zz-runtime/files/rename rename_file
+DELETE /zz-runtime/files/content delete_file
+GET /zz-runtime/files/content read_file
+PUT /zz-runtime/files/content write_file
+GET /zz-runtime/model get_agent_model
+GET /zz-runtime/models list_agent_models
+GET /zz-runtime/model-response-times model_response_times
+POST /zz-runtime/model set_agent_model
+GET /zz-runtime <lambda>
+# first match per route path: method sample -> handler
+GET /openapi.json -> openapi
+HEAD /openapi.json -> openapi
+GET /docs -> swagger_ui_html
+HEAD /docs -> swagger_ui_html
+GET /docs/oauth2-redirect -> swagger_ui_redirect
+HEAD /docs/oauth2-redirect -> swagger_ui_redirect
+GET /redoc -> redoc_html
+HEAD /redoc -> redoc_html
+GET /api/agents/x/avatar -> agent_avatar
+POST /api/agents/x/avatar -> set_agent_avatar
+GET /api/avatar-library -> api_avatar_library
+GET /api/avatar-library/x.svg -> api_avatar_library_svg
+POST /api/agents/x/avatar/library -> api_pick_library_avatar
+POST /api/avatar/fetch -> avatar_fetch
+POST /api/avatar/cartoon -> avatar_cartoon
+GET /login -> login_form
+POST /login -> login_submit
+GET /api/maintainer/inbox -> maintainer_inbox
+GET /api/maintainer/inbox/x -> maintainer_inbox_item
+POST /api/maintainer/inbox/x -> update_maintainer_inbox_item
+GET /api/reminders -> api_reminders
+DELETE /api/reminders/x/x -> api_cancel_reminder
+GET /api/tasks -> api_tasks
+POST /api/tasks/x -> api_add_task
+POST /api/tasks/x/x -> api_update_task
+DELETE /api/tasks/x/x -> api_delete_task
+POST /api/tasks/x/x/run -> api_run_task
+GET /api/catalog -> api_catalog
+GET /api/catalog/x/avatar -> api_catalog_avatar
+POST /api/catalog/x/install -> api_catalog_install
+GET /api/agents/x/recaps -> api_agent_recaps
+GET /api/agents/x/recaps/x -> api_agent_recap_chat
+POST /api/agents/x/recaps/x/write -> api_agent_recap_write
+POST /api/agents/x/recaps/x/restore -> api_agent_recap_restore
+GET /api/agents/x/skills -> api_agent_skills
+GET /api/agents/x/skills/x/x -> api_skill_text
+POST /api/agents/x/skills/x/x -> api_skill_action
+DELETE /api/agents/x/skills/x/x -> api_skill_delete
+POST /api/skills/import -> api_skill_import
+GET /api/push/key -> api_push_key
+POST /api/push/subscribe -> api_push_subscribe
+POST /api/push/unsubscribe -> api_push_unsubscribe
+GET /api/push/status -> api_push_status
+POST /api/push/test -> api_push_test
+POST /api/files/move -> move_workspace_file
+POST /api/conversations/move -> move_conversation
+POST /api/conversations/handover -> handover_conversation
+GET /api/room -> api_room
+POST /api/room -> api_room_post
+GET /api/channels -> api_channels
+POST /api/channels -> api_channel_create
+PATCH /api/channels/x -> api_channel_update
+DELETE /api/channels/x -> api_channel_delete
+GET /api/claves -> api_claves
+POST /api/claves/enabled -> api_claves_enabled
+POST /api/claves -> api_create_clave
+PATCH /api/claves/x -> api_update_clave
+DELETE /api/claves/x -> api_archive_clave
+POST /api/claves/active -> api_active_clave
+POST /api/claves/place -> api_place_agent
+POST /api/claves/clone -> api_clone_agent
+POST /api/claves/remove -> api_remove_from_clave
+GET /api/agents/x/claves -> api_agent_claves
+POST /api/agents/x/claves -> api_set_agent_clave
+GET /api/agent-messages -> api_agent_messages
+GET /api/agents -> api_agents
+GET /api/usage -> api_usage
+GET /api/replies -> api_recent_replies
+POST /api/agents -> api_create_agent
+GET /api/agents/x/profile -> api_agent_profile
+POST /api/agents/x/vault-write -> api_agent_vault_write
+POST /api/agents/x/name -> api_rename_agent
+POST /api/agents/x/color -> api_agent_color
+PUT /api/agents/x/identity/x -> api_set_identity
+GET /api/tools -> api_tools
+GET /api/agents/x/tools -> api_agent_tools
+POST /api/agents/x/tools -> api_set_agent_tools
+GET /api/settings -> api_get_settings
+GET /api/access -> api_access
+GET /api/network -> api_network
+GET /api/phone -> api_phone
+POST /api/phone/setup -> api_phone_setup
+GET /api/update -> api_update
+POST /api/update/check -> api_update_check
+POST /api/update/apply -> api_update_apply
+POST /api/settings -> api_update_settings
+GET /api/attention -> api_attention
+POST /api/attention/digest-test -> api_attention_digest_test
+GET /api/claude-auth -> api_claude_auth
+POST /api/claude-auth/login -> api_claude_auth_login
+POST /api/claude-auth/code -> api_claude_auth_code
+POST /api/claude-auth/cancel -> api_claude_auth_cancel
+GET /api/cleanup -> api_cleanup
+POST /api/cleanup/check -> api_cleanup_check
+POST /api/cleanup/apply -> api_cleanup_apply
+POST /api/cleanup/dismiss -> api_cleanup_dismiss
+GET /api/proposals -> api_proposals
+POST /api/proposals/x/approve -> api_proposal_approve
+POST /api/proposals/x/decline -> api_proposal_decline
+POST /api/proposals/x/discuss -> api_proposal_discuss
+GET /api/weekly-review -> api_weekly_review
+POST /api/weekly-review/run -> api_weekly_review_run
+POST /api/audit/run -> api_audit_run
+POST /api/cleanup/unarchive -> api_cleanup_unarchive
+GET /api/setup -> api_setup
+POST /api/setup/key -> api_setup_key
+GET /api/version -> api_version
+GET /api/model-check -> api_model_check
+POST /api/model-check -> api_model_check_now
+GET /api/model-updates -> api_model_updates
+POST /api/model-updates/run -> api_model_updates_run
+POST /api/model-updates/enabled -> api_model_updates_enabled
+POST /api/model-updates/x -> api_model_updates_review
+GET /api/credits -> api_credits
+GET /api/quota -> api_quota
+GET /api/model-response-times -> api_model_response_times
+GET /api/models -> api_models
+POST /api/agents/x/model -> api_set_agent_model
+POST /api/agents/order -> api_set_agent_order
+GET / -> dashboard
+GET /control/ -> control_panel
+GET /mobile/sw.js -> mobile_service_worker
+GET /mobile -> mobile_redirect
+GET /mobile/ -> mobile_dashboard
+POST /fresh/chat -> chat
+GET /fresh/voice/languages -> voice_languages
+POST /fresh/voice/transcribe -> voice_transcribe
+POST /fresh/voice/reply -> voice_reply
+GET /fresh/phase -> get_phase
+POST /fresh/chat-requests -> create_chat_request
+POST /fresh/attachments -> upload_attachment
+GET /fresh/conversations/x/attachments/x -> get_attachment
+GET /fresh/chat-requests/x -> get_chat_request
+POST /fresh/chat-requests/x/cancel -> cancel_chat_request
+GET /fresh/agent-tabs -> agent_tabs
+GET /fresh/claves -> agent_page_claves
+POST /fresh/claves/active -> agent_page_set_clave
+POST /fresh/agent-tabs/order -> set_agent_tabs_order
+GET /fresh/move-targets -> move_targets
+GET /fresh/conversations -> list_conversations
+GET /fresh/conversation-search -> search_conversations
+GET /fresh/conversations/x -> get_conversation
+GET /fresh/conversations/x/handover-files -> handover_files
+DELETE /fresh/conversations/x -> delete_conversation
+PATCH /fresh/conversations/x -> rename_conversation
+GET /fresh/folders -> list_folders
+POST /fresh/folders -> create_folder
+PATCH /fresh/folders/x -> rename_folder
+POST /fresh/folders/x/conversations -> new_folder_conversation
+DELETE /fresh/folders/x -> delete_folder
+POST /fresh/conversations/x/purge/preview -> purge_preview
+POST /fresh/conversations/x/purge -> purge_apply
+POST /fresh/conversations/x/purge/undo -> purge_undo
+POST /fresh/conversations/x/archive -> archive_conversation
+GET /fresh/recaps -> agent_recaps
+POST /fresh/conversations/x/recap -> write_recap
+POST /fresh/conversations/x/auto-name -> auto_name_conversation
+GET /fresh/page -> get_page
+POST /fresh/page/keep -> keep_page
+POST /fresh/page/revert -> revert_page
+POST /fresh/page/add -> add_page_item
+GET /fresh/page/html/x -> get_page_html
+GET /fresh/plan -> get_plan
+GET /fresh/backlog -> get_backlog
+GET /fresh/kanban -> get_kanban
+POST /fresh/kanban -> set_kanban
+GET /fresh/usage -> get_usage
+GET /fresh/tracking -> get_tracking
+POST /fresh/tracking -> post_tracking
+POST /fresh/tracking/batch -> post_tracking_batch
+GET /fresh/dashboard-src -> get_dashboard_src
+GET /fresh/avatar-data -> get_avatar_data
+GET /fresh/files -> list_files
+POST /fresh/files -> create_file
+POST /fresh/files/rename -> rename_file
+DELETE /fresh/files/content -> delete_file
+GET /fresh/files/content -> read_file
+PUT /fresh/files/content -> write_file
+GET /fresh/model -> get_agent_model
+GET /fresh/models -> list_agent_models
+GET /fresh/model-response-times -> model_response_times
+POST /fresh/model -> set_agent_model
+GET /fresh -> <lambda>
+POST /greg/chat -> chat
+GET /greg/voice/languages -> voice_languages
+POST /greg/voice/transcribe -> voice_transcribe
+POST /greg/voice/reply -> voice_reply
+GET /greg/phase -> get_phase
+POST /greg/chat-requests -> create_chat_request
+POST /greg/attachments -> upload_attachment
+GET /greg/conversations/x/attachments/x -> get_attachment
+GET /greg/chat-requests/x -> get_chat_request
+POST /greg/chat-requests/x/cancel -> cancel_chat_request
+GET /greg/agent-tabs -> agent_tabs
+GET /greg/claves -> agent_page_claves
+POST /greg/claves/active -> agent_page_set_clave
+POST /greg/agent-tabs/order -> set_agent_tabs_order
+GET /greg/move-targets -> move_targets
+GET /greg/conversations -> list_conversations
+GET /greg/conversation-search -> search_conversations
+GET /greg/conversations/x -> get_conversation
+GET /greg/conversations/x/handover-files -> handover_files
+DELETE /greg/conversations/x -> delete_conversation
+PATCH /greg/conversations/x -> rename_conversation
+GET /greg/folders -> list_folders
+POST /greg/folders -> create_folder
+PATCH /greg/folders/x -> rename_folder
+POST /greg/folders/x/conversations -> new_folder_conversation
+DELETE /greg/folders/x -> delete_folder
+POST /greg/conversations/x/purge/preview -> purge_preview
+POST /greg/conversations/x/purge -> purge_apply
+POST /greg/conversations/x/purge/undo -> purge_undo
+POST /greg/conversations/x/archive -> archive_conversation
+GET /greg/recaps -> agent_recaps
+POST /greg/conversations/x/recap -> write_recap
+POST /greg/conversations/x/auto-name -> auto_name_conversation
+GET /greg/page -> get_page
+POST /greg/page/keep -> keep_page
+POST /greg/page/revert -> revert_page
+POST /greg/page/add -> add_page_item
+GET /greg/page/html/x -> get_page_html
+GET /greg/plan -> get_plan
+GET /greg/backlog -> get_backlog
+GET /greg/kanban -> get_kanban
+POST /greg/kanban -> set_kanban
+GET /greg/usage -> get_usage
+GET /greg/tracking -> get_tracking
+POST /greg/tracking -> post_tracking
+POST /greg/tracking/batch -> post_tracking_batch
+GET /greg/dashboard-src -> get_dashboard_src
+GET /greg/avatar-data -> get_avatar_data
+GET /greg/files -> list_files
+POST /greg/files -> create_file
+POST /greg/files/rename -> rename_file
+DELETE /greg/files/content -> delete_file
+GET /greg/files/content -> read_file
+PUT /greg/files/content -> write_file
+GET /greg/model -> get_agent_model
+GET /greg/models -> list_agent_models
+GET /greg/model-response-times -> model_response_times
+POST /greg/model -> set_agent_model
+GET /greg -> <lambda>
+POST /r2/chat -> chat
+GET /r2/voice/languages -> voice_languages
+POST /r2/voice/transcribe -> voice_transcribe
+POST /r2/voice/reply -> voice_reply
+GET /r2/phase -> get_phase
+POST /r2/chat-requests -> create_chat_request
+POST /r2/attachments -> upload_attachment
+GET /r2/conversations/x/attachments/x -> get_attachment
+GET /r2/chat-requests/x -> get_chat_request
+POST /r2/chat-requests/x/cancel -> cancel_chat_request
+GET /r2/agent-tabs -> agent_tabs
+GET /r2/claves -> agent_page_claves
+POST /r2/claves/active -> agent_page_set_clave
+POST /r2/agent-tabs/order -> set_agent_tabs_order
+GET /r2/move-targets -> move_targets
+GET /r2/conversations -> list_conversations
+GET /r2/conversation-search -> search_conversations
+GET /r2/conversations/x -> get_conversation
+GET /r2/conversations/x/handover-files -> handover_files
+DELETE /r2/conversations/x -> delete_conversation
+PATCH /r2/conversations/x -> rename_conversation
+GET /r2/folders -> list_folders
+POST /r2/folders -> create_folder
+PATCH /r2/folders/x -> rename_folder
+POST /r2/folders/x/conversations -> new_folder_conversation
+DELETE /r2/folders/x -> delete_folder
+POST /r2/conversations/x/purge/preview -> purge_preview
+POST /r2/conversations/x/purge -> purge_apply
+POST /r2/conversations/x/purge/undo -> purge_undo
+POST /r2/conversations/x/archive -> archive_conversation
+GET /r2/recaps -> agent_recaps
+POST /r2/conversations/x/recap -> write_recap
+POST /r2/conversations/x/auto-name -> auto_name_conversation
+GET /r2/page -> get_page
+POST /r2/page/keep -> keep_page
+POST /r2/page/revert -> revert_page
+POST /r2/page/add -> add_page_item
+GET /r2/page/html/x -> get_page_html
+GET /r2/plan -> get_plan
+GET /r2/backlog -> get_backlog
+GET /r2/kanban -> get_kanban
+POST /r2/kanban -> set_kanban
+GET /r2/usage -> get_usage
+GET /r2/tracking -> get_tracking
+POST /r2/tracking -> post_tracking
+POST /r2/tracking/batch -> post_tracking_batch
+GET /r2/dashboard-src -> get_dashboard_src
+GET /r2/avatar-data -> get_avatar_data
+GET /r2/files -> list_files
+POST /r2/files -> create_file
+POST /r2/files/rename -> rename_file
+DELETE /r2/files/content -> delete_file
+GET /r2/files/content -> read_file
+PUT /r2/files/content -> write_file
+GET /r2/model -> get_agent_model
+GET /r2/models -> list_agent_models
+GET /r2/model-response-times -> model_response_times
+POST /r2/model -> set_agent_model
+GET /r2 -> <lambda>
+POST /reba/chat -> chat
+GET /reba/voice/languages -> voice_languages
+POST /reba/voice/transcribe -> voice_transcribe
+POST /reba/voice/reply -> voice_reply
+GET /reba/phase -> get_phase
+POST /reba/chat-requests -> create_chat_request
+POST /reba/attachments -> upload_attachment
+GET /reba/conversations/x/attachments/x -> get_attachment
+GET /reba/chat-requests/x -> get_chat_request
+POST /reba/chat-requests/x/cancel -> cancel_chat_request
+GET /reba/agent-tabs -> agent_tabs
+GET /reba/claves -> agent_page_claves
+POST /reba/claves/active -> agent_page_set_clave
+POST /reba/agent-tabs/order -> set_agent_tabs_order
+GET /reba/move-targets -> move_targets
+GET /reba/conversations -> list_conversations
+GET /reba/conversation-search -> search_conversations
+GET /reba/conversations/x -> get_conversation
+GET /reba/conversations/x/handover-files -> handover_files
+DELETE /reba/conversations/x -> delete_conversation
+PATCH /reba/conversations/x -> rename_conversation
+GET /reba/folders -> list_folders
+POST /reba/folders -> create_folder
+PATCH /reba/folders/x -> rename_folder
+POST /reba/folders/x/conversations -> new_folder_conversation
+DELETE /reba/folders/x -> delete_folder
+POST /reba/conversations/x/purge/preview -> purge_preview
+POST /reba/conversations/x/purge -> purge_apply
+POST /reba/conversations/x/purge/undo -> purge_undo
+POST /reba/conversations/x/archive -> archive_conversation
+GET /reba/recaps -> agent_recaps
+POST /reba/conversations/x/recap -> write_recap
+POST /reba/conversations/x/auto-name -> auto_name_conversation
+GET /reba/page -> get_page
+POST /reba/page/keep -> keep_page
+POST /reba/page/revert -> revert_page
+POST /reba/page/add -> add_page_item
+GET /reba/page/html/x -> get_page_html
+GET /reba/plan -> get_plan
+GET /reba/backlog -> get_backlog
+GET /reba/kanban -> get_kanban
+POST /reba/kanban -> set_kanban
+GET /reba/usage -> get_usage
+GET /reba/tracking -> get_tracking
+POST /reba/tracking -> post_tracking
+POST /reba/tracking/batch -> post_tracking_batch
+GET /reba/dashboard-src -> get_dashboard_src
+GET /reba/avatar-data -> get_avatar_data
+GET /reba/files -> list_files
+POST /reba/files -> create_file
+POST /reba/files/rename -> rename_file
+DELETE /reba/files/content -> delete_file
+GET /reba/files/content -> read_file
+PUT /reba/files/content -> write_file
+GET /reba/model -> get_agent_model
+GET /reba/models -> list_agent_models
+GET /reba/model-response-times -> model_response_times
+POST /reba/model -> set_agent_model
+GET /reba -> <lambda>
+POST /rick/chat -> chat
+GET /rick/voice/languages -> voice_languages
+POST /rick/voice/transcribe -> voice_transcribe
+POST /rick/voice/reply -> voice_reply
+GET /rick/phase -> get_phase
+POST /rick/chat-requests -> create_chat_request
+POST /rick/attachments -> upload_attachment
+GET /rick/conversations/x/attachments/x -> get_attachment
+GET /rick/chat-requests/x -> get_chat_request
+POST /rick/chat-requests/x/cancel -> cancel_chat_request
+GET /rick/agent-tabs -> agent_tabs
+GET /rick/claves -> agent_page_claves
+POST /rick/claves/active -> agent_page_set_clave
+POST /rick/agent-tabs/order -> set_agent_tabs_order
+GET /rick/move-targets -> move_targets
+GET /rick/conversations -> list_conversations
+GET /rick/conversation-search -> search_conversations
+GET /rick/conversations/x -> get_conversation
+GET /rick/conversations/x/handover-files -> handover_files
+DELETE /rick/conversations/x -> delete_conversation
+PATCH /rick/conversations/x -> rename_conversation
+GET /rick/folders -> list_folders
+POST /rick/folders -> create_folder
+PATCH /rick/folders/x -> rename_folder
+POST /rick/folders/x/conversations -> new_folder_conversation
+DELETE /rick/folders/x -> delete_folder
+POST /rick/conversations/x/purge/preview -> purge_preview
+POST /rick/conversations/x/purge -> purge_apply
+POST /rick/conversations/x/purge/undo -> purge_undo
+POST /rick/conversations/x/archive -> archive_conversation
+GET /rick/recaps -> agent_recaps
+POST /rick/conversations/x/recap -> write_recap
+POST /rick/conversations/x/auto-name -> auto_name_conversation
+GET /rick/page -> get_page
+POST /rick/page/keep -> keep_page
+POST /rick/page/revert -> revert_page
+POST /rick/page/add -> add_page_item
+GET /rick/page/html/x -> get_page_html
+GET /rick/plan -> get_plan
+GET /rick/backlog -> get_backlog
+GET /rick/kanban -> get_kanban
+POST /rick/kanban -> set_kanban
+GET /rick/usage -> get_usage
+GET /rick/tracking -> get_tracking
+POST /rick/tracking -> post_tracking
+POST /rick/tracking/batch -> post_tracking_batch
+GET /rick/dashboard-src -> get_dashboard_src
+GET /rick/avatar-data -> get_avatar_data
+GET /rick/files -> list_files
+POST /rick/files -> create_file
+POST /rick/files/rename -> rename_file
+DELETE /rick/files/content -> delete_file
+GET /rick/files/content -> read_file
+PUT /rick/files/content -> write_file
+GET /rick/model -> get_agent_model
+GET /rick/models -> list_agent_models
+GET /rick/model-response-times -> model_response_times
+POST /rick/model -> set_agent_model
+GET /rick -> <lambda>
+POST /rocky/chat -> chat
+GET /rocky/voice/languages -> voice_languages
+POST /rocky/voice/transcribe -> voice_transcribe
+POST /rocky/voice/reply -> voice_reply
+GET /rocky/phase -> get_phase
+POST /rocky/chat-requests -> create_chat_request
+POST /rocky/attachments -> upload_attachment
+GET /rocky/conversations/x/attachments/x -> get_attachment
+GET /rocky/chat-requests/x -> get_chat_request
+POST /rocky/chat-requests/x/cancel -> cancel_chat_request
+GET /rocky/agent-tabs -> agent_tabs
+GET /rocky/claves -> agent_page_claves
+POST /rocky/claves/active -> agent_page_set_clave
+POST /rocky/agent-tabs/order -> set_agent_tabs_order
+GET /rocky/move-targets -> move_targets
+GET /rocky/conversations -> list_conversations
+GET /rocky/conversation-search -> search_conversations
+GET /rocky/conversations/x -> get_conversation
+GET /rocky/conversations/x/handover-files -> handover_files
+DELETE /rocky/conversations/x -> delete_conversation
+PATCH /rocky/conversations/x -> rename_conversation
+GET /rocky/folders -> list_folders
+POST /rocky/folders -> create_folder
+PATCH /rocky/folders/x -> rename_folder
+POST /rocky/folders/x/conversations -> new_folder_conversation
+DELETE /rocky/folders/x -> delete_folder
+POST /rocky/conversations/x/purge/preview -> purge_preview
+POST /rocky/conversations/x/purge -> purge_apply
+POST /rocky/conversations/x/purge/undo -> purge_undo
+POST /rocky/conversations/x/archive -> archive_conversation
+GET /rocky/recaps -> agent_recaps
+POST /rocky/conversations/x/recap -> write_recap
+POST /rocky/conversations/x/auto-name -> auto_name_conversation
+GET /rocky/page -> get_page
+POST /rocky/page/keep -> keep_page
+POST /rocky/page/revert -> revert_page
+POST /rocky/page/add -> add_page_item
+GET /rocky/page/html/x -> get_page_html
+GET /rocky/plan -> get_plan
+GET /rocky/backlog -> get_backlog
+GET /rocky/kanban -> get_kanban
+POST /rocky/kanban -> set_kanban
+GET /rocky/usage -> get_usage
+GET /rocky/tracking -> get_tracking
+POST /rocky/tracking -> post_tracking
+POST /rocky/tracking/batch -> post_tracking_batch
+GET /rocky/dashboard-src -> get_dashboard_src
+GET /rocky/avatar-data -> get_avatar_data
+GET /rocky/files -> list_files
+POST /rocky/files -> create_file
+POST /rocky/files/rename -> rename_file
+DELETE /rocky/files/content -> delete_file
+GET /rocky/files/content -> read_file
+PUT /rocky/files/content -> write_file
+GET /rocky/model -> get_agent_model
+GET /rocky/models -> list_agent_models
+GET /rocky/model-response-times -> model_response_times
+POST /rocky/model -> set_agent_model
+GET /rocky -> <lambda>
+POST /spice/chat -> chat
+GET /spice/voice/languages -> voice_languages
+POST /spice/voice/transcribe -> voice_transcribe
+POST /spice/voice/reply -> voice_reply
+GET /spice/phase -> get_phase
+POST /spice/chat-requests -> create_chat_request
+POST /spice/attachments -> upload_attachment
+GET /spice/conversations/x/attachments/x -> get_attachment
+GET /spice/chat-requests/x -> get_chat_request
+POST /spice/chat-requests/x/cancel -> cancel_chat_request
+GET /spice/agent-tabs -> agent_tabs
+GET /spice/claves -> agent_page_claves
+POST /spice/claves/active -> agent_page_set_clave
+POST /spice/agent-tabs/order -> set_agent_tabs_order
+GET /spice/move-targets -> move_targets
+GET /spice/conversations -> list_conversations
+GET /spice/conversation-search -> search_conversations
+GET /spice/conversations/x -> get_conversation
+GET /spice/conversations/x/handover-files -> handover_files
+DELETE /spice/conversations/x -> delete_conversation
+PATCH /spice/conversations/x -> rename_conversation
+GET /spice/folders -> list_folders
+POST /spice/folders -> create_folder
+PATCH /spice/folders/x -> rename_folder
+POST /spice/folders/x/conversations -> new_folder_conversation
+DELETE /spice/folders/x -> delete_folder
+POST /spice/conversations/x/purge/preview -> purge_preview
+POST /spice/conversations/x/purge -> purge_apply
+POST /spice/conversations/x/purge/undo -> purge_undo
+POST /spice/conversations/x/archive -> archive_conversation
+GET /spice/recaps -> agent_recaps
+POST /spice/conversations/x/recap -> write_recap
+POST /spice/conversations/x/auto-name -> auto_name_conversation
+GET /spice/page -> get_page
+POST /spice/page/keep -> keep_page
+POST /spice/page/revert -> revert_page
+POST /spice/page/add -> add_page_item
+GET /spice/page/html/x -> get_page_html
+GET /spice/plan -> get_plan
+GET /spice/backlog -> get_backlog
+GET /spice/kanban -> get_kanban
+POST /spice/kanban -> set_kanban
+GET /spice/usage -> get_usage
+GET /spice/tracking -> get_tracking
+POST /spice/tracking -> post_tracking
+POST /spice/tracking/batch -> post_tracking_batch
+GET /spice/dashboard-src -> get_dashboard_src
+GET /spice/avatar-data -> get_avatar_data
+GET /spice/files -> list_files
+POST /spice/files -> create_file
+POST /spice/files/rename -> rename_file
+DELETE /spice/files/content -> delete_file
+GET /spice/files/content -> read_file
+PUT /spice/files/content -> write_file
+GET /spice/model -> get_agent_model
+GET /spice/models -> list_agent_models
+GET /spice/model-response-times -> model_response_times
+POST /spice/model -> set_agent_model
+GET /spice -> <lambda>
+POST /stash/chat -> chat
+GET /stash/voice/languages -> voice_languages
+POST /stash/voice/transcribe -> voice_transcribe
+POST /stash/voice/reply -> voice_reply
+GET /stash/phase -> get_phase
+POST /stash/chat-requests -> create_chat_request
+POST /stash/attachments -> upload_attachment
+GET /stash/conversations/x/attachments/x -> get_attachment
+GET /stash/chat-requests/x -> get_chat_request
+POST /stash/chat-requests/x/cancel -> cancel_chat_request
+GET /stash/agent-tabs -> agent_tabs
+GET /stash/claves -> agent_page_claves
+POST /stash/claves/active -> agent_page_set_clave
+POST /stash/agent-tabs/order -> set_agent_tabs_order
+GET /stash/move-targets -> move_targets
+GET /stash/conversations -> list_conversations
+GET /stash/conversation-search -> search_conversations
+GET /stash/conversations/x -> get_conversation
+GET /stash/conversations/x/handover-files -> handover_files
+DELETE /stash/conversations/x -> delete_conversation
+PATCH /stash/conversations/x -> rename_conversation
+GET /stash/folders -> list_folders
+POST /stash/folders -> create_folder
+PATCH /stash/folders/x -> rename_folder
+POST /stash/folders/x/conversations -> new_folder_conversation
+DELETE /stash/folders/x -> delete_folder
+POST /stash/conversations/x/purge/preview -> purge_preview
+POST /stash/conversations/x/purge -> purge_apply
+POST /stash/conversations/x/purge/undo -> purge_undo
+POST /stash/conversations/x/archive -> archive_conversation
+GET /stash/recaps -> agent_recaps
+POST /stash/conversations/x/recap -> write_recap
+POST /stash/conversations/x/auto-name -> auto_name_conversation
+GET /stash/page -> get_page
+POST /stash/page/keep -> keep_page
+POST /stash/page/revert -> revert_page
+POST /stash/page/add -> add_page_item
+GET /stash/page/html/x -> get_page_html
+GET /stash/plan -> get_plan
+GET /stash/backlog -> get_backlog
+GET /stash/kanban -> get_kanban
+POST /stash/kanban -> set_kanban
+GET /stash/usage -> get_usage
+GET /stash/tracking -> get_tracking
+POST /stash/tracking -> post_tracking
+POST /stash/tracking/batch -> post_tracking_batch
+GET /stash/dashboard-src -> get_dashboard_src
+GET /stash/avatar-data -> get_avatar_data
+GET /stash/files -> list_files
+POST /stash/files -> create_file
+POST /stash/files/rename -> rename_file
+DELETE /stash/files/content -> delete_file
+GET /stash/files/content -> read_file
+PUT /stash/files/content -> write_file
+GET /stash/model -> get_agent_model
+GET /stash/models -> list_agent_models
+GET /stash/model-response-times -> model_response_times
+POST /stash/model -> set_agent_model
+GET /stash -> <lambda>
+POST /zz-runtime/chat -> chat
+GET /zz-runtime/voice/languages -> voice_languages
+POST /zz-runtime/voice/transcribe -> voice_transcribe
+POST /zz-runtime/voice/reply -> voice_reply
+GET /zz-runtime/phase -> get_phase
+POST /zz-runtime/chat-requests -> create_chat_request
+POST /zz-runtime/attachments -> upload_attachment
+GET /zz-runtime/conversations/x/attachments/x -> get_attachment
+GET /zz-runtime/chat-requests/x -> get_chat_request
+POST /zz-runtime/chat-requests/x/cancel -> cancel_chat_request
+GET /zz-runtime/agent-tabs -> agent_tabs
+GET /zz-runtime/claves -> agent_page_claves
+POST /zz-runtime/claves/active -> agent_page_set_clave
+POST /zz-runtime/agent-tabs/order -> set_agent_tabs_order
+GET /zz-runtime/move-targets -> move_targets
+GET /zz-runtime/conversations -> list_conversations
+GET /zz-runtime/conversation-search -> search_conversations
+GET /zz-runtime/conversations/x -> get_conversation
+GET /zz-runtime/conversations/x/handover-files -> handover_files
+DELETE /zz-runtime/conversations/x -> delete_conversation
+PATCH /zz-runtime/conversations/x -> rename_conversation
+GET /zz-runtime/folders -> list_folders
+POST /zz-runtime/folders -> create_folder
+PATCH /zz-runtime/folders/x -> rename_folder
+POST /zz-runtime/folders/x/conversations -> new_folder_conversation
+DELETE /zz-runtime/folders/x -> delete_folder
+POST /zz-runtime/conversations/x/purge/preview -> purge_preview
+POST /zz-runtime/conversations/x/purge -> purge_apply
+POST /zz-runtime/conversations/x/purge/undo -> purge_undo
+POST /zz-runtime/conversations/x/archive -> archive_conversation
+GET /zz-runtime/recaps -> agent_recaps
+POST /zz-runtime/conversations/x/recap -> write_recap
+POST /zz-runtime/conversations/x/auto-name -> auto_name_conversation
+GET /zz-runtime/page -> get_page
+POST /zz-runtime/page/keep -> keep_page
+POST /zz-runtime/page/revert -> revert_page
+POST /zz-runtime/page/add -> add_page_item
+GET /zz-runtime/page/html/x -> get_page_html
+GET /zz-runtime/plan -> get_plan
+GET /zz-runtime/backlog -> get_backlog
+GET /zz-runtime/kanban -> get_kanban
+POST /zz-runtime/kanban -> set_kanban
+GET /zz-runtime/usage -> get_usage
+GET /zz-runtime/tracking -> get_tracking
+POST /zz-runtime/tracking -> post_tracking
+POST /zz-runtime/tracking/batch -> post_tracking_batch
+GET /zz-runtime/dashboard-src -> get_dashboard_src
+GET /zz-runtime/avatar-data -> get_avatar_data
+GET /zz-runtime/files -> list_files
+POST /zz-runtime/files -> create_file
+POST /zz-runtime/files/rename -> rename_file
+DELETE /zz-runtime/files/content -> delete_file
+GET /zz-runtime/files/content -> read_file
+PUT /zz-runtime/files/content -> write_file
+GET /zz-runtime/model -> get_agent_model
+GET /zz-runtime/models -> list_agent_models
+GET /zz-runtime/model-response-times -> model_response_times
+POST /zz-runtime/model -> set_agent_model
+GET /zz-runtime -> <lambda>

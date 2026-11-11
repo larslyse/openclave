@@ -27,6 +27,11 @@ class DeployStateTests(unittest.TestCase):
         self.assertTrue(status["stale"])
         self.assertEqual(status["changed_files"], ["main.py", "new_module.py"])
 
+    def test_route_modules_count(self):
+        (self.tmp / "routes").mkdir()
+        (self.tmp / "routes" / "agents.py").write_text("x")
+        self.assertEqual(deploy_state.status()["changed_files"], ["routes/agents.py"])
+
     def test_static_files_do_not_count(self):
         (self.tmp / "dashboard.html").write_text("changed")
         self.assertFalse(deploy_state.status()["stale"])

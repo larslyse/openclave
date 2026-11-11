@@ -182,7 +182,7 @@ class PhoneAndUpdateRouteTests(FakeTailscale):
         real_setup, real_saved = phone_setup.setup, phone_setup.saved_public_url
         for name, fn in (("setup", lambda port, _p: real_setup(port, self.toml)),
                          ("saved_public_url", lambda _p: real_saved(self.toml))):
-            p = mock.patch.object(main.phone_setup, name, fn)
+            p = mock.patch.object(phone_setup, name, fn)
             p.start()
             self.addCleanup(p.stop)
         self.origins = set(main.TRUSTED_ORIGINS)
