@@ -12,6 +12,7 @@ from unittest.mock import patch
 import attention
 import claude_auth
 import llm_client
+from providers import claude_cli
 
 # What Claude CLI 2.1 really prints when it has no login (2026-10-14).
 SIGNED_OUT = "\n".join(json.dumps(e) for e in [
@@ -56,7 +57,7 @@ class DetectionTests(AuthStateCase):
             kwargs["stdout"].write(SIGNED_OUT.encode())
             return subprocess.CompletedProcess(args, 1, None, "")
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "_watch_claude_phase", lambda *a: None):
+             patch.object(claude_cli, "_watch_claude_phase", lambda *a: None):
             reply = llm_client._chat_claude_cli("rick", "claude-x", "system", [{"role": "user", "content": "hi"}])
         self.assertEqual(reply, claude_auth.AGENT_REPLY)
         self.assertIn("Claude sign-in", reply)
@@ -69,7 +70,7 @@ class DetectionTests(AuthStateCase):
             kwargs["stdout"].write(json.dumps({"type": "result", "is_error": False, "result": "fine"}).encode())
             return subprocess.CompletedProcess(args, 0, None, "")
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "_watch_claude_phase", lambda *a: None), patch.object(llm_client, "log_usage"):
+             patch.object(claude_cli, "_watch_claude_phase", lambda *a: None), patch.object(claude_cli, "log_usage"):
             self.assertEqual(llm_client._chat_claude_cli("rick", "claude-x", "system", [{"role": "user", "content": "hi"}]), "fine")
         self.assertFalse(claude_auth.signed_out())
         self.assertTrue(claude_auth.status()["restored"])

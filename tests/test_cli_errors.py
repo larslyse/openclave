@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import chat_service
 import llm_client
-from providers import xai_api
+from providers import claude_cli, xai_api
 
 
 PROMPT_ECHO = "OpenAI Codex v1\nuser\n<system_instructions>\nsecret-ish notes " + "x" * 2000 + "\n### Assistant\n"
@@ -37,7 +37,7 @@ class CliDiagnosticTests(unittest.TestCase):
             kwargs["stdout"].write(stream.encode())
             return subprocess.CompletedProcess(args, 1, None, "")
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "_watch_claude_phase", lambda *a: None):
+             patch.object(claude_cli, "_watch_claude_phase", lambda *a: None):
             reply = llm_client._chat_claude_cli("rick", "claude-x", "system", [{"role": "user", "content": "hi"}])
         self.assertEqual(reply, "(claude-cli error: exit code 1: There's an issue with the selected model (x). Run --model to pick a different model.)")
         self.assertEqual(llm_client._claude_stream_error(stream.split("\n", 2)[0] + "\n" + stream.split("\n")[1]),
@@ -53,7 +53,7 @@ class CliDiagnosticTests(unittest.TestCase):
         messages = [{"role": "user", "content": [{"type": "text", "text": "colour?"},
                                                   {"type": "image", "media_type": "image/png", "data": "QUJD"}]}]
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "_watch_claude_phase", lambda *a: None), patch.object(llm_client, "log_usage"):
+             patch.object(claude_cli, "_watch_claude_phase", lambda *a: None), patch.object(claude_cli, "log_usage"):
             self.assertEqual(llm_client._chat_claude_cli("r2", "claude-opus-5-5", "system", messages), "Red")
         self.assertIn("--input-format", seen["args"])
         content = json.loads(seen["input"])["message"]["content"]
@@ -67,7 +67,7 @@ class CliDiagnosticTests(unittest.TestCase):
             kwargs["stdout"].write(json.dumps({"type": "result", "is_error": False, "result": "ok"}).encode())
             return subprocess.CompletedProcess(args, 0, None, "")
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "_watch_claude_phase", lambda *a: None), patch.object(llm_client, "log_usage"):
+             patch.object(claude_cli, "_watch_claude_phase", lambda *a: None), patch.object(claude_cli, "log_usage"):
             llm_client._chat_claude_cli("r2", "claude-opus-5-5", "system", [{"role": "user", "content": "hi"}])
         self.assertNotIn("--input-format", seen["args"])
         self.assertIs(seen["kwargs"]["stdin"], subprocess.DEVNULL)
@@ -144,8 +144,8 @@ class CliDiagnosticTests(unittest.TestCase):
             raise subprocess.TimeoutExpired(args, kwargs["timeout"])
 
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "cancel_running"), patch.object(llm_client, "_extra_servers", return_value={}), \
-             patch.object(llm_client, "_has_web_search", return_value=False):
+             patch.object(claude_cli, "cancel_running"), patch.object(claude_cli, "_extra_servers", return_value={}), \
+             patch.object(claude_cli, "_has_web_search", return_value=False):
             reply = llm_client._chat_claude_cli("r2", "claude-opus-5-5", "system", [{"role": "user", "content": "build"}], timeout_s=600)
         self.assertTrue(reply.startswith("**Stopped after 10 minutes before Claude Opus 5.5 finished.**"))
         self.assertIn('ha_ws {"type": "input_boolean/create", "name": "Dim"}', reply)
