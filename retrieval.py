@@ -39,6 +39,7 @@ _EXCLUDED_PATHS = ("/conversations/", "/openclave/build-docs/archive/")
 
 def _drop_excluded_hits(output: str) -> list[str]:
     blocks = [b.strip() for b in re.split(r"(?m)^(?=qmd://)", output) if b.strip().startswith("qmd://")]
+    blocks = vault.allowed_qmd_blocks(blocks)  # confidential folders, state, secrets
     return [b for b in blocks if not any(p in b.split("\n", 1)[0] for p in _EXCLUDED_PATHS)]
 
 
