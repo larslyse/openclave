@@ -10,6 +10,7 @@ from unittest.mock import patch
 
 import llm_client
 import llm_usage
+from providers import codex_cli
 
 
 class CodexIsolationTests(unittest.TestCase):
@@ -103,7 +104,7 @@ class CodexIsolationTests(unittest.TestCase):
 
                 with patch.object(llm_client.subprocess, "run", side_effect=fake_run):
                     if timeout:
-                        with patch.object(llm_client, "cancel_running"):
+                        with patch.object(codex_cli, "cancel_running"):
                             reply = llm_client._chat_codex_cli("stash", "gpt-5.6-sol", "system", messages)
                         self.assertIn("no reply from GPT-5.6 Sol within 5 minutes", reply)
                     else:

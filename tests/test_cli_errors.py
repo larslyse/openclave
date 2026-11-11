@@ -9,7 +9,7 @@ from unittest.mock import patch
 
 import chat_service
 import llm_client
-from providers import claude_cli, xai_api
+from providers import claude_cli, codex_cli, xai_api
 
 
 PROMPT_ECHO = "OpenAI Codex v1\nuser\n<system_instructions>\nsecret-ish notes " + "x" * 2000 + "\n### Assistant\n"
@@ -100,7 +100,7 @@ class CliDiagnosticTests(unittest.TestCase):
             with patch.dict(os.environ, {"CODEX_HOME": source_home}), \
                  patch.object(llm_client.vault, "agent_root", side_effect=lambda agent: Path(root) / agent), \
                  patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-                 patch.object(llm_client, "cancel_running") as cancel:
+                 patch.object(codex_cli, "cancel_running") as cancel:
                 reply = llm_client._chat_codex_cli("cathie", "gpt-6-astra", "system", [{"role": "user", "content": "PROMPT-TEXT"}])
         cancel.assert_called_once_with("cathie")
         self.assertTrue(reply.startswith("(codex-cli error: no reply from GPT-6 Astra within 10 minutes"))
