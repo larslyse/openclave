@@ -13,7 +13,6 @@ set -euo pipefail
 REPO_URL="https://github.com/larslyse/openclave.git"
 DATA="${OPENCLAVE_HOME:-$HOME/.openclave}"
 export OPENCLAVE_HOME="$DATA"
-PORT=8777
 USER="${USER:-$(id -un)}"
 
 # ── Output and questions ─────────────────────────────────────────────────
@@ -111,9 +110,26 @@ step "Installing OpenClave's Python packages (into $REPO/.venv, nothing system-w
 .venv/bin/pip install -q --disable-pip-version-check -r requirements.txt
 ok "Packages installed"
 
+# The `openclave` command (bin/openclave): start, stop, update, backup.
+BIN_LINK="$HOME/.local/bin/openclave"
+mkdir -p "$HOME/.local/bin"
+if [ -e "$BIN_LINK" ] && [ ! -L "$BIN_LINK" ]; then
+  warn "$BIN_LINK already exists and isn't OpenClave's; leaving it. Use $REPO/bin/openclave instead."
+  OC="$REPO/bin/openclave"
+else
+  ln -sfn "$REPO/bin/openclave" "$BIN_LINK"
+  case ":$PATH:" in
+    *":$HOME/.local/bin:"*) OC=openclave ;;
+    *) OC="$BIN_LINK"
+       warn "$HOME/.local/bin isn't on your PATH yet, so type $BIN_LINK for now; after you log in again, plain \"openclave\" works on Ubuntu." ;;
+  esac
+  ok "Added the ${B}openclave${N} command (openclave help lists what it does)"
+fi
+
 # ── About you ────────────────────────────────────────────────────────────
 mkdir -p "$DATA"; chmod 700 "$DATA"
 TOML="$DATA/openclave.toml"
+NEW_TOML=""
 ENV_FILE="$DATA/.env"
 touch "$ENV_FILE"; chmod 600 "$ENV_FILE"
 
@@ -143,6 +159,7 @@ else
     printf '# OpenClave settings. All options: openclave.example.toml in %s\n\n' "$REPO"
     printf '[owner]\nname = %s\n\n[time]\ntimezone = %s\n' "$(toml_str "$NAME")" "$(toml_str "$TZ_ANS")"
   } >"$TOML"
+  NEW_TOML=1
   ok "Saved to $TOML"
 fi
 
@@ -392,39 +409,129 @@ fi
 step "Checking the setup"
 .venv/bin/python run.py --check || true
 
+# The port comes from openclave.toml ([network] port, 8777 when not set).
+PORT="$(.venv/bin/python -c 'from config import CONFIG; print(CONFIG.port)' 2>/dev/null || echo 8777)"
+is_openclave() {  # is_openclave PORT: OpenClave itself (not another program) answers there
+  curl -s -m 3 "http://localhost:$1/api/version" 2>/dev/null \
+    | .venv/bin/python -c 'import json, sys; sys.exit(0 if "started_at" in json.load(sys.stdin) else 1)' 2>/dev/null
+}
+port_free() {
+  .venv/bin/python -c '
+import socket, sys
+s = socket.socket()
+s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+try:
+    s.bind(("0.0.0.0", int(sys.argv[1])))
+except OSError:
+    sys.exit(1)' "$1"
+}
+if ! is_openclave "$PORT" && ! port_free "$PORT"; then
+  NEW_PORT=""
+  for p in $(seq $((PORT + 1)) $((PORT + 50))); do
+    if port_free "$p"; then NEW_PORT=$p; break; fi
+  done
+  [ -n "$NEW_PORT" ] || die "Port $PORT and the 50 after it are in use. Set a free port under [network] in $TOML, then run ./install.sh again."
+  warn "Another program already uses port $PORT."
+  if [ -n "$NEW_TOML" ] || yes_no "Use port $NEW_PORT for OpenClave instead? (saved in $TOML)" Y; then
+    .venv/bin/python toml_edit.py "$TOML" network port "$NEW_PORT" --int || die "Couldn't save the port in $TOML."
+    PORT=$NEW_PORT
+    ok "OpenClave uses port $PORT (saved as [network] port in $TOML)"
+  else
+    die "Stop the program on port $PORT, or set another port under [network] in $TOML, then run ./install.sh again."
+  fi
+fi
 URL="http://localhost:$PORT/"
+
+# ── No screen: reach it from your other devices ──────────────────────────
+HEADLESS=""; [ -z "$WSL" ] && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && HEADLESS=1
+PUBLIC=""
+saved_public() { .venv/bin/python -c 'import sys, phone_setup; print(phone_setup.saved_public_url(sys.argv[1]))' "$TOML" 2>/dev/null || true; }
+run_phone_setup() { .venv/bin/python phone_setup.py setup --port "$PORT" --toml "$TOML"; }
+if [ -n "$HEADLESS" ]; then
+  step "Reaching it from your other devices"
+  PUBLIC="$(saved_public)"
+  case "$PUBLIC" in
+    https://*) ok "Secure address already set: $PUBLIC" ;;
+    *)
+      PUBLIC=""; ts=0
+      .venv/bin/python phone_setup.py status --port "$PORT" || ts=$?
+      if [ "$ts" -eq 0 ]; then
+        say "This computer has no screen, so you'll use OpenClave from your laptop or phone."
+        say "Tailscale is signed in here. It can give OpenClave a private HTTPS address that"
+        say "only your own devices can open (the phone app needs HTTPS)."
+        if yes_no "Set that up now? (runs: tailscale serve --bg $PORT)" Y; then
+          rc=0; run_phone_setup || rc=$?
+          if [ "$rc" -eq 3 ]; then
+            say "Tailscale needs administrator rights for this."
+            if as_root tailscale serve --bg "$PORT" >/dev/null; then rc=0; run_phone_setup || rc=$?; fi
+          fi
+          if [ "$rc" -eq 0 ]; then PUBLIC="$(saved_public)"; ok "Secure address: $PUBLIC"
+          else warn "Not set up now. Control Panel → Phone can try again later."; fi
+        fi
+      elif [ "$ts" -eq 11 ]; then
+        warn "Tailscale is installed but not signed in. Sign in (sudo tailscale up), then use Control Panel → Phone."
+      else
+        say "No Tailscale here, so for now you reach OpenClave through SSH (shown below)."
+      fi ;;
+  esac
+fi
+far_away() {
+  [ -n "$HEADLESS" ] || return 0
+  if [ -n "$PUBLIC" ]; then
+    say "From your laptop or phone (signed in to the same Tailscale): ${B}$PUBLIC/${N}"
+    say "Phone app: ${B}$PUBLIC/mobile/${N} (open it, then Add to Home Screen)"
+  else
+    say "No screen on this computer? From your own computer run"
+    say "  ${B}ssh -L $PORT:localhost:$PORT $USER@${HOSTNAME:-this-computer}${N}"
+    say "and open $URL there."
+    say "For the phone app later: Control Panel → Phone (sets up a private HTTPS address with Tailscale)."
+  fi
+}
+
+# ── Windows (WSL) ────────────────────────────────────────────────────────
+if [ -n "$WSL" ]; then
+  step "Windows (WSL)"
+  distro="${WSL_DISTRO_NAME:-Ubuntu}"
+  if [ -z "$SYSTEMD" ]; then
+    say "systemd is off in this WSL, so OpenClave can't run as a service that starts by itself."
+    say "To turn it on, put these two lines in /etc/wsl.conf (sudo nano /etc/wsl.conf):"
+    say "  ${B}[boot]${N}"
+    say "  ${B}systemd=true${N}"
+    say "then run ${B}wsl --shutdown${N} in Windows PowerShell, open Ubuntu again and run ./install.sh."
+    say "Until then, start it with ${B}$OC start${N} whenever you want to use it."
+  fi
+  say "WSL stops when you close its last window, and OpenClave stops with it. To start it"
+  say "every time you log in to Windows, run this once in Windows PowerShell:"
+  say "  ${B}schtasks /create /tn OpenClave /sc onlogon /tr \"wsl.exe -d $distro -u $USER -- $HOME/.local/bin/openclave start --stay\"${N}"
+  say "It keeps a small window open; closing that window stops OpenClave."
+fi
+
 open_browser() {
   if [ -n "$WSL" ] && command -v explorer.exe >/dev/null; then explorer.exe "$URL" >/dev/null 2>&1 || true
   elif [ -n "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ] && command -v xdg-open >/dev/null; then xdg-open "$URL" >/dev/null 2>&1 || true
   fi
 }
-wait_up() { for _ in $(seq 40); do curl -s -o /dev/null "$URL" && return 0; sleep 0.5; done; return 1; }
-far_away() {
-  if [ -z "$WSL" ] && [ -z "${DISPLAY:-}${WAYLAND_DISPLAY:-}" ]; then
-    say "No screen on this computer? From your own computer run"
-    say "  ${B}ssh -L $PORT:localhost:$PORT $USER@${HOSTNAME:-this-computer}${N}"
-    say "and open $URL there."
-  fi
-}
+wait_up() { for _ in $(seq 40); do is_openclave "$PORT" && return 0; sleep 0.5; done; return 1; }
 
 step "Starting OpenClave"
 if [ -n "$BOOT" ]; then
   as_root systemctl restart openclave
-  if wait_up; then ok "OpenClave is running: ${B}$URL${N}"; else warn "It didn't answer yet: journalctl -u openclave -n 50 shows why."; fi
+  if wait_up; then ok "OpenClave is running: ${B}$URL${N}"; else warn "It didn't answer yet: $OC logs shows why."; fi
   open_browser; far_away
   say ""
   say "It keeps running in the background and starts with the computer."
-  say "Log: journalctl -u openclave -f   ·   Restart: sudo systemctl restart openclave"
+  say "Log: $OC logs   ·   Restart: $OC restart   ·   Everything else: $OC help"
   say "Next: open $URL, say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
-elif curl -s -o /dev/null -m 3 "$URL"; then
+elif is_openclave "$PORT"; then
   ok "OpenClave is already running at ${B}$URL${N}."
   say "Stop it (Ctrl+C where it runs) and start it again so it picks up the changes:"
-  say "  cd $REPO && .venv/bin/python run.py"
+  say "  $OC start"
 else
   ok "Open ${B}$URL${N} in your browser (stop OpenClave with Ctrl+C)."
   far_away
   say "Next: say hi to ${B}${MGR_NAME:-your manager}${N}, then add two or three agents for what you care about."
-  say "To start it again later: cd $REPO && .venv/bin/python run.py"
+  say "To start it again later: $OC start   (all commands: $OC help)"
   ( wait_up && open_browser ) &
   exec .venv/bin/python run.py
 fi
+

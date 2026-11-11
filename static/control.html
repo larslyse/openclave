@@ -87,6 +87,8 @@
 </tbody></table><p id="auto-lookup-help"></p><p class="muted">Fallback: if an agent's model is out of credits or at its usage limit, the reply is retried once on this model and says so. Off by default.</p></section>
 <section id="claude-login"><h2>Claude sign-in</h2><p class="muted">Agents on a Claude CLI model use the Claude subscription you signed in to with <code>claude</code> on this computer. When it expires they can't answer, and this says so. Sign in again: open the link, sign in to Claude, copy the code the page shows and paste it here. No password or token passes through OpenClave.</p><p id="claude-login-status">Loading…</p><div id="claude-login-flow"></div><p><button type="button" class="link" id="claude-login-start">Sign in again</button></p></section>
 <section id="access"><h2>Connections</h2><p class="muted">Where OpenClave can be reached. Local and network addresses are plain HTTP, so the phone app at <code>/mobile/</code> works there only on this computer itself, where localhost counts as secure; other devices need the secure address. <span id="access-tunnel"></span></p><table><tbody id="access-list"><tr><td>Loading…</td></tr></tbody></table></section>
+<section id="phone"><h2>Phone</h2><p class="muted">The phone app needs a secure (HTTPS) address. Tailscale gives OpenClave one that only your own devices can open: install Tailscale on this computer and your phone, sign in to the same account on both, then press the button.</p><div id="phone-status">Loading…</div><div id="phone-result"></div></section>
+<section id="update"><h2>Update</h2><div id="update-status">Loading…</div><p class="muted">The check is a <code>git fetch</code> every few hours from where you installed OpenClave. Turn it off with <code>[updates] check = false</code> in <code>openclave.toml</code>.</p></section>
 <section><h2>Needs attention</h2><p class="muted">Checked from each agent's own files, no AI involved. <b>Bold</b> needs you and puts the amber dot on the agent: a measurement log with no entry for 7 days, open items in the maintainer inbox, an agent on a model that can't reach its connection. Grey is upkeep for the agent (a plan or backlog untouched for 14 days while you're using it): the agent is asked to bring it up to date itself. The digest push (Settings) sends only what needs you.</p><table><tbody id="attention"><tr><td>Loading…</td></tr></tbody></table><p class="muted" id="digest-last"></p></section>
 <section id="inbox"><h2>Maintainer inbox</h2><p class="muted">Bugs and ideas the agents flag to the manager (<code>flag_to_maintainer</code>). The manager triages them into the project backlog; close one here when it's dealt with.</p><table><thead><tr><th>Status</th><th>From</th><th>What</th><th>When</th><th></th></tr></thead><tbody id="inbox-list"><tr><td colspan="5">Loading…</td></tr></tbody></table><p><button class="link" type="button" id="inbox-show-closed">Show closed</button></p></section>
 <section id="weekly-review"><h2>Weekly review</h2><p class="muted">Every Monday the manager tidies up and looks through the week. Tick what it should do. Everything here only <b>suggests</b>: the suggestions land on <a data-manager href="/mobile/">the manager's page</a> in the phone app, and nothing changes until you say yes.</p>
@@ -764,5 +766,76 @@ async function checkDeployState() {
   } catch (e) { /* non-critical */ }
 }
 checkDeployState();
+</script>
+<!-- QR codes drawn in the browser: qrcode-generator 1.4.4, (c) Kazuhiko Arase, MIT licence (see the file header). -->
+<script src="/static/vendor/qrcode-generator-1.4.4.js"></script>
+<script>
+// Control Panel → Phone (phone_setup.py) and → Update (updater.py).
+const PH_BTN='background:#2A2F34;color:#e7e4de;border:1px solid #30373a;border-radius:6px;padding:7px 16px;font:inherit;cursor:pointer';
+function phoneQr(url){
+  try{const q=qrcode(0,'M');q.addData(url);q.make();return `<div style="background:#fff;display:inline-block;padding:8px;border-radius:8px;margin:8px 0">${q.createSvgTag(5,2)}</div>`}catch{return ''}
+}
+function phoneDone(url,restart){
+  const m=url+'/mobile/';
+  return `<p>Phone app: <a href="${esc(m)}" target="_blank" rel="noopener">${esc(m)}</a>. Scan this with your phone (signed in to Tailscale), then use <b>Add to Home Screen</b>.</p>${phoneQr(m)}`
+    +(restart?`<p class="muted">Saved in openclave.toml. It works now; restart OpenClave (<code>openclave restart</code>) so the Connections list shows it too.</p>`:'');
+}
+async function loadPhone(){
+  const st=document.querySelector('#phone-status');
+  try{
+    const d=await (await fetch('/api/phone')).json();
+    const yes=(v,t,f)=>`<tr><td style="width:28px;color:${v?'#9dd6b9':'#E8A33D'}">${v?'✓':'–'}</td><td>${v?t:f}</td></tr>`;
+    st.innerHTML=`<table><tbody>${yes(d.installed,'Tailscale is installed','Tailscale isn\'t installed: <a href="https://tailscale.com/download" target="_blank" rel="noopener">get it</a>')}`
+      +(d.installed?yes(d.logged_in,'Tailscale is signed in','Tailscale isn\'t signed in: run <code>sudo tailscale up</code>'):'')
+      +yes(d.https,`Secure address: ${esc(d.public_url)}`,'No secure address yet')+'</tbody></table>'
+      +(d.https?phoneDone(d.public_url,d.restart_needed):(d.logged_in?`<p><button type="button" id="phone-go" style="${PH_BTN}">Set up phone access</button> <button type="button" class="link" id="phone-recheck">Check again</button></p>`:`<p><button type="button" class="link" id="phone-recheck">Check again</button></p>`));
+    const go=document.querySelector('#phone-go');
+    if(go)go.onclick=async()=>{
+      if(!confirm(`This runs "tailscale serve --bg ${d.port}" so your own Tailscale devices can open OpenClave over HTTPS, and saves the address in openclave.toml. Go ahead?`))return;
+      go.disabled=true;const out=document.querySelector('#phone-result');out.innerHTML='<p class="muted">Setting up…</p>';
+      try{
+        const r=await postJson('/api/phone/setup',{});
+        if(r.ok){out.innerHTML='';await loadPhone();}
+        else out.innerHTML=`<p style="color:#E8A33D">${esc(r.message)}</p>`+(r.commands.length?`<pre style="background:#121517;padding:10px;border-radius:6px">${r.commands.map(esc).join('\n')}</pre>`:'');
+      }catch(x){out.innerHTML=`<p style="color:#E8877A">${esc(x.message)}</p>`}
+      go.disabled=false;
+    };
+    const re=document.querySelector('#phone-recheck');
+    if(re)re.onclick=()=>{document.querySelector('#phone-result').innerHTML='';loadPhone()};
+  }catch{st.textContent='Could not load.'}
+}
+let updateTimer=null;
+async function loadUpdate(){
+  const st=document.querySelector('#update-status');
+  try{
+    const d=await (await fetch('/api/update')).json(),c=d.check||{};
+    const when=c.checked_at?` <span class="muted">(checked ${esc(claudeWhen(c.checked_at))})</span>`:'';
+    let html=`<p>Running: <b>${esc(d.current.label)}</b>${d.current.version&&d.current.commit?` <span class="muted">commit ${esc(d.current.commit)}</span>`:''}</p>`;
+    if(c.error)html+=`<p style="color:#E8A33D">Couldn't check: ${esc(c.error)}${when}</p>`;
+    else if(c.available)html+=`<p style="color:#9dd6b9">A newer version is available: ${esc(c.latest)}${c.behind?` (${c.behind} changes)`:''}${when}</p>`;
+    else if(c.checked_at)html+=`<p>You have the latest version.${when}</p>`;
+    else html+=`<p class="muted">${d.enabled?'Not checked yet.':'Automatic checks are off.'}</p>`;
+    html+=`<p><button type="button" class="link" id="update-check">${d.checking?'Checking…':'Check now'}</button></p>`;
+    if(d.local_changes.length)html+=`<p style="color:#E8A33D">This OpenClave folder has local changes (${esc(d.local_changes.slice(0,5).join(', '))}), so it won't update over them.</p>`;
+    else if(c.available&&d.restart)html+=`<p><button type="button" id="update-go" style="${PH_BTN}">Update now</button> <span class="muted">OpenClave restarts by itself; open chats reconnect.</span></p>`;
+    else if(c.available)html+=`<p>To update, run <code>openclave update</code> in a terminal on this computer, then start OpenClave again.</p>`;
+    st.innerHTML=html;
+    clearTimeout(updateTimer);if(d.checking)updateTimer=setTimeout(loadUpdate,2000);
+    document.querySelector('#update-check').onclick=async()=>{await postJson('/api/update/check',{});updateTimer=setTimeout(loadUpdate,1500)};
+    const go=document.querySelector('#update-go');
+    if(go)go.onclick=async()=>{
+      if(!confirm('Update OpenClave now and restart it?'))return;
+      go.disabled=true;go.textContent='Updating… (this can take a minute)';
+      try{
+        const r=await postJson('/api/update/apply',{});
+        if(!r.ok){st.insertAdjacentHTML('beforeend',`<p style="color:#E8877A">${esc(r.message)}</p>`);go.disabled=false;go.textContent='Update now';return}
+        go.textContent=r.restarting?'Restarting…':r.message;
+        if(r.restarting){const until=Date.now()+120000;const poll=async()=>{try{const v=await (await fetch('/api/version')).json();if(v.running_commit===r.new.commit){location.reload();return}}catch{}if(Date.now()<until)setTimeout(poll,2000)};setTimeout(poll,3000)}
+      }catch(x){st.insertAdjacentHTML('beforeend',`<p style="color:#E8877A">${esc(x.message)}</p>`);go.disabled=false;go.textContent='Update now'}
+    };
+  }catch{st.textContent='Could not load.'}
+}
+loadPhone();
+loadUpdate();
 </script>
 </body></html>

@@ -19,7 +19,9 @@ EnvironmentFile=-__DATA__/.env
 # The CLI routes (claude, codex) are usually installed in ~/.local/bin.
 Environment=PATH=__HOME__/.local/bin:/usr/local/bin:/usr/bin:/bin
 ExecStart=__REPO__/.venv/bin/python run.py
-Restart=on-failure
+# always: Control Panel → Update stops OpenClave cleanly and systemd starts the
+# new version (updater.py). Plain stops with systemctl stay stopped.
+Restart=always
 RestartSec=5
 
 [Install]

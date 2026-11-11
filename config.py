@@ -70,6 +70,8 @@ class Settings:
     voice_second_language: str = ""
     voice_second_language_name: str = ""
     voice_second_voice: dict | None = None
+    # [updates] check: look for a newer OpenClave every few hours (updater.py).
+    update_check: bool = True
 
     @property
     def qmd_env(self) -> dict[str, str]:
@@ -137,6 +139,9 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
     network = section("network")
     time = section("time")
     owner = section("owner")
+    update_check = section("updates").get("check", True)
+    if not isinstance(update_check, bool):
+        raise ValueError("updates.check must be true or false")
     catalog_sources = section("catalog").get("sources", [])
     if not isinstance(catalog_sources, list) or not all(isinstance(s, str) and s for s in catalog_sources):
         raise ValueError("catalog.sources must be a list of folder paths")
@@ -205,6 +210,7 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
         claves_root=_path(paths.get("claves_root"), agents_root.parent / "Claves", home),
         note_languages=_languages(owner.get("note_languages", [])),
         access_token=str(env.get("OPENCLAVE_ACCESS_TOKEN") or network.get("access_token", "") or "").strip(),
+        update_check=update_check,
         **_second_language(voice),
     )
 
