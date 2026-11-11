@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>OpenClave: organise AI agents like people</title>
-<meta name="description" content="A small team of AI agents, each with one area of your life. Runs on your own computer, keeps everything as Markdown files you can read. Free and open source.">
+<title>OpenClave: AI chats, kept in order</title>
+<meta name="description" content="A private workspace for doing many things with AI at once. Agents for each area of your life, topics inside each agent, and a manager that tidies up every week. Runs on your own computer. Free and open source.">
 <meta property="og:title" content="OpenClave">
-<meta property="og:description" content="Organise AI agents the way you’d organise people. Runs on your computer, keeps everything in plain Markdown.">
+<meta property="og:description" content="AI chats get messy fast. OpenClave sorts them into agents and topics, and a manager agent tidies up every week. Runs on your own computer.">
 <meta property="og:image" content="https://getopenclave.com/img/home.webp">
 <meta property="og:url" content="https://getopenclave.com/">
 <meta name="theme-color" content="#111416">
@@ -23,9 +23,10 @@
 <header class="top wrap">
   <a class="brand" href="/"><img src="/keeper.svg" alt="" width="32" height="32"> OpenClave</a>
   <nav>
-    <a href="#features">Features</a>
+    <a href="#why">Why</a>
+    <a href="#tour">Tour</a>
     <a href="#examples">Examples</a>
-    <a href="#how">How it works</a>
+    <a href="#needs">What you need</a>
     <a href="#install">Install</a>
     <a href="https://github.com/larslyse/openclave">GitHub</a>
   </nav>
@@ -33,61 +34,149 @@
 
 <main>
 <section class="hero wrap">
-  <h1>Organise AI agents the way you’d organise people.</h1>
-  <p class="lead">Each agent has one area of your life: training, the house, the car, money, writing.
-    You talk to them from a browser or your phone. They run on your own computer and keep their notes,
-    plans and chats as plain Markdown files, so they remember what you told them last month and you can
-    read everything they know.</p>
+  <h1>AI chats get messy fast. OpenClave keeps them in order.</h1>
+  <p class="lead">A private workspace for doing many things with AI at once. Your work is sorted into
+    agents, each with one area of your life, and each agent's chats are sorted into topics. A manager
+    agent tidies up every week. It runs on your own computer, and everything is a Markdown file you
+    can read.</p>
   <div class="cmd" data-copy>
     <code>curl -fsSL https://getopenclave.com/install.sh | bash</code>
     <button type="button" aria-label="Copy install command">Copy</button>
   </div>
   <p class="small">Ubuntu, Debian or Windows with WSL. Free and open source (AGPL-3.0).
-    <a href="#install">What you need</a> · <a href="#what-it-runs">What it runs</a></p>
+    <a href="#needs">What you need</a> · <a href="#what-it-runs">What the installer runs</a></p>
 </section>
 
-<section id="features" class="wrap">
+<section class="wrap shot-main">
+  <img src="/img/home.webp" width="2800" height="1800" alt="OpenClave dashboard: six agents side by side, each with its latest chat and a message box">
+</section>
+
+<section id="why" class="wrap">
+  <h2>Why use it</h2>
+  <p class="sub">A chat app gives you one long list of conversations. After a few months you can't
+    find the answer you got in March unless you remember the words to search for. People keep
+    things in buckets, so OpenClave gives you two layers of them, and someone to keep them tidy.</p>
+
+  <div class="compare">
+    <figure class="pile" aria-label="A normal AI chat app: one flat list of unrelated chats">
+      <figcaption>A normal AI chat app</figcaption>
+      <ul>
+        <li>Garage door automation</li>
+        <li>Knee pain after run</li>
+        <li>Is 8 kW solar worth it</li>
+        <li>Soft floor by the shower</li>
+        <li>Running shoes wet trails</li>
+        <li>Blog post from shed notes</li>
+        <li>Waking up at 4 am</li>
+        <li>Hallway sensor battery</li>
+        <li>Half marathon plan</li>
+        <li class="more">+ 214 more, newest first</li>
+      </ul>
+    </figure>
+
+    <figure class="tree" aria-label="OpenClave: agents, then topics, then chats, with a manager underneath">
+      <figcaption>OpenClave</figcaption>
+      <div class="layers"><span><b>1</b> Agent</span><span><b>2</b> Topic</span><span>Chats</span></div>
+      <div class="agent" style="--c:#E8A33D">
+        <div class="who"><i></i>Reba <small>training</small></div>
+        <div class="topics">
+          <div><b>Running</b><span>Half marathon plan</span><span>Running shoes, wet trails</span></div>
+          <div><b>Knee rehab</b><span>Knee pain after run</span></div>
+          <div><b>Sleep</b><span>Waking up at 4 am</span></div>
+        </div>
+      </div>
+      <div class="agent" style="--c:#5B8DEF">
+        <div class="who"><i></i>Bolt <small>house tech</small></div>
+        <div class="topics">
+          <div><b>Automations</b><span>Garage door automation</span></div>
+          <div><b>Sensors</b><span>Hallway sensor battery</span></div>
+        </div>
+      </div>
+      <div class="agent" style="--c:#C9A43A">
+        <div class="who"><i></i>Penny <small>money</small></div>
+        <div class="topics">
+          <div><b>Solar</b><span>Is 8 kW solar worth it</span></div>
+        </div>
+      </div>
+      <div class="manager"><img src="/keeper.svg" alt="" width="28" height="28">
+        <p><b>3 The manager, every week:</b> archives finished chats with a short recap, points out
+          agents that overlap, and asks you yes or no before changing anything.</p></div>
+    </figure>
+  </div>
+
   <div class="features">
     <article>
-      <h3>Organised like a team</h3>
-      <p>Group agents into teams (we call them claves): home, work, hobbies, each with a lead. You give them areas and jobs the way you would people, so you always know who does what and where the info is.</p>
+      <h3>1. Agents are the first bucket</h3>
+      <p>One agent per area: training, the house, money, writing. Each has a name, a job and its own
+        memory, plan and backlog. You know whom to ask, the same way you know which colleague to ask.</p>
     </article>
     <article>
-      <h3>One overview</h3>
-      <p>The home dashboard shows every agent, what it’s working on and its latest chat. It works like a planning board, not a pile of chat tabs.</p>
+      <h3>2. Topics are the second</h3>
+      <p>Inside an agent, chats sit in topics you name. Drag a chat into one. A new question goes in
+        a new chat, so each chat stays about one thing.</p>
     </article>
     <article>
-      <h3>A manager that keeps it tidy</h3>
-      <p>Once a week your manager archives finished chats (each gets a short recap), spots agents that overlap, and brings you a few yes/no proposals. A weekly review, done for you.</p>
-    </article>
-    <article>
-      <h3>Your data, on your disk</h3>
-      <p>Every agent is a folder of plain Markdown: mission, plan, backlog, notes, chats. Open it in any editor or Obsidian. No account, no cloud of ours; only what you send to the model leaves your computer.</p>
-    </article>
-    <article>
-      <h3>Agents that remember and follow up</h3>
-      <p>Each agent keeps its own plan, backlog and files, and interviews you once to fit itself to you. Agents message each other, run scheduled tasks and remind you.</p>
-    </article>
-    <article>
-      <h3>Plain Python, yours to change</h3>
-      <p>Small, readable Python. Your agents, settings and skills live outside the core, so you can change anything and still update with <code>git pull</code>.</p>
+      <h3>3. A manager keeps it that way</h3>
+      <p>One agent has the job of looking after the others. Once a week it archives what's finished,
+        writes a recap of each chat, and brings you a short list of yes/no proposals.</p>
     </article>
   </div>
 </section>
 
-<section class="wrap shot-main">
-  <img src="/img/home.webp" width="2800" height="1800" alt="OpenClave home page: six agents in boxes, each with its latest chat">
-</section>
+<section id="tour" class="wrap">
+  <h2>What it looks like</h2>
 
-<section class="wrap closer">
-  <figure>
-    <img src="/img/claves.webp" width="2120" height="640" alt="Three claves (Health, Home, Money &amp; writing), each with a lead and members, and the manager above them" loading="lazy">
-    <figcaption><b>Teams with a lead.</b> Agents grouped like people: Health, Home, Money &amp; writing. The manager looks after all of them.</figcaption>
-  </figure>
-  <figure>
-    <img src="/img/phone-recaps.webp" width="780" height="880" alt="Phone: an agent's recaps, archived chats marked Concluded, Left open or Dropped" loading="lazy">
-    <figcaption><b>Recaps, not clutter.</b> Finished chats are archived each week with how they ended. Reply and one comes back.</figcaption>
-  </figure>
+  <div class="tour">
+    <div class="text">
+      <h3>The dashboard: everything at once</h3>
+      <p>Every agent in its own box with its latest chat and a message box. Ask the house agent
+        something, then the money agent, and read the answers as they come in. Nothing is hidden in
+        a tab. This is the screenshot at the top of the page.</p>
+    </div>
+  </div>
+
+  <div class="tour wide">
+    <div class="text">
+      <h3>The agent page: chats, plan and backlog side by side</h3>
+      <p>Topics and chats on the left, the chat in the middle, the agent's plan and backlog on the
+        right, and a small kanban board below. The agent updates the plan and ticks off the backlog
+        as you talk. Tabs at the top switch agent.</p>
+    </div>
+    <img src="/img/agent.webp" width="2800" height="1800" loading="lazy" alt="Agent page for the training agent: topics Running, Sleep and Knee rehab with their chats on the left, the open chat in the middle, plan progress and backlog on the right, kanban below">
+  </div>
+
+  <div class="tour phones3">
+    <figure>
+      <img src="/img/phone-quickjump.webp" width="780" height="1688" loading="lazy" alt="Phone: Quick jump menu listing the other agents above the message box">
+      <figcaption><b>Quick jump.</b> One button under the message box lists your agents. Tap one and
+        you are in its latest chat. Ask, jump, ask, jump back when the reply is in.</figcaption>
+    </figure>
+    <figure>
+      <img src="/img/phone-topics.webp" width="780" height="1688" loading="lazy" alt="Phone: the training agent's chats grouped under the topics Running, Sleep and Knee rehab">
+      <figcaption><b>Topics.</b> The same two layers on the phone: pick the agent, then the topic.</figcaption>
+    </figure>
+    <figure>
+      <img src="/img/phone-recaps.webp" width="780" height="880" loading="lazy" alt="Phone: an agent's recaps, archived chats marked Concluded, Left open or Dropped">
+      <figcaption><b>Recaps.</b> Archived chats become one line each: what it was about and how it
+        ended. Reply to one and it comes back.</figcaption>
+    </figure>
+  </div>
+
+  <div class="tour wide">
+    <div class="text">
+      <h3>Claves: teams, when one group isn't enough</h3>
+      <p>Group agents into teams (claves) such as Home, Health and Work. Each has a lead, a group
+        chat and a shared backlog. Pick a clave and the dashboard shows only that team.</p>
+    </div>
+    <img src="/img/claves.webp" width="2120" height="640" loading="lazy" alt="Three claves (Health, Home, Money &amp; writing), each with a lead and members, and the manager above them">
+  </div>
+
+  <div class="features also">
+    <article><h3>Your data, on your disk</h3><p>Every agent is a folder of plain Markdown: mission, plan, backlog, notes, chats. Open it in any editor or Obsidian. No account with us; only what you send to the model leaves your computer.</p></article>
+    <article><h3>Agents that follow up</h3><p>They remember what you said last month, message each other, run scheduled tasks and send reminders to your phone.</p></article>
+    <article><h3>Asks before anything risky</h3><p>Home Assistant changes wait for your OK. Agents only write to the notes you allow.</p></article>
+    <article><h3>Plain Python, yours to change</h3><p>Your agents and settings live outside the code, so you can change anything and still update with <code>git pull</code>.</p></article>
+  </div>
 </section>
 
 <section id="examples" class="wrap">
@@ -102,7 +191,7 @@
     <article>
       <h3><span class="dot" style="--c:#5B8DEF"></span>Home Assistant</h3>
       <p class="you">"Warn me if the garage door is open after 22:00."</p>
-      <p>Writes the automation in your Home Assistant, tests it, and tells you which sensor batteries are running low. Asks before anything risky.</p>
+      <p>Writes the automation in your Home Assistant, tests it, and tells you which sensor batteries are running low.</p>
     </article>
     <article>
       <h3><span class="dot" style="--c:#6FC43D"></span>Fixing an old house</h3>
@@ -120,31 +209,46 @@
       <p>Orders and joins your notes without rewriting them, and marks where they contradict each other. Can write into your Obsidian vault.</p>
     </article>
     <article>
-      <h3><span class="dot" style="--c:#2E9E5B"></span>A manager for the rest</h3>
+      <h3><span class="dot" style="--c:#2E9E5B"></span>The manager</h3>
       <p class="you">Once a week, on its own.</p>
-      <p>Archives old chats, spots agents that overlap, and collects bugs and ideas. You give it its name.</p>
+      <p>Archives old chats, spots agents that overlap, and collects bugs and ideas. You give it its name and personality.</p>
     </article>
   </div>
 </section>
 
-<section class="wrap">
-  <h2>On your phone too</h2>
-  <p class="sub">Same agents, same chats. Reach it from anywhere with Tailscale (free), and use voice if you like.</p>
-  <div class="phones">
-    <img src="/img/phone-home.webp" width="780" height="1688" alt="Phone: list of agents" loading="lazy">
-    <img src="/img/phone-reba.webp" width="780" height="1688" alt="Phone: chat with the training agent" loading="lazy">
-    <img src="/img/phone-chat.webp" width="780" height="1688" alt="Phone: chat with the Home Assistant agent" loading="lazy">
-  </div>
-</section>
+<section id="needs" class="wrap">
+  <h2>What you need</h2>
+  <p class="sub">Two things, plus a third if you want it on your phone. No GPU, no Docker, no domain name, no account with us.</p>
 
-<section id="how" class="wrap">
-  <h2>How it works</h2>
-  <div class="how">
-    <div><h3>Use what you already pay for</h3><p>Your Claude Pro/Max or ChatGPT Plus/Pro subscription, or an Anthropic or xAI API key (a few dollars a month for light use). Pick the model per agent.</p></div>
-    <div><h3>Asks before anything risky</h3><p>Home Assistant actions wait for your OK, or follow a standing approval you set. Agents only write to the notes you allow.</p></div>
-    <div><h3>Group chat and recaps</h3><p>Each team has a shared room where agents answer in turn. Archived chats become a card with what it was about and any loose ends; reply and it comes back.</p></div>
-    <div><h3>Works with your notes</h3><p>Agents search across your notes and can write into your Obsidian vault. Runs on a laptop, an old PC or a small home server.</p></div>
+  <div class="setup" role="img" aria-label="Diagram: your phone or laptop reaches the computer that runs OpenClave, at home directly or from anywhere through Tailscale. That computer sends your messages to the AI model you chose.">
+    <div class="node opt">
+      <span class="tag">Optional</span>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="15" y="5" width="18" height="38" rx="4"/><path d="M21 37h6"/></svg>
+      <h3>Your phone, anywhere</h3>
+      <p><a href="https://tailscale.com/">Tailscale</a> (free for personal use) links your phone to your computer privately. Nothing is opened to the internet.</p>
+    </div>
+    <div class="link"><span>Tailscale</span></div>
+    <div class="node main">
+      <span class="tag req">Required</span>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="6" y="9" width="36" height="24" rx="3"/><path d="M18 41h12M24 33v8"/></svg>
+      <h3>A computer that runs OpenClave</h3>
+      <p>Ubuntu or Debian, or Windows with <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a>. A laptop is fine to try it. For daily use, something that stays on: an old PC, a mini PC or a home server. About 300 MB of disk and 1 GB of free memory.</p>
+      <p class="files">Your agents and chats stay here, as Markdown files.</p>
+    </div>
+    <div class="link"><span>your messages</span></div>
+    <div class="node">
+      <span class="tag req">Required</span>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path d="M24 6l4.5 13.5L42 24l-13.5 4.5L24 42l-4.5-13.5L6 24l13.5-4.5z"/></svg>
+      <h3>An AI model</h3>
+      <p>The Claude Pro/Max or ChatGPT Plus/Pro subscription you already pay for, or an <a href="https://console.anthropic.com/">Anthropic</a> or xAI API key (a few dollars a month for light use). Pick the model per agent.</p>
+    </div>
   </div>
+
+  <ul class="needs">
+    <li><b>At home</b> you open OpenClave in a browser on the same computer. Tailscale is only for reaching it from your phone or from outside the house, and for voice and notifications on the phone.</li>
+    <li><b>Not a server person?</b> The installer does the setup and asks its questions in plain language.</li>
+    <li><b>Early software:</b> it runs every day for its author, but you are among the first to install it. If something fails or confuses you, <a href="https://github.com/larslyse/openclave/issues">please report it</a>.</li>
+  </ul>
 </section>
 
 <section id="install" class="wrap">
@@ -161,11 +265,6 @@
   </div>
   <p>The installer asks a few questions (what to call you, your timezone, which model), then opens
     <code>http://localhost:8777</code>. Run it again any time; it keeps your settings and agents.</p>
-  <ul class="needs">
-    <li><b>You need:</b> Ubuntu or Debian, or Windows with <a href="https://learn.microsoft.com/windows/wsl/install">WSL</a>.</li>
-    <li><b>And one of:</b> an <a href="https://console.anthropic.com/">Anthropic API key</a>, an xAI key, Claude Pro/Max, or ChatGPT Plus/Pro.</li>
-    <li><b>Early software:</b> it runs every day for its author, but you are among the first to install it. If something fails or confuses you, <a href="https://github.com/larslyse/openclave/issues">please report it</a>.</li>
-  </ul>
   <p><a class="btn" href="https://github.com/larslyse/openclave#readme">Full setup guide on GitHub</a></p>
 </section>
 
@@ -187,6 +286,7 @@
         <li>Claude Pro/Max: installs Claude Code from claude.ai and lets you sign in.</li>
         <li>ChatGPT Plus/Pro: installs Node.js 22 (NodeSource), bubblewrap and the Codex CLI, plus an AppArmor rule on Ubuntu 24.04+ so Codex's sandbox works, then lets you sign in <b>(sudo)</b>.</li>
       </ul></li>
+    <li><b>Asks which ready-made agents to start with</b> (none unless you pick some).</li>
     <li><b>Optional, asks first:</b> note search (qmd, through npm) <b>(sudo)</b>, and a systemd service so OpenClave starts with the computer <b>(sudo)</b>.</li>
     <li><b>Starts OpenClave</b> on <code>http://localhost:8777</code> and opens your browser.</li>
   </ol>

@@ -19,12 +19,28 @@ AGENTS = [("rick", "Juno"), ("reba", "Reba"), ("bolt", "Bolt"),
 
 CHATS = {
     "Reba": [
+        ("Half marathon in October?", [
+            ("user", "Is a half marathon in October realistic?"),
+            ("Reba", "Yes, with 14 weeks. Three runs a week, long run up by 1 km a week. Plan is in your files."),
+        ], "Running"),
+        ("Shoes for wet trails", [
+            ("user", "Which shoes for wet forest trails?"),
+            ("Reba", "A 4 to 5 mm lug sole. Your road pair is fine on gravel, not on roots."),
+        ], "Running"),
+        ("Waking at 4 am", [
+            ("user", "I keep waking at 4 am after hard sessions."),
+            ("Reba", "Common after late intervals. Move them before 18:00 for two weeks and log your sleep."),
+        ], "Sleep"),
+        ("Step-down form check", [
+            ("user", "Is my knee supposed to track over the toes?"),
+            ("Reba", "Yes, over the second toe. Slow on the way down, three seconds."),
+        ], "Knee rehab"),
         ("Knee after Sunday's run", [
             ("user", "Knee ached on the last 3 km of Sunday's 12 km run. Fine walking, a bit stiff on stairs."),
             ("Reba", "Outside or under the kneecap? Stairs-down pain under the kneecap usually means patellar load, not a structural injury.\n\nThis week:\n- **Runs:** keep them under 6 km, flat, easy pace\n- **Daily:** 3×15 slow step-downs, 2×30 s wall sit\n- **Stop rule:** pain above 3/10 during, or worse the next morning\n\nI've moved Saturday's long run to next week in your plan."),
             ("user", "Under the kneecap. Did the step-downs, no pain."),
             ("Reba", "Good sign. Logged. If Thursday's 6 km is also pain-free we go back to 10 km on Sunday."),
-        ]),
+        ], "Knee rehab"),
     ],
     "Bolt": [
         ("Garage door left open", [
@@ -109,15 +125,38 @@ def main():
     for name, chats in CHATS.items():
         conv = agents_dir / name / "conversations"
         conv.mkdir(exist_ok=True)
-        for i, (title, turns) in enumerate(chats):
+        topics = []
+        for i, (title, turns, *topic) in enumerate(chats):
             body = ""
             for role, text in turns:
                 t += timedelta(minutes=2)
                 label = "User" if role == "user" else name
                 body += f"\n### {label} ({t:%H:%M})\n{text}\n"
             cid = f"{t:%Y%m%d-%H%M%S}-demo{i:04d}"
-            fm = f"---\nAgent: {name}\nDate: '{t:%Y-%m-%d}'\nTitle: {title}\n---\n\n"
+            folder = f"Folder: {topic[0]}\n" if topic else ""
+            if topic and topic[0] not in topics:
+                topics.append(topic[0])
+            fm = f"---\nAgent: {name}\nDate: '{t:%Y-%m-%d}'\nTitle: {title}\n{folder}---\n\n"
             (conv / f"{cid}.md").write_text(fm + body.strip() + "\n")
+        if topics:
+            (agents_dir / name / "folders.json").write_text(json.dumps({"folders": topics}, indent=2))
+
+    # Reba's plan, backlog and kanban, for the agent-page screenshot.
+    today = f"{datetime.now():%Y-%m-%d}"
+    reba = agents_dir / "Reba"
+    (reba / "plan.md").write_text(
+        f"---\nStatus: on-track\nUpdated: '{today}'\nTarget-event: Half marathon, 18 October\nPhases:\n"
+        "- {name: Base, status: done, percent: 100}\n"
+        "- {name: Build, status: in-progress, percent: 40}\n"
+        "- {name: Taper, status: not-started, percent: 0}\n"
+        "---\n\n# Plan\n\nThree runs a week. Long run back to 10 km once the knee is pain-free twice in a row.\n")
+    items = ["Thursday 6 km, easy and flat", "Step-downs daily, 3x15", "Test gel timing on the next long run",
+             "Book a physio check if pain passes 3/10"]
+    (reba / "backlog.md").write_text(
+        f"---\nUpdated: '{today}'\n---\n\n# Backlog\n\n" + "".join(f"- [ ] {x}\n" for x in items)
+        + "- [x] Move Saturday's long run\n")
+    (reba / "kanban.json").write_text(json.dumps(
+        {items[0]: "in-progress", items[1]: "in-progress", items[2]: "backlog", "Move Saturday's long run": "done"}, indent=2))
 
     # Three teams (claves) for the claves screenshot. The manager (Juno) is in
     # every clave by itself, so it isn't listed as a member.
