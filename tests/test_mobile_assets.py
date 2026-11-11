@@ -6,6 +6,7 @@ import unittest
 import main
 from routes import library as library_routes
 from routes import pages as page_routes
+from routes import agents as agent_routes
 
 
 class MobileAssetTests(unittest.TestCase):
@@ -28,7 +29,7 @@ class MobileAssetTests(unittest.TestCase):
         self.assertEqual(library_routes.agent_avatar(agent, v=v - 1).headers["cache-control"], "no-store", "stale version")
 
     def test_agent_list_carries_avatar_version(self):
-        listed = {a.id: a.avatar_v for a in main.api_agents()}
+        listed = {a.id: a.avatar_v for a in agent_routes.api_agents()}
         for agent_id, v in listed.items():
             self.assertEqual(v, library_routes._avatar_version(agent_id))
 
