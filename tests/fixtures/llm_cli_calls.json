@@ -1,0 +1,418 @@
+{
+ "claude/r2-image": {
+  "argv": [
+   "<claude>",
+   "-p",
+   "--input-format",
+   "stream-json",
+   "--model",
+   "claude-opus-5-5",
+   "--system-prompt",
+   "System prompt.",
+   "--tools",
+   "",
+   "--mcp-config",
+   "<tmp>/*.json",
+   "--strict-mcp-config",
+   "--permission-mode",
+   "bypassPermissions",
+   "--output-format",
+   "stream-json",
+   "--verbose",
+   "--no-session-persistence",
+   "--setting-sources",
+   ""
+  ],
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "ANTHROPIC_API_KEY"
+  ],
+  "kwargs": {
+   "cwd": "<tmp>",
+   "input": "{\"type\": \"user\", \"message\": {\"role\": \"user\", \"content\": [{\"type\": \"text\", \"text\": \"### User\\nwhat is this?\\n[Attached image 1]\\n\\n### Assistant\"}, {\"type\": \"image\", \"source\": {\"type\": \"base64\", \"media_type\": \"image/png\", \"data\": \"QUJD\"}}]}}\n",
+   "start_new_session": true,
+   "stderr": -1,
+   "stdout": "_TemporaryFileWrapper",
+   "text": true,
+   "timeout": 300
+  },
+  "mcp_config": {
+   "mcpServers": {
+    "ha": {
+     "headers": {
+      "Authorization": "Bearer ha-token"
+     },
+     "type": "sse",
+     "url": "http://ha.invalid/mcp_server/sse"
+    },
+    "ha-admin": {
+     "args": [
+      "mcp_ha_server.py"
+     ],
+     "command": "python3",
+     "env": {
+      "HA_API_TOKEN": "ha-token"
+     }
+    },
+    "vault": {
+     "args": [
+      "<repo>/mcp_vault_server.py"
+     ],
+     "command": "<python>",
+     "env": {
+      "OPENCLAVE_AGENT_ID": "r2"
+     }
+    }
+   }
+  },
+  "reply": "(claude-cli error: no final result in output stream)"
+ },
+ "claude/r2-read-only-run-env": {
+  "argv": [
+   "<claude>",
+   "-p",
+   "### User\ncheck\n\n### Assistant",
+   "--model",
+   "claude-opus-5-5",
+   "--system-prompt",
+   "System prompt.",
+   "--tools",
+   "",
+   "--mcp-config",
+   "<tmp>/*.json",
+   "--strict-mcp-config",
+   "--permission-mode",
+   "bypassPermissions",
+   "--output-format",
+   "stream-json",
+   "--verbose",
+   "--no-session-persistence",
+   "--setting-sources",
+   ""
+  ],
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "ANTHROPIC_API_KEY"
+  ],
+  "kwargs": {
+   "cwd": "<tmp>",
+   "start_new_session": true,
+   "stderr": -1,
+   "stdin": -3,
+   "stdout": "_TemporaryFileWrapper",
+   "text": true,
+   "timeout": 300
+  },
+  "mcp_config": {
+   "mcpServers": {
+    "ha-admin": {
+     "args": [
+      "mcp_ha_server.py"
+     ],
+     "command": "python3",
+     "env": {
+      "HA_API_TOKEN": "ha-token",
+      "OPENCLAVE_HA_READ_ONLY": "1",
+      "X_APPROVED": "1"
+     }
+    },
+    "vault": {
+     "args": [
+      "<repo>/mcp_vault_server.py"
+     ],
+     "command": "<python>",
+     "env": {
+      "OPENCLAVE_AGENT_ID": "r2"
+     }
+    }
+   }
+  },
+  "reply": "(claude-cli error: no final result in output stream)"
+ },
+ "claude/r2-text": {
+  "argv": [
+   "<claude>",
+   "-p",
+   "### User\nlights?\n\n### Assistant",
+   "--model",
+   "claude-opus-5-5",
+   "--system-prompt",
+   "System prompt.",
+   "--tools",
+   "",
+   "--mcp-config",
+   "<tmp>/*.json",
+   "--strict-mcp-config",
+   "--permission-mode",
+   "bypassPermissions",
+   "--output-format",
+   "stream-json",
+   "--verbose",
+   "--no-session-persistence",
+   "--setting-sources",
+   ""
+  ],
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "ANTHROPIC_API_KEY"
+  ],
+  "kwargs": {
+   "cwd": "<tmp>",
+   "start_new_session": true,
+   "stderr": -1,
+   "stdin": -3,
+   "stdout": "_TemporaryFileWrapper",
+   "text": true,
+   "timeout": 300
+  },
+  "mcp_config": {
+   "mcpServers": {
+    "ha": {
+     "headers": {
+      "Authorization": "Bearer ha-token"
+     },
+     "type": "sse",
+     "url": "http://ha.invalid/mcp_server/sse"
+    },
+    "ha-admin": {
+     "args": [
+      "mcp_ha_server.py"
+     ],
+     "command": "python3",
+     "env": {
+      "HA_API_TOKEN": "ha-token"
+     }
+    },
+    "vault": {
+     "args": [
+      "<repo>/mcp_vault_server.py"
+     ],
+     "command": "<python>",
+     "env": {
+      "OPENCLAVE_AGENT_ID": "r2"
+     }
+    }
+   }
+  },
+  "reply": "(claude-cli error: no final result in output stream)"
+ },
+ "claude/rick-text": {
+  "argv": [
+   "<claude>",
+   "-p",
+   "### User\nhi\n\n### Assistant\nhello\n\n### User\nTitle: x\nmore\n\n### Assistant",
+   "--model",
+   "claude-opus-5-5",
+   "--system-prompt",
+   "System prompt.",
+   "--tools",
+   "WebSearch,WebFetch",
+   "--mcp-config",
+   "<tmp>/*.json",
+   "--strict-mcp-config",
+   "--permission-mode",
+   "bypassPermissions",
+   "--output-format",
+   "stream-json",
+   "--verbose",
+   "--no-session-persistence",
+   "--setting-sources",
+   ""
+  ],
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "ANTHROPIC_API_KEY"
+  ],
+  "kwargs": {
+   "cwd": "<tmp>",
+   "start_new_session": true,
+   "stderr": -1,
+   "stdin": -3,
+   "stdout": "_TemporaryFileWrapper",
+   "text": true,
+   "timeout": 300
+  },
+  "mcp_config": {
+   "mcpServers": {
+    "vault": {
+     "args": [
+      "<repo>/mcp_vault_server.py"
+     ],
+     "command": "<python>",
+     "env": {
+      "OPENCLAVE_AGENT_ID": "rick"
+     }
+    }
+   }
+  },
+  "reply": "(claude-cli error: no final result in output stream)"
+ },
+ "codex/r2-image": {
+  "argv": [
+   "<codex>",
+   "exec",
+   "--approve-for-me",
+   "-C",
+   "/agents/r2",
+   "--skip-git-repo-check",
+   "-c",
+   "model_instructions_file=\"<tmp>/*.md\"",
+   "-m",
+   "gpt-5.6-terra",
+   "--output-last-message",
+   "<tmp>/*.txt",
+   "--image",
+   "<tmp>/openclave-codex-r2-*/attachment-1.png",
+   "--",
+   "<system_instructions>\nSystem prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.\n</system_instructions>\n\n### User\nwhat is this?\n[Attached image 1]\n\n### Assistant"
+  ],
+  "codex_home_files": [
+   "attachment-1.png",
+   "config.toml"
+  ],
+  "config_toml": "model_reasoning_effort = \"low\"\nweb_search = \"live\"\n\n[mcp_servers.\"openclave-vault-r2\"]\ncommand = \"<python>\"\nargs = [\"<repo>/mcp_vault_server.py\"]\n\n[mcp_servers.\"openclave-vault-r2\".env]\nOPENCLAVE_AGENT_ID = \"r2\"\n\n[mcp_servers.\"openclave-ha-admin\"]\ncommand = \"python3\"\nargs = [\"mcp_ha_server.py\"]\nenv_vars = [\"HA_API_TOKEN\"]\ndefault_tools_approval_mode = \"auto\"\nrequired = true\n",
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "OPENAI_API_KEY",
+   "XDG_CACHE_HOME",
+   "XDG_CONFIG_HOME"
+  ],
+  "instructions": "System prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.",
+  "kwargs": {
+   "capture_output": true,
+   "start_new_session": true,
+   "stdin": -3,
+   "text": true,
+   "timeout": 300
+  },
+  "reply": "ok"
+ },
+ "codex/r2-read-only-run-env": {
+  "argv": [
+   "<codex>",
+   "exec",
+   "--approve-for-me",
+   "-C",
+   "/agents/r2",
+   "--skip-git-repo-check",
+   "-c",
+   "model_instructions_file=\"<tmp>/*.md\"",
+   "-m",
+   "gpt-5.6-terra",
+   "--output-last-message",
+   "<tmp>/*.txt",
+   "--",
+   "<system_instructions>\nSystem prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.\n</system_instructions>\n\n### User\ncheck\n\n### Assistant"
+  ],
+  "codex_home_files": [
+   "config.toml"
+  ],
+  "config_toml": "model_reasoning_effort = \"low\"\nweb_search = \"live\"\n\n[mcp_servers.\"openclave-vault-r2\"]\ncommand = \"<python>\"\nargs = [\"<repo>/mcp_vault_server.py\"]\n\n[mcp_servers.\"openclave-vault-r2\".env]\nOPENCLAVE_AGENT_ID = \"r2\"\n\n[mcp_servers.\"openclave-ha-admin\"]\ncommand = \"python3\"\nargs = [\"mcp_ha_server.py\"]\nenv_vars = [\"HA_API_TOKEN\"]\ndefault_tools_approval_mode = \"auto\"\nrequired = true\n\n[mcp_servers.\"openclave-ha-admin\".env]\n\"X_APPROVED\" = \"1\"\n\"OPENCLAVE_HA_READ_ONLY\" = \"1\"\n",
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "OPENAI_API_KEY",
+   "XDG_CACHE_HOME",
+   "XDG_CONFIG_HOME"
+  ],
+  "instructions": "System prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.",
+  "kwargs": {
+   "capture_output": true,
+   "start_new_session": true,
+   "stdin": -3,
+   "text": true,
+   "timeout": 300
+  },
+  "reply": "ok"
+ },
+ "codex/r2-text": {
+  "argv": [
+   "<codex>",
+   "exec",
+   "--approve-for-me",
+   "-C",
+   "/agents/r2",
+   "--skip-git-repo-check",
+   "-c",
+   "model_instructions_file=\"<tmp>/*.md\"",
+   "-m",
+   "gpt-5.6-terra",
+   "--output-last-message",
+   "<tmp>/*.txt",
+   "--",
+   "<system_instructions>\nSystem prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.\n</system_instructions>\n\n### User\nlights?\n\n### Assistant"
+  ],
+  "codex_home_files": [
+   "config.toml"
+  ],
+  "config_toml": "model_reasoning_effort = \"low\"\nweb_search = \"live\"\n\n[mcp_servers.\"openclave-vault-r2\"]\ncommand = \"<python>\"\nargs = [\"<repo>/mcp_vault_server.py\"]\n\n[mcp_servers.\"openclave-vault-r2\".env]\nOPENCLAVE_AGENT_ID = \"r2\"\n\n[mcp_servers.\"openclave-ha-admin\"]\ncommand = \"python3\"\nargs = [\"mcp_ha_server.py\"]\nenv_vars = [\"HA_API_TOKEN\"]\ndefault_tools_approval_mode = \"auto\"\nrequired = true\n",
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "OPENAI_API_KEY",
+   "XDG_CACHE_HOME",
+   "XDG_CONFIG_HOME"
+  ],
+  "instructions": "System prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.",
+  "kwargs": {
+   "capture_output": true,
+   "start_new_session": true,
+   "stdin": -3,
+   "text": true,
+   "timeout": 300
+  },
+  "reply": "ok"
+ },
+ "codex/rick-text": {
+  "argv": [
+   "<codex>",
+   "exec",
+   "-s",
+   "workspace-write",
+   "-C",
+   "/agents/rick",
+   "--skip-git-repo-check",
+   "-c",
+   "model_instructions_file=\"<tmp>/*.md\"",
+   "-m",
+   "gpt-5.6-terra",
+   "--output-last-message",
+   "<tmp>/*.txt",
+   "--",
+   "<system_instructions>\nSystem prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.\n</system_instructions>\n\n### User\nhi\n\n### Assistant\nhello\n\n### User\nTitle: x\nmore\n\n### Assistant"
+  ],
+  "codex_home_files": [
+   "config.toml"
+  ],
+  "config_toml": "model_reasoning_effort = \"low\"\nweb_search = \"live\"\n\n[mcp_servers.\"openclave-vault-rick\"]\ncommand = \"<python>\"\nargs = [\"<repo>/mcp_vault_server.py\"]\n\n[mcp_servers.\"openclave-vault-rick\".env]\nOPENCLAVE_AGENT_ID = \"rick\"\n",
+  "env_added": {
+   "OPENCLAVE_RUN": "<run-marker>"
+  },
+  "env_removed": [
+   "OPENAI_API_KEY",
+   "XDG_CACHE_HOME",
+   "XDG_CONFIG_HOME"
+  ],
+  "instructions": "System prompt.\n\n# Codex-specific capability notes\n\nYour MCP tools for writing (update_backlog, update_plan_phase, update_mission,\nupdate_persona, add_feedback, write_memory, log_measurement, add_foundation,\nwrite_own_dashboard, write_note, flag_to_maintainer, update_maintainer_inbox_item) will\nNOT work under this provider \u2014 every call to them fails with an approval\nerror. Do not retry them.\n\nflag_to_maintainer and update_maintainer_inbox_item have no native-file-tool workaround\nlike the ones below \u2014 they write to the maintainer inbox, outside your folder.\nIf something genuinely needs maintainer attention, tell the user directly.\ncheck_maintainer_request (MCP,\nread-only) still works if you already have an item id from a prior session.\n\nInstead, for backlog/mission/persona changes, edit the file directly with\nyour own file tools. You can read anywhere, but you can only write inside\nyour own agent folder (your current working directory) \u2014 the same boundary\nthe MCP tools would have enforced, just applied by the sandbox instead.\nAlways read the file first so you preserve its exact existing structure,\nand make the smallest edit that accomplishes the change rather than\nrewriting the whole file. Mission has a 1,850-character limit and Persona a\n2,200-character limit, including frontmatter. If an edit cannot fit, do not\nsilently drop the improvement: explain that it was not stored. The service\nwill restore an over-limit direct edit, send its proposed content to the maintainer,\nand append a notice to the user's reply.\n\n- backlog.md: YAML frontmatter, then a '# Backlog' section of\n  '- [ ] item text' / '- [x] item text' lines. To add an item, append a new\n  '- [ ] ...' line. To check/uncheck, flip '[ ]'/'[x]' on the matching line.\n- mission.md / persona.md: YAML frontmatter, then a freeform markdown body.\n  Replace the whole body when it changes, but keep sections that are still\n  true \u2014 don't just append. mission.md's '## Domains' list is read by other\n  agents; only change it deliberately.\n\n- Freeform notes (a per-project file, an inventory list, working notes not\n  covered by anything above): create/edit them directly with your own file\n  tools too, anywhere in your own folder, as long as the filename ends in\n  .md or .txt. read_note/list_notes (MCP, read-only) still work if useful,\n  but you don't need them just to write \u2014 your native file tools already\n  have the access.\n\n- Your own skills: save_skill won't work here either. Write\n  skills/<name>/SKILL.md in your folder: front matter with name and a\n  one-sentence description, then the steps. read_skill (MCP, read-only)\n  still works.\n\n- Your phone page: write page.json (and page.html for an html block) in\n  your own folder with your own file tools \u2014 write_page won't work here.\n  Call check_page (MCP, read-only) first for the format and again after\n  writing, and fix anything it reports.\n\nDo NOT directly edit tracking.md or dashboard.html \u2014 their formats (multi-\nsection tables; templated HTML/JS) are easy to corrupt with a freeform edit,\nand other tools depend on them parsing correctly. If a tracking entry or\ndashboard change seems called for, say so to the user rather than attempting it\nyourself.\n\nReading is unaffected by any of this \u2014 search_vault, read_vault_file, and\nreading files directly all still work everywhere in the vault.",
+  "kwargs": {
+   "capture_output": true,
+   "start_new_session": true,
+   "stdin": -3,
+   "text": true,
+   "timeout": 300
+  },
+  "reply": "ok"
+ }
+}

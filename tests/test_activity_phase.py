@@ -5,6 +5,7 @@ import unittest
 from unittest.mock import patch
 
 import llm_client
+from providers import claude_cli
 
 
 class ActivityPhaseTests(unittest.TestCase):
@@ -38,7 +39,7 @@ class ActivityPhaseTests(unittest.TestCase):
             return subprocess.CompletedProcess(args, 0, None, "")
 
         with patch.object(llm_client.subprocess, "run", side_effect=fake_run), \
-             patch.object(llm_client, "log_usage") as usage:
+             patch.object(claude_cli, "log_usage") as usage:
             self.assertEqual(llm_client._chat_claude_cli("r2", "claude-opus-4-6", "system", []), "done")
         usage.assert_called_once_with("r2", "claude-cli", "claude-opus-4-6", {"input_tokens": 1}, None)
 

@@ -5,6 +5,7 @@ from pathlib import Path
 from unittest.mock import patch
 
 import llm_client
+import llm_usage
 
 LINE = json.dumps({"type": "event_msg", "payload": {"type": "token_count", "rate_limits": {
     "primary": {"used_percent": 55.0, "window_minutes": 300, "resets_at": 1790199607},
@@ -14,7 +15,7 @@ LINE = json.dumps({"type": "event_msg", "payload": {"type": "token_count", "rate
 class CliQuotaTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp())
-        patcher = patch.object(llm_client, "CLI_QUOTA_FILE", self.tmp / "cli_quota.json")
+        patcher = patch.object(llm_usage, "CLI_QUOTA_FILE", self.tmp / "cli_quota.json")
         patcher.start()
         self.addCleanup(patcher.stop)
 

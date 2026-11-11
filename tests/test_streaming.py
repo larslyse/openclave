@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 import llm_client
+from providers import anthropic_api, xai_api
 import request_phase
 
 AGENT = "stream-test"
@@ -39,7 +40,7 @@ class Watched(list):
 class XaiStreamingTests(unittest.TestCase):
     def setUp(self):
         os.environ.setdefault("XAI_API_KEY", "test-key")
-        for p in (patch.object(llm_client, "log_usage"), patch.object(llm_client, "tools_for", return_value=[])):
+        for p in (patch.object(xai_api, "log_usage"), patch.object(xai_api, "tools_for", return_value=[])):
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(request_phase.set_phase, AGENT, None)
@@ -55,7 +56,7 @@ class XaiStreamingTests(unittest.TestCase):
         fake_openai = MagicMock()
         fake_openai.OpenAI.return_value = client
         with patch.dict("sys.modules", {"openai": fake_openai}), \
-             patch.object(llm_client, "_run_tool", return_value=tool_result) as run_tool:
+             patch.object(xai_api, "_run_tool", return_value=tool_result) as run_tool:
             reply = llm_client._chat_xai(AGENT, "grok-4.3", "sys", [{"role": "user", "content": "hi"}])
         return reply, sent, seen, run_tool
 
@@ -127,7 +128,7 @@ def final_message(text, stop_reason="end_turn"):
 
 class AnthropicStreamingTests(unittest.TestCase):
     def setUp(self):
-        for p in (patch.object(llm_client, "log_usage"), patch.object(llm_client, "tools_for", return_value=[])):
+        for p in (patch.object(anthropic_api, "log_usage"), patch.object(anthropic_api, "tools_for", return_value=[])):
             p.start()
             self.addCleanup(p.stop)
         self.addCleanup(request_phase.set_phase, AGENT, None)
@@ -170,7 +171,7 @@ class AnthropicStreamingTests(unittest.TestCase):
         client.messages.stream.side_effect = stream
         fake = MagicMock()
         fake.Anthropic.return_value = client
-        with patch.dict("sys.modules", {"anthropic": fake}), patch.object(llm_client, "_run_tool", return_value="none"):
+        with patch.dict("sys.modules", {"anthropic": fake}), patch.object(anthropic_api, "_run_tool", return_value="none"):
             reply = llm_client._chat_anthropic(AGENT, "claude-sonnet-5", "sys", [{"role": "user", "content": "hi"}])
         self.assertEqual(reply, "Done")
         echoed = sent[1][1]["content"]
