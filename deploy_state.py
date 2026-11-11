@@ -6,7 +6,7 @@ Happened 2026-09-23: Codex sessions changed main.py and friends until 19:34,
 but openclave.service had been up since 06:31 — the dashboard showed new
 buttons whose backend routes 404'd, and nobody noticed for a day.
 
-Fingerprints the top-level *.py files at import (== process start) and
+Fingerprints the top-level and routes/ *.py files at import (== process start) and
 compares against a fresh fingerprint on demand. Static files are excluded on
 purpose: they're served from disk and never need a restart.
 """
@@ -19,7 +19,8 @@ ROOT = Path(__file__).parent
 
 
 def _py_hashes() -> dict[str, str]:
-    return {p.name: hashlib.sha256(p.read_bytes()).hexdigest() for p in sorted(ROOT.glob("*.py"))}
+    files = sorted([*ROOT.glob("*.py"), *ROOT.glob("routes/*.py")])
+    return {p.relative_to(ROOT).as_posix(): hashlib.sha256(p.read_bytes()).hexdigest() for p in files}
 
 
 def _git_commit() -> str | None:
