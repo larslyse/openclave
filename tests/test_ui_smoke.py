@@ -44,6 +44,18 @@ def _free_port() -> int:
         return s.getsockname()[1]
 
 
+async def _until(br, expr, timeout=10.0, step=0.1, frame=None):
+    """Evaluate the JS body `expr` until it returns something truthy and
+    return that, or None after `timeout` seconds. Waits on what the page
+    shows instead of guessing how long the server or a poll takes."""
+    deadline = time.monotonic() + timeout
+    while True:
+        value = await br.eval(expr, frame) if frame else await br.eval(expr)
+        if value or time.monotonic() > deadline:
+            return value or None
+        await asyncio.sleep(step)
+
+
 @unittest.skipUnless(HAVE_DEPS, "needs chromium and websockets")
 class UiSmokeTest(unittest.TestCase):
     @classmethod
@@ -291,7 +303,7 @@ class UiSmokeTest(unittest.TestCase):
 
             await br.goto(f"{self.base}/mobile/#/agents/spice/new", wait=4)
             await br.eval("const t=document.querySelector('.composer textarea'); t.value='hi'; t.dispatchEvent(new Event('input')); document.querySelector('.composer .send').click(); return 1;")
-            await asyncio.sleep(5)
+            await _until(br, "const m=[...document.querySelectorAll('.reply-meta')]; return m.length && m[m.length-1].textContent.includes('·');")
             meta = await br.eval("return [...document.querySelectorAll('.reply-meta')].map(e=>e.textContent);")
             self.assertTrue(meta and "·" in meta[-1], f"reply shows model · time, got {meta}")
 
@@ -395,7 +407,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertTrue(await br.eval(vis % ".col-left", f) and await br.eval(vis % ".kanban-panel", f), "panes come back")
             self.assertEqual(await br.eval("return document.querySelector('.layout').style.gridTemplateColumns;", f), "", "all on = default layout")
             await br.eval("const t=document.querySelector('.composer textarea'); t.value='hi desktop'; t.dispatchEvent(new Event('input')); document.querySelector('.composer .send').click(); return 1;", f)
-            await asyncio.sleep(5)
+            await _until(br, "return document.getElementById('chat-window').innerText.includes('Fake reply from rick.');", frame=f)
             text = await br.eval("return document.getElementById('chat-window').innerText;", f)
             self.assertIn("Fake reply from rick.", text)
 
@@ -756,8 +768,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertNotIn("Loading", text, "no loading state")
             self.assertEqual(await br.eval("return document.querySelectorAll('.conversation-item').length;"), before, "last time's list at once")
             self.assertEqual(await br.eval("return document.querySelectorAll('.conversation-item .new-tag').length;"), 0, "no 'new' from the copy")
-            await asyncio.sleep(3.5)
-            self.assertEqual(await br.eval("return document.querySelectorAll('.conversation-item').length;"), before + 1, "server's list swapped in")
+            self.assertTrue(await _until(br, f"return document.querySelectorAll('.conversation-item').length === {before + 1};"), "server's list swapped in")
             self.assertIn("brand new while away", await br.eval("return document.querySelector('#convo-list').innerText;"))
             self.assertEqual(await br.eval("return document.querySelectorAll('.conversation-item .new-tag').length;"), 1, "its 'new' comes from the server")
 
@@ -765,13 +776,11 @@ class UiSmokeTest(unittest.TestCase):
             msgs = await br.eval("return document.querySelector('.messages').innerText;")
             self.assertIn("cached chat text", msgs, "the chat at once")
             self.assertNotIn("Loading conversation", msgs)
-            await asyncio.sleep(3.5)
-            self.assertIn("Fake reply", await br.eval("return document.querySelector('.messages').innerText;"))
+            self.assertTrue(await _until(br, "return document.querySelector('.messages').innerText.includes('Fake reply');"), "then the server's copy")
 
             await br.goto(f"{self.base}/mobile/#/agents", wait=0.8)
             self.assertGreater(await br.eval("return document.querySelectorAll('.row[data-agent]').length;"), 3, "agent list at once")
-            await asyncio.sleep(3.5)
-            self.assertTrue(await br.eval("return !!document.querySelector('.row[data-agent=rocky] .new-tag');"), "then the server's 'new msg'")
+            self.assertTrue(await _until(br, "return !!document.querySelector('.row[data-agent=rocky] .new-tag');"), "then the server's 'new msg'")
             self.assertEqual([l for l in br.logs if "EXC" in l], [], "no page errors")
         finally:
             await br.eval("localStorage.removeItem('__slow'); return 1;")
@@ -785,20 +794,25 @@ class UiSmokeTest(unittest.TestCase):
         try:
             await br.goto(f"{self.base}/mobile/#/agents/greg/new", wait=3)
             await br.eval("const t=document.querySelector('textarea'); t.value='stream please'; t.dispatchEvent(new Event('input')); return 1;")
+            # Every state the pending bubble's text goes through, recorded on
+            # each DOM change: the reply poll rebuilds the bubble every 2 s,
+            # and the text must survive that, not blank until the next phase poll.
+            await br.eval("window.__seen = []; new MutationObserver(() => { const b = document.querySelector('.bubble.pending'); if (b) window.__seen.push(b.querySelector('.stream-text')?.innerHTML || ''); }).observe(document.body, {subtree: true, childList: true}); return 1;")
             await br.eval("document.querySelector('button.send').click(); return 1;")
-            await asyncio.sleep(2.5)
             bubble = "const b=document.querySelector('.bubble.pending'); return b ? [b.className, b.querySelector('.stream-text')?.innerHTML || '', b.innerText] : null;"
-            first = await br.eval(bubble)
-            self.assertIsNotNone(first, "still working")
+            first = await _until(br, bubble.replace("return b ?", "return b && b.querySelector('.stream-text')?.innerHTML ?"))
+            self.assertIsNotNone(first, "still working, with text")
             self.assertIn("streaming", first[0])
             self.assertIn("<strong>part one</strong>", first[1], "the text so far, as markdown")
             self.assertNotIn("part three", first[1])
             self.assertRegex(first[2], r"Working|Thinking", "the timer line stays under it")
             self.assertIn("Stop", first[2])
-            await asyncio.sleep(1.6)
-            self.assertIn("part two", (await br.eval(bubble))[1], "it grows")
-            await asyncio.sleep(4)
-            self.assertIsNone(await br.eval("return document.querySelector('.bubble.pending') && 1;"), "done")
+            grown = await _until(br, bubble.replace("return b ?", "return b && b.querySelector('.stream-text')?.innerHTML.includes('part two') ?"))
+            self.assertIsNotNone(grown, "it grows while the reply is still pending")
+            self.assertTrue(await _until(br, "return !document.querySelector('.bubble.pending');", timeout=15), "done")
+            seen = await br.eval("return window.__seen;")
+            shown = seen[next(i for i, text in enumerate(seen) if text):]
+            self.assertEqual(shown.count(""), 0, "the streamed text never blanks between polls")
             final = await br.eval("return [...document.querySelectorAll('.bubble.assistant')].pop().innerText;")
             self.assertIn("part three", final)
             self.assertEqual(await br.eval("return document.documentElement.scrollWidth;"), 390)
@@ -1352,7 +1366,7 @@ class UiSmokeTest(unittest.TestCase):
             await br.goto(f"{self.base}/stash", wait=6)
             _, kids = await br.frames()
             await br.eval("document.querySelector('.left-tab[data-tab=tools]').click(); return 1;", kids[0])
-            await asyncio.sleep(4)
+            await _until(br, "const d=document.querySelector('iframe[data-view=tools]')?.contentDocument; return d && d.querySelectorAll('.tool-row input').length > 3;")
             inner = "const d=document.querySelector('iframe[data-view=tools]').contentDocument;"
             self.assertGreater(await br.eval(f"{inner} return d.querySelectorAll('.tool-row input').length;"), 3)
             self.assertEqual(await br.eval("return getComputedStyle(document.querySelector('iframe[data-view=tools]')).display;"), "block", "in the left pane, like Chat and Files")

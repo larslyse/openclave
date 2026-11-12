@@ -544,6 +544,7 @@
     let conversationId = o.conversationId || null;
     let destroyed = false;
     let workTimer = null, phaseTimer = null, pollTimer = null;
+    let streamed = {id: null, text: ''};  // the running request's text so far (startWorkTimer)
     const alive = () => !destroyed && (!o.isCurrent || o.isCurrent());
 
     form.innerHTML = composerHtml({...o, canTalk, store});
@@ -727,11 +728,15 @@
         if (!text || text === shown || !bubble.isConnected) return;
         const atBottom = nearBottom(scroller);
         shown = text;
+        if (request.requestId) streamed = {id: request.requestId, text};
         streamEl.innerHTML = md(text);
         streamEl.hidden = false;
         bubble.classList.add('streaming');
         if (atBottom) scrollToBottom(scroller);
       };
+      // monitor() rebuilds this bubble every poll: put back what was already
+      // streamed at once, or the text blanks until the next phase reply.
+      if (request.requestId && streamed.id === request.requestId) showText(streamed.text);
       const stopBtn = bubble.querySelector('.stop-btn');
       if (stopBtn) stopBtn.onclick = () => { stopBtn.disabled = true; cancelRequest(request); };
       const label = bubble.querySelector('.pending-label') || bubble;
