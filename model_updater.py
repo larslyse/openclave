@@ -47,6 +47,7 @@ MAX_PER_GROUP = 6
 MAX_FAILURES = 3          # test-reply failures before a model is no longer retried
 RUN_EVERY_S = 24 * 3600
 FIRST_RUN_DELAY_S = 15 * 60
+CHECK_EVERY_S = 3600       # how often the scheduler asks whether a run is due
 API_FAST_S, CLI_FAST_S = 4.0, 12.0
 PROBE_PROMPT = "Reply with just OK"
 _OLDER = re.compile(r"^(older|previous|legacy)\b", re.IGNORECASE)
@@ -392,18 +393,21 @@ def summary() -> dict:
     }
 
 
-def _loop() -> None:
-    time.sleep(FIRST_RUN_DELAY_S)
-    while True:
-        try:
-            state = load()
-            last = datetime.fromisoformat(state["last_run"]) if state["last_run"] else None
-            if state["enabled"] and (not last or (datetime.now(timezone.utc) - last).total_seconds() > RUN_EVERY_S):
-                run()
-        except Exception as exc:
-            print(f"model updater: {exc}")
-        time.sleep(3600)
+def run_due_once() -> bool:
+    """Runs an update when it's switched on and the last one is more than
+    RUN_EVERY_S old."""
+    state = load()
+    last = datetime.fromisoformat(state["last_run"]) if state["last_run"] else None
+    if not (state["enabled"] and (not last or (datetime.now(timezone.utc) - last).total_seconds() > RUN_EVERY_S)):
+        return False
+    run()
+    return True
 
 
 def start() -> None:
-    threading.Thread(target=_loop, name="openclave-model-updater-loop", daemon=True).start()
+    """Registers the model update check with the scheduler: first look
+    FIRST_RUN_DELAY_S after startup, then every CHECK_EVERY_S. Test replies
+    take up to a minute each, so it runs in the worker pool."""
+    import scheduler
+    scheduler.register("model-updates", "Look for new models", run_due_once,
+                       every=CHECK_EVERY_S, delay=FIRST_RUN_DELAY_S, worker=True)

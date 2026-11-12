@@ -193,26 +193,27 @@ def kick(agent_id: str) -> None:
     (_kick_dir() / agent_id).touch()
 
 
-def _kicker_loop() -> None:
-    while True:
-        time.sleep(KICK_POLL_S)
-        try:
-            for marker in _kick_dir().iterdir():
-                agent_id = marker.name
-                marker.unlink(missing_ok=True)
-                if agent_id not in AGENTS:
-                    continue
-                with _SUBMIT_LOCK:
-                    start = agent_id not in _SCHEDULED
-                    _SCHEDULED.add(agent_id)
-                if start:
-                    _EXECUTOR.submit(_drain, agent_id)
-        except Exception as exc:  # noqa: BLE001 -- keep polling
-            print(f"chat kick failed: {exc}")
+def kick_once() -> None:
+    """Hands each kicked agent's queue to the chat executor."""
+    for marker in _kick_dir().iterdir():
+        agent_id = marker.name
+        marker.unlink(missing_ok=True)
+        if agent_id not in AGENTS:
+            continue
+        with _SUBMIT_LOCK:
+            start = agent_id not in _SCHEDULED
+            _SCHEDULED.add(agent_id)
+        if start:
+            _EXECUTOR.submit(_drain, agent_id)
 
 
 def start_kicker() -> None:
-    threading.Thread(target=_kicker_loop, name="openclave-chat-kick", daemon=True).start()
+    """Registers the kick poll with the scheduler: every KICK_POLL_S seconds,
+    inline (it only lists a folder). It is part of normal chat handling, so it
+    runs even with background jobs switched off."""
+    import scheduler
+    scheduler.register("chat-kick", "Run messages agents queued", kick_once,
+                       every=KICK_POLL_S, delay=KICK_POLL_S, background=False)
 
 
 def _drain(agent_id: str) -> None:

@@ -24,7 +24,6 @@ reads files and sends one notification: it never runs an agent.
 import re
 import agents
 import threading
-import time
 from datetime import date, datetime
 from pathlib import Path
 from config import CONFIG
@@ -214,12 +213,12 @@ def run_due_once() -> bool:
     return True
 
 
-def start(interval_s: int = 60) -> None:
-    def loop():
-        while True:
-            try:
-                run_due_once()
-            except Exception:
-                pass
-            time.sleep(interval_s)
-    threading.Thread(target=loop, name="openclave-digest", daemon=True).start()
+CHECK_EVERY_S = 60
+
+
+def start(interval_s: int = CHECK_EVERY_S) -> None:
+    """Registers the digest check with the scheduler: every interval_s
+    seconds; run_due_once sends only in the configured daily/weekly window.
+    Reading every agent's files and pushing runs in the worker pool."""
+    import scheduler
+    scheduler.register("digest", "Send the needs-you digest", run_due_once, every=interval_s, worker=True)

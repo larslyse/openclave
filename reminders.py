@@ -19,7 +19,6 @@ time in the configured timezone, while the server itself may run on UTC.
 """
 import json
 import threading
-import time
 import uuid
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -257,18 +256,12 @@ def _deliver_logged(agent_id: str, reminder: dict) -> None:
         print(f"reminders: delivering {agent_id}/{reminder.get('id')} failed: {exc}")
 
 
-_started = False
+CHECK_EVERY_S = 30
 
 
-def start(interval_s: int = 30) -> None:
-    global _started
-    if _started:
-        return
-    _started = True
-
-    def loop():
-        while True:
-            run_due_once()
-            time.sleep(interval_s)
-
-    threading.Thread(target=loop, name="openclave-reminders", daemon=True).start()
+def start(interval_s: int = CHECK_EVERY_S) -> None:
+    """Registers the reminder check with the scheduler: every interval_s
+    seconds from startup. Sending pushes can wait on the network, so it runs
+    in the scheduler's worker pool."""
+    import scheduler
+    scheduler.register("reminders", "Send due reminders", run_due_once, every=interval_s, worker=True)

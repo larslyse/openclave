@@ -40,6 +40,8 @@ from state_io import load_json, save_json
 
 ROOT = Path(__file__).resolve().parent
 CHECK_EVERY = 6 * 3600
+FIRST_LOOK_S = 300   # first look after startup
+LOOK_EVERY_S = 1800  # how often the scheduler asks whether a check is due
 TAG_RE = re.compile(r"^v\d+\.\d+\.\d+$")
 _lock = threading.Lock()
 _checking = False
@@ -258,17 +260,30 @@ def _due() -> bool:
         return True
 
 
-def start() -> None:
-    """Background loop: first look 5 minutes after start, then at most once
-    every CHECK_EVERY, and only while [updates] check is on."""
-    def loop():
-        time.sleep(300)
-        while True:
-            if enabled() and _due():
-                check_in_background()
-            time.sleep(1800)
+def run_due_once() -> bool:
+    """Checks for an update when [updates] check is on and the last check is
+    CHECK_EVERY old. Skips while a check started from the Control Panel runs."""
+    global _checking
+    if not (enabled() and _due()):
+        return False
+    with _lock:
+        if _checking:
+            return False
+        _checking = True
+    try:
+        check()
+    finally:
+        _checking = False
+    return True
 
-    threading.Thread(target=loop, name="update-check-loop", daemon=True).start()
+
+def start() -> None:
+    """Registers the update check with the scheduler: first look
+    FIRST_LOOK_S after startup, then every LOOK_EVERY_S, so a check happens
+    at most once every CHECK_EVERY. The fetch runs in the worker pool."""
+    import scheduler
+    scheduler.register("update-check", "Check for an OpenClave update", run_due_once,
+                       every=LOOK_EVERY_S, delay=FIRST_LOOK_S, worker=True)
 
 
 def _label(v: dict) -> str:

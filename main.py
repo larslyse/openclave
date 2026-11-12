@@ -25,6 +25,7 @@ import attention
 import cleanup
 import chat_jobs
 import recaps
+import scheduler
 import voice_engine
 from agents import AGENTS
 from routes.common import VOICE_ENABLED_AGENTS, STATIC_DIR, _lan_address
@@ -40,6 +41,7 @@ from routes import claves as clave_routes
 from routes import agents as agent_routes
 from routes import models as model_routes
 from routes import setup as setup_routes
+from routes import jobs as job_routes
 
 app = FastAPI(title="OpenClave")
 
@@ -108,16 +110,19 @@ def upgrade_agent_pages():
 
 
 @app.on_event("startup")
-def start_reminders():
-    if os.environ.get("OPENCLAVE_DISABLE_BACKGROUND_JOBS", "").strip().lower() in {"1", "true", "yes"}:
-        return
+def start_background_jobs():
+    # Each start() registers the feature's job with the one scheduler thread
+    # (scheduler.py). With OPENCLAVE_DISABLE_BACKGROUND_JOBS set they are
+    # registered switched off, so /api/jobs still lists them; the chat kicker
+    # registered above keeps running either way.
     reminders.start()
     scheduled_tasks.start()
     attention.start()
     cleanup.start()  # Weekly maintainer cleanup suggestions.
-    recaps.backfill(list(AGENTS))  # cards for archived chats that have none yet
-    model_updater.start()  # first run 15 min after startup, then daily; background only
-    updater.start()  # [updates] check: git fetch at most every 6 hours, background only
+    recaps.backfill(list(AGENTS))  # once: cards for archived chats that have none yet
+    model_updater.start()  # first run 15 min after startup, then daily
+    updater.start()  # [updates] check: git fetch at most every 6 hours
+    scheduler.start()
 
 
 @app.on_event("startup")
@@ -133,6 +138,11 @@ def start_voice_engine():
 @app.on_event("shutdown")
 def stop_voice_engine():
     voice_engine.stop()
+
+
+@app.on_event("shutdown")
+def stop_scheduler():
+    scheduler.stop()
 
 
 # Backlog.md item #3: agent-editable dashboard.html used to be served directly
@@ -264,6 +274,7 @@ app.include_router(clave_routes.router)
 app.include_router(agent_routes.router)
 app.include_router(model_routes.router)
 app.include_router(setup_routes.router)
+app.include_router(job_routes.router)
 
 
 for _agent_id in list(AGENTS):

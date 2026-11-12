@@ -102,6 +102,8 @@ POST /api/cleanup/unarchive api_cleanup_unarchive
 GET /api/setup api_setup
 POST /api/setup/key api_setup_key
 GET /api/version api_version
+GET /api/jobs api_jobs
+POST /api/jobs/{job_id}/run api_job_run
 GET /api/model-check api_model_check
 POST /api/model-check api_model_check_now
 GET /api/model-updates api_model_updates
@@ -759,6 +761,8 @@ POST /api/cleanup/unarchive -> api_cleanup_unarchive
 GET /api/setup -> api_setup
 POST /api/setup/key -> api_setup_key
 GET /api/version -> api_version
+GET /api/jobs -> api_jobs
+POST /api/jobs/x/run -> api_job_run
 GET /api/model-check -> api_model_check
 POST /api/model-check -> api_model_check_now
 GET /api/model-updates -> api_model_updates

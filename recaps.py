@@ -209,11 +209,13 @@ def concluded_since(agent_id: str, since_ts: float) -> list[dict]:
 def backfill(agent_ids) -> None:
     """Once at startup: recaps for archived conversations that have none yet
     (archived before recaps existed, or the call failed). One at a time."""
-    if not available():
-        return
+    import scheduler
+    agent_ids = list(agent_ids)
 
     def run():
-        for agent_id in list(agent_ids):
+        if not available():
+            return
+        for agent_id in agent_ids:
             try:
                 cards = list_for(agent_id)
             except Exception:  # noqa: BLE001
@@ -225,4 +227,5 @@ def backfill(agent_ids) -> None:
                     except Exception:  # noqa: BLE001
                         pass
 
-    threading.Thread(target=run, name="openclave-recap-backfill", daemon=True).start()
+    # Once, right after startup; one model call per conversation, so in the worker pool.
+    scheduler.register("recap-backfill", "Recaps for archived chats", run, worker=True)
