@@ -11,6 +11,10 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 - Control Panel → Background jobs: every background job (reminders, scheduled
   tasks, weekly cleanup, model updates, update check and the rest) with its
   last run and result, and a "Run now" button.
+- `[cli] hide_private_files` (off by default): runs the Claude Code and Codex
+  CLIs under bubblewrap, so their own file tools can't see `.env`, the access
+  token, confidential folders, `~/.ssh` and other credential folders. See
+  README, Privacy.
 
 ### Changed
 

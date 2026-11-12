@@ -373,16 +373,30 @@ confidential_folders` are closed the same way: agents can't search, read,
 write or export notes in them, and a refused read tells the agent (and so
 you) why.
 
-One limit remains. On the Claude Code and Codex routes the CLI runs as your
-own user. Its reads of your notes go through OpenClave's tools and follow
-these rules, but the CLI's own built-in file access is only restricted for
-writing: Codex runs with `-s workspace-write` (it can read any file your user
-can, and write only in the agent's folder), and the Home Assistant agent runs
-Codex without `-s`, so Codex's default or configured sandbox applies. Claude
-Code gets no built-in tools except those an agent lists in its `cli_tools`
-(for web search), and those run without permission prompts. If a folder must
-stay away from those CLIs too, keep it outside what your user can read, or use
-the API routes for that work.
+On the Claude Code and Codex routes the CLI runs as your own user. Its reads
+of your notes go through OpenClave's tools and follow these rules, but the
+CLI's own built-in file access is only restricted for writing: Codex runs with
+`-s workspace-write` (it can read any file your user can, and write only in
+the agent's folder), and the Home Assistant agent runs Codex without `-s`, so
+Codex's default or configured sandbox applies. Claude Code gets no built-in
+tools except those an agent lists in its `cli_tools` (for web search), and
+those run without permission prompts. Extra MCP servers an agent lists run
+with your user's rights.
+
+To close most of that gap, set `hide_private_files = true` under `[cli]` in
+`openclave.toml` (new, off by default; needs bubblewrap, `sudo apt install
+bubblewrap`). Each CLI run then sees your files read-only, can write only to
+OpenClave's data folder, your notes folder and its own settings, and finds
+these hidden: `.env` and `private-strings.txt`, the access token in
+`openclave.toml`, the confidential folders, the web-push key and Garmin
+tokens, the other CLI's login, and credential folders in your home folder
+(`~/.ssh`, `~/.gnupg`, `~/.aws`, `~/.config/gcloud`, browser profiles,
+keyrings and similar). If bubblewrap is missing, CLI replies fail with a
+message instead of running unprotected. It does not cover: network access
+(the CLI must reach its provider), environment variables (your API keys stay
+in the CLI's environment), the rest of OpenClave's state folder (agents' tools
+need it), and any other file your user can read. Try one chat per route
+after turning it on.
 
 OpenClave looks for a newer version of itself every few hours (a `git fetch`
 from where you installed it, shown in Control Panel → Update). Its only other calls on its own are to the model provider (replies, and a
