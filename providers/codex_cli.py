@@ -11,6 +11,7 @@ import threading
 from pathlib import Path
 
 import agents
+import cli_sandbox
 import config
 import request_phase
 import vault
@@ -263,6 +264,7 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
     env.pop("XDG_CONFIG_HOME", None)
     env.pop("XDG_CACHE_HOME", None)
 
+    sandboxed = cli_sandbox.enabled()
     source_codex_home = Path(os.environ.get("CODEX_HOME", Path.home() / ".codex"))
     server_name = f"openclave-vault-{agent_id}"
 
@@ -301,6 +303,10 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
                         f'[mcp_servers.{_toml_str(server_name)}]',
                         f"command = {_toml_str(sys.executable)}",
                         f"args = [{_toml_str(MCP_VAULT_SERVER)}]",
+                        # Sandboxed, the server can't read .env itself, so it
+                        # gets those variables (and OPENCLAVE_HOME) by name.
+                        *([f'env_vars = [{", ".join(_toml_str(k) for k in cli_sandbox.env_file_names(env))}]']
+                          if sandboxed else []),
                         "",
                         f'[mcp_servers.{_toml_str(server_name)}.env]',
                         f"OPENCLAVE_AGENT_ID = {_toml_str(agent_id)}",
@@ -349,20 +355,24 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
             watcher.start()
             timeout_s = _cli_timeout(model_id, CODEX_CLI_TIMEOUT_S)
             try:
+                argv = [
+                    CODEX_BIN, "exec",
+                    *(["--approve-for-me"] if agents.is_home_assistant_agent(agent_id) else []),
+                    *([] if agents.is_home_assistant_agent(agent_id) else ["-s", "workspace-write"]),
+                    "-C", str(vault.agent_root(agent_id)),
+                    "--skip-git-repo-check",
+                    "-c", f"model_instructions_file={_toml_str(instructions_path)}",
+                    "-m", model_id,
+                    "--output-last-message", last_message_path,
+                    *image_args,
+                    "--",
+                    prompt,
+                ]
+                if sandboxed:
+                    argv = cli_sandbox.wrap(argv, cli="codex", agent_id=agent_id, env=env,
+                                            writable=[codex_home, last_message_path], readable=[instructions_path])
                 result = subprocess.run(
-                    [
-                        CODEX_BIN, "exec",
-                        *(["--approve-for-me"] if agents.is_home_assistant_agent(agent_id) else []),
-                        *([] if agents.is_home_assistant_agent(agent_id) else ["-s", "workspace-write"]),
-                        "-C", str(vault.agent_root(agent_id)),
-                        "--skip-git-repo-check",
-                        "-c", f"model_instructions_file={_toml_str(instructions_path)}",
-                        "-m", model_id,
-                        "--output-last-message", last_message_path,
-                        *image_args,
-                        "--",
-                        prompt,
-                    ],
+                    argv,
                     stdin=subprocess.DEVNULL,
                     capture_output=True,
                     text=True,
@@ -370,6 +380,8 @@ def _chat_codex_cli(agent_id: str, model_id: str, system_prompt: str, messages: 
                     env=env,
                     start_new_session=True,
                 )
+            except cli_sandbox.SandboxUnavailable as exc:
+                return f"({exc})"
             except subprocess.TimeoutExpired:
                 cancel_running(agent_id)  # Codex's sandbox and MCP children too
                 return _stopped_reply("codex-cli", model_id, timeout_s, codex_steps_done(codex_home_path))

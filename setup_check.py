@@ -200,6 +200,7 @@ def extras() -> list[dict]:
     qmd = _which(CONFIG.qmd_bin)
     voice_py = CONFIG.voice_python and Path(os.path.expanduser(CONFIG.voice_python)).is_file()
     voice_models = CONFIG.voice_model_dir and CONFIG.voice_model_dir.is_dir()
+    bwrap = shutil.which("bwrap")
     return [
         {"id": "owner", "name": "Your name", "ready": bool(CONFIG.owner_name),
          "detail": CONFIG.owner_name or "not set; agents call you \"the user\"",
@@ -218,6 +219,11 @@ def extras() -> list[dict]:
                     "token required" if CONFIG.access_token else
                     f"open to the network on {CONFIG.bind_address} with no access token"),
          "fix": "Set [network] access_token in openclave.toml (or OPENCLAVE_ACCESS_TOKEN), then restart."},
+        {"id": "hide_private_files", "name": "Hide private files from the CLIs",
+         "ready": bool(CONFIG.hide_private_files and bwrap),
+         "detail": (("on" if bwrap else "on, but bubblewrap (bwrap) is missing: CLI replies fail until it is installed")
+                    if CONFIG.hide_private_files else "off" + ("" if bwrap else "; bubblewrap (bwrap) not installed")),
+         "fix": "Install bubblewrap and set [cli] hide_private_files = true (see README, Privacy)."},
     ]
 
 

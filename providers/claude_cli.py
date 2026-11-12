@@ -10,6 +10,7 @@ import threading
 from pathlib import Path
 
 import claude_auth
+import cli_sandbox
 import config
 import request_phase
 from llm_runs import (
@@ -178,20 +179,24 @@ def _chat_claude_cli(agent_id: str, model_id: str, system_prompt: str, messages:
                 ]}}) + "\n"
             else:
                 prompt_args, stdin_line = ["-p", _format_transcript(flat)], None
+            argv = [
+                CLAUDE_BIN, *prompt_args,
+                "--model", model_id,
+                "--system-prompt", system_prompt,
+                "--tools", _cli_tools(agent_id) if _has_web_search(agent_id) else "",
+                "--mcp-config", mcp_config_path,
+                "--strict-mcp-config",
+                "--permission-mode", "bypassPermissions",
+                "--output-format", "stream-json",
+                "--verbose",
+                "--no-session-persistence",
+                "--setting-sources", "",
+            ]
+            if cli_sandbox.enabled():
+                argv = cli_sandbox.wrap(argv, cli="claude", agent_id=agent_id, env=env,
+                                        cwd=tempfile.gettempdir(), readable=[mcp_config_path])
             result = subprocess.run(
-                [
-                    CLAUDE_BIN, *prompt_args,
-                    "--model", model_id,
-                    "--system-prompt", system_prompt,
-                    "--tools", _cli_tools(agent_id) if _has_web_search(agent_id) else "",
-                    "--mcp-config", mcp_config_path,
-                    "--strict-mcp-config",
-                    "--permission-mode", "bypassPermissions",
-                    "--output-format", "stream-json",
-                    "--verbose",
-                    "--no-session-persistence",
-                    "--setting-sources", "",
-                ],
+                argv,
                 **({"input": stdin_line} if stdin_line else {"stdin": subprocess.DEVNULL}),
                 stdout=output_file,
                 stderr=subprocess.PIPE,
@@ -204,6 +209,8 @@ def _chat_claude_cli(agent_id: str, model_id: str, system_prompt: str, messages:
             output_file.flush()
             output_file.seek(0)
             output = output_file.read().decode("utf-8", "replace")
+        except cli_sandbox.SandboxUnavailable as exc:
+            return f"({exc})"
         except subprocess.TimeoutExpired:
             cancel_running(agent_id)  # its MCP servers live on in the process group
             output_file.flush()

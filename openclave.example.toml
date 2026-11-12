@@ -22,7 +22,8 @@ garmin_token_dir = "state/garmin"
 # Vault-relative folders closed to agents: search_vault and automatic lookup
 # leave them out (and they are kept out of the search index), read_vault_file
 # refuses them, and agents never write or export PDFs there. The Claude Code
-# and Codex CLIs' own built-in file access is not covered (see README, Privacy).
+# and Codex CLIs' own built-in file access is covered only with
+# [cli] hide_private_files = true (see README, Privacy).
 confidential_folders = []
 
 [search]
@@ -35,6 +36,11 @@ xdg_config_home = "state/qmd-config"
 [cli]
 claude = "claude"
 codex = "codex"
+# Run the Claude Code and Codex CLIs under bubblewrap (bwrap) so their own
+# file tools can't see private files: .env, the access token, confidential
+# folders, ~/.ssh and other credential folders. New and off by default; needs
+# bwrap. Network access and other readable files stay (see README, Privacy).
+hide_private_files = false
 
 [voice]
 # Leave either setting empty to keep voice disabled until configured.

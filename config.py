@@ -75,6 +75,9 @@ class Settings:
     # [updates] channel: "release" (the newest vX.Y.Z tag) or "main" (every
     # change on the main branch, for developers). See updater.py.
     update_channel: str = "release"
+    # [cli] hide_private_files: run the Claude Code and Codex CLIs under
+    # bubblewrap with private files masked (cli_sandbox.py). Off by default.
+    hide_private_files: bool = False
 
     @property
     def qmd_env(self) -> dict[str, str]:
@@ -148,6 +151,9 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
     update_channel = section("updates").get("channel", "release")
     if update_channel not in ("release", "main"):
         raise ValueError('updates.channel must be "release" or "main"')
+    hide_private_files = cli.get("hide_private_files", False)
+    if not isinstance(hide_private_files, bool):
+        raise ValueError("cli.hide_private_files must be true or false")
     catalog_sources = section("catalog").get("sources", [])
     if not isinstance(catalog_sources, list) or not all(isinstance(s, str) and s for s in catalog_sources):
         raise ValueError("catalog.sources must be a list of folder paths")
@@ -218,6 +224,7 @@ def load_config(path: Path | str | None = None, *, environ: Mapping[str, str] | 
         access_token=str(env.get("OPENCLAVE_ACCESS_TOKEN") or network.get("access_token", "") or "").strip(),
         update_check=update_check,
         update_channel=update_channel,
+        hide_private_files=hide_private_files,
         **_second_language(voice),
     )
 
