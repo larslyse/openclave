@@ -115,7 +115,7 @@ def render_dashboard(name: str, agent_id: str, color: str, initials: str) -> str
     return dashboard
 
 
-# ── Upgrading the agents' page copies (2026-11-05) ────────────────────────
+# ── Upgrading the agents' page copies ─────────────────────────────────────
 # Each agent's dashboard.html starts as a copy of templates/agent_dashboard.html
 # filled in with its name, id, colour and initials; an agent may rewrite its
 # own (write_own_dashboard). A copy is "stock" when every line of it, with the
@@ -412,7 +412,7 @@ def _rename_in_dashboard(cfg, name: str) -> None:
     f.write_text(text, encoding="utf-8")
 
 
-# What a clone takes from the original (claves, 2026-11-04): who it is and how
+# What a clone takes from the original (claves.py): who it is and how
 # it is set up. Never its memory, plan, backlog, files or chats: those stay
 # with the clave the original is in, so claves stay separate.
 CLONE_FILES = ("mission.md", "persona.md", "avatar.svg", "avatar.png")

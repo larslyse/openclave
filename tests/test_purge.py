@@ -1,4 +1,4 @@
-"""Purge (purge.py, 2026-11-05): preview, purge, undo. Temp vault; the model is faked."""
+"""Purge (purge.py): preview, purge, undo. Temp vault; the model is faked."""
 import tempfile
 import unittest
 from pathlib import Path

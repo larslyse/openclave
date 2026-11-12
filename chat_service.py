@@ -51,20 +51,19 @@ VOICE_MODEL_ID = "claude-sonnet-5"
 def reply_model_label(model_id: str | None, *, voice: bool = False) -> str | None:
     """The model shown under a reply. Voice always answers on VOICE_MODEL_ID,
     whatever the agent's text model is, so say so: an unlabelled "Claude
-    Sonnet 5" under a GPT agent's reply looked like a bug (2026-10)."""
+    Sonnet 5" under a GPT agent's reply looks like a bug."""
     name = llm_models.display_name(model_id)
     return f"Voice · {name}" if voice and name else name
 
-# No voice-specific max_tokens cap. There was one (300, 2026-09-21) as a
-# backstop for replies that ignored VOICE_DIRECTIVE, but a hard cap only has
-# bad outcomes: speech cut off mid-word, or — once Sonnet 5's default adaptive
-# thinking ate the whole budget — no text at all and a 502 to the phone
-# (2026-09-24, real Reba turn). Brevity comes from VOICE_DIRECTIVE plus low
+# No voice-specific max_tokens cap. A hard cap as a backstop for replies
+# that ignore VOICE_DIRECTIVE only has bad outcomes: speech cut off
+# mid-word, or, when adaptive thinking (Sonnet 5's default) eats the whole
+# budget, no text at all and a 502 to the phone. Brevity comes from VOICE_DIRECTIVE plus low
 # effort, which also keeps thinking short and replies terse.
 VOICE_EFFORT = "low"
 
-# The second voice language ([voice] second_language in the config,
-# 2026-11-05; Norwegian was built in before). Kokoro speaks English only, and
+# The second voice language ([voice] second_language in the config).
+# Kokoro speaks English only, and
 # English voices read another language with such an accent that whisper hears
 # it as English, so the second language gets its own native TTS voice
 # (second_voice_*). Give an agent its own voice for it by adding it here.
@@ -87,7 +86,7 @@ def _language_directive(language: str) -> str:
             "whatever language earlier turns were in.\n")
 
 # Stage directions an LLM naturally writes (*burp*, *sighs*) that TTS engines
-# read aloud literally instead of acting out — confirmed live 2026-09-21:
+# read aloud literally instead of acting out (confirmed live):
 # Fish Audio's documented non-verbal tags are (laugh)/(cough)/(sigh)/(breath)/
 # (lip-smacking)/(break), "burp" isn't one of them even rewritten as a
 # parenthetical tag (tested, it just spelled the word out). Stripped before
@@ -95,8 +94,8 @@ def _language_directive(language: str) -> str:
 _UNSPOKEN_CUE_RE = re.compile(r"\*burps?\*", re.IGNORECASE)
 
 
-# Markdown read aloud (2026-10-12 and 2026-10-13: "reading out loud
-# asterisks"): the reply stays markdown on screen, the speech gets plain text.
+# Markdown would be read aloud, asterisks and all: the reply stays markdown
+# on screen, the speech gets plain text.
 _SPEECH_SUBS = [
     (re.compile(r"<!--.*?-->", re.S), ""),
     (re.compile(r"^\s*```[^\n]*$", re.M), ""),                     # code fences (content kept)
@@ -153,10 +152,9 @@ VOICE_DIRECTIVE = (
 )
 
 
-# A reply that says it did something no tool did (Rick's backlog, 2026-10-13):
-# in a long chat full of "Added: ..." replies, voice-mode Rick kept writing
-# "Added" without calling update_backlog (replayed: 3 of 3, and a prompt rule
-# alone didn't stop it). The history keeps reply text, not the tool calls
+# A reply that says it did something no tool did: in a long chat full of
+# "Added: ..." replies, a model writes "Added" without calling update_backlog
+# (replayed: 3 of 3, and a prompt rule alone doesn't stop it). The history keeps reply text, not the tool calls
 # behind it, so the model learns the words. On the API routes, where tool
 # calls are visible, such a reply gets one more round telling it so.
 _CLAIM_RE = re.compile(
@@ -208,7 +206,7 @@ _EXHAUSTED_MARKERS = (
 )
 
 
-# Codex: "ERROR: Selected model ..." (R2, 2026-10-02); APIs: model not found.
+# Codex: "ERROR: Selected model ..."; APIs: model not found.
 _MODEL_UNAVAILABLE = re.compile(r"(?i)selected model|model\b[^.|]{0,60}\b(not (available|supported|found)|does not exist|unknown)")
 
 
@@ -545,8 +543,8 @@ def transcribe_voice_audio(agent_id: str, audio_path: str, language: str = "en")
     """Standalone STT step — no agent_execution lock needed (stateless,
     doesn't touch conversation history or call an LLM), split out from the
     reply generation so the mobile UI can show the transcript immediately
-    instead of waiting for the full reply+speech round trip (The user,
-    2026-09-21: wants to see what he said before waiting on the reply).
+    instead of waiting for the full reply+speech round trip: the owner sees
+    what they said before waiting on the reply.
     request_phase is still set/cleared here since it's a real wait the UI
     should reflect."""
     request_phase.set_phase(agent_id, "transcribing")

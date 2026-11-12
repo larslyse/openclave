@@ -15,7 +15,7 @@ week this looks at every agent's conversations and suggests:
 and flags agents nobody has talked to for DORMANT_DAYS. The rules are plain
 file checks; only the suggested names use a model. The maintainer only suggests:
 nothing is archived, deleted or renamed until the user applies a suggestion on
-the maintainer's phone page (moved there from the Control Panel, 2026-10-14). "Keep" (dismiss) is remembered, so the same suggestion
+the maintainer's phone page. "Keep" (dismiss) is remembered, so the same suggestion
 doesn't come back. The summary arrives in the maintainer's Cleanup
 conversation, with a push.
 """

@@ -11,9 +11,8 @@ from vault_paths import _write_text_unlocked, file_lock, render_frontmatter, spl
 
 
 # ── Generic notes (scoped, freeform, outside the structured files below) ──
-# Backlog gap: agents previously had no way to create their own files (Reba
-# wanted programs.md, Rocky/Stash need per-project/inventory files) without a
-# bespoke tool per use case. Reserved names/dirs stay carved out because they
+# Lets agents create their own files (e.g. a programs.md, per-project or
+# inventory files) without a bespoke tool per use case. Reserved names/dirs stay carved out because they
 # already have dedicated tools with their own parsing/format guarantees —
 # this must not become a second way to write dashboard.html or backlog.md.
 class NoteConflictError(RuntimeError):
@@ -103,20 +102,18 @@ def list_notes(agent_id: str) -> list[dict]:
 
 # ── Memory (freeform, low-priority, not auto-loaded into the system prompt)
 #
-# Renamed from `notes` 2026-09-14/15 to match the folder the owner actually
-# renamed it to on disk (both agents already had `memory/`, not `notes/` —
-# this was previously a live path bug: write_note would have silently
-# recreated an orphaned `notes/` folder on its next call). This is
+# Named `memory` to match the agents' folder on disk: a name that differs
+# from the folder makes write_note silently create an orphaned folder
+# beside it. This is
 # deliberately the LOWEST-priority bucket: genuinely one-off, "might matter
 # later" content that doesn't need to be in every context window. Durable
 # protocol/equipment facts belong in mission.md; a dated qualitative
 # check-in belongs in tracking.md's 'Check-ins' section — see openclave.md's
 # "What goes where" for the full classification. Misusing this bucket for
 # something that should always inform recommendations is exactly the bug
-# that motivated writing that rule down (2026-09-15: a slant-block rehab
-# protocol note landed here instead of mission.md, and a check-in's
-# qualitative narrative had nowhere to go because tracking.md had no
-# free-text section yet).
+# that rule prevents: a rehab protocol note filed here instead of
+# mission.md drops out of what the agent always sees, and a check-in's
+# qualitative narrative belongs in tracking.md's free-text section.
 
 def memory_dir(agent_id: str) -> Path:
     return vault.agent_root(agent_id) / "memory"

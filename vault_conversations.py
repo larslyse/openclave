@@ -174,7 +174,7 @@ def _raw_turns(body: str, agent_name: str, prior_agents: list[str] | None = None
                     if type(value) is int and value >= 0:
                         elapsed_ms = value
                         content = content[timing.end():].strip()
-                    # Which model answered (recorded since 2026-09-27).
+                    # Which model answered (older turns don't record it).
                     if isinstance(meta.get("model_id"), str) and len(meta["model_id"]) <= 80:
                         model_id = meta["model_id"]
                     # Voice turns answer on the fixed voice model, not the agent's.
@@ -394,7 +394,7 @@ def move_conversation(source_agent: str, target_agent: str, conversation_id: str
     return True
 
 
-# Archived conversations (weekly cleanup, 2026-10-13): moved aside, not
+# Archived conversations (weekly cleanup): moved aside, not
 # deleted. Lists, search and the Files tab only read conversations/*.md, so
 # they disappear from view; attachments stay where they are, so a restored
 # conversation is whole again.

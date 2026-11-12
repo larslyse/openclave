@@ -1,4 +1,4 @@
-"""Claude CLI sign-in (Rick's backlog, 2026-10-14): a signed-out CLI gives a
+"""Claude CLI sign-in: a signed-out CLI gives a
 clear reply and the amber dot, and the Control Panel can sign in again."""
 import json
 import os
@@ -14,7 +14,7 @@ import claude_auth
 import llm_client
 from providers import claude_cli
 
-# What Claude CLI 2.1 really prints when it has no login (2026-10-14).
+# What Claude CLI 2.1 really prints when it has no login.
 SIGNED_OUT = "\n".join(json.dumps(e) for e in [
     {"type": "system", "subtype": "init"},
     {"type": "assistant", "error": "authentication_failed", "message": {"model": "<synthetic>", "content": [{"type": "text", "text": "Not logged in · Please run /login"}]}},

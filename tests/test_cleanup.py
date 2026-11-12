@@ -1,4 +1,4 @@
-"""Rick's weekly cleanup (Rick's backlog, 2026-10-13): suggestions only, and
+"""The maintainer's weekly cleanup: suggestions only, and
 nothing changes until the owner applies one."""
 import os
 import tempfile

@@ -1,4 +1,4 @@
-"""An agent's own mobile page (The user, 2026-10-05): the button left of the
+"""An agent's own mobile page: the button left of the
 agent's name opens it.
 
 The agent writes `page.json` in its own folder: a title plus a list of
@@ -6,7 +6,7 @@ ready-made blocks that read the agent's own files (Stash's inventory is a
 searchable table over catalog.md). Nothing the agent writes runs as code in
 the app; the one free-form escape hatch is an `html` block, shown in a
 sandboxed frame with no network access. The one block that writes is
-`form` (The user, 2026-10-12): a text box that appends `- [ ] <text>` to one
+`form`: a text box that appends `- [ ] <text>` to one
 note the page names; see add_item. Codex agents write page.json with
 their own file tools (Codex blocks MCP writes), other routes use the
 `write_page` tool; every route can call `check_page` for the format and to

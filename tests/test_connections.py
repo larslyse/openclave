@@ -1,5 +1,5 @@
 """connections.py: what an agent loses on a model, and every place that must
-say so (2026-09-28: "this is stuff that I can't go around and remember")."""
+say so, so nobody has to remember it."""
 import json
 import tempfile
 import unittest

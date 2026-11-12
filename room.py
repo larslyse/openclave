@@ -1,4 +1,4 @@
-"""The group chat: the owner and every agent in one room (2026-10-31).
+"""The group chat: the owner and every agent in one room.
 
 The desktop's chat view shows it to the right of the agent list. Who answers
 a message:
@@ -15,10 +15,10 @@ each other without running away.
 The room is a JSON-lines file in OpenClave's state. Everything here runs in
 the service process (chat_jobs calls on_done from its worker).
 
-Channels (channels.py, 2026-11-05): rooms the owner makes, with chosen members.
+Channels (channels.py): rooms the owner makes, with chosen members.
 
-Claves (claves.py, 2026-11-04): each clave has its own room with only its
-members; "everyone" is the original room with every agent. An agent answers
+Claves (claves.py): each clave has its own room with only its
+members; "everyone" is the room with every agent. An agent answers
 a clave's room in its own "Group chat · <clave>" conversation, filed in a chat
 folder named after the clave.
 """

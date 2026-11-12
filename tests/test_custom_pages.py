@@ -138,7 +138,7 @@ BUYING = """# AliExpress List
 
 
 class PageFormTests(unittest.TestCase):
-    """The form block (2026-10-12): one text box + Add appends
+    """The form block: one text box + Add appends
     `- [ ] <text>` to the note the page names, and nothing else."""
 
     write = CustomPageTests.write
@@ -219,7 +219,7 @@ if __name__ == "__main__":
 
 
 class PageHistoryTests(unittest.TestCase):
-    """Page versions (2026-10-12): no agent silently replaces a page
+    """Page versions: no agent silently replaces a page
     the owner uses; they get Keep / Revert, and "revert your page" works."""
     write = CustomPageTests.write
 

@@ -1,4 +1,4 @@
-"""Optional token login (access.py, 2026-11-05)."""
+"""Optional token login (access.py)."""
 import dataclasses
 import unittest
 from unittest.mock import patch

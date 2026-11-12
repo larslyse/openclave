@@ -1,4 +1,4 @@
-"""Each agent's own Fish Audio voice (2026-10-12): found with
+"""Each agent's own Fish Audio voice: found with
 find_voice, chosen by the owner, saved with set_voice, used by voice mode."""
 import json
 import tempfile

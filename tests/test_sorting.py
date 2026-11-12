@@ -1,4 +1,4 @@
-"""Control Panel → Sorting (2026-11-05): conversation and agent-tab order."""
+"""Control Panel → Sorting: conversation and agent-tab order."""
 import os
 import tempfile
 import time

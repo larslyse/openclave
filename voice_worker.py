@@ -36,10 +36,10 @@ def main(models_dir: str | None = None):
         try:
             if req["op"] == "transcribe":
                 # Always a fixed language: whisper-small's auto-detect heard
-                # native Norwegian as English and translated it (2026-09-27).
+                # native Norwegian as English and translated it.
                 # vad_filter drops non-speech first: on room noise or a click,
-                # whisper otherwise invents "You"/"Thank you" (reproduced
-                # 2026-09-29; Auto sent those as messages). Segments whisper
+                # whisper otherwise invents "You"/"Thank you" (reproduced;
+                # Auto would send those as messages). Segments whisper
                 # itself thinks are probably not speech are dropped too.
                 segments, _info = whisper.transcribe(req["path"], language=req.get("language", "en"), vad_filter=True)
                 text = " ".join(seg.text.strip() for seg in segments

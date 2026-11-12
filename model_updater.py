@@ -1,7 +1,7 @@
-"""Keeps the model pickers current without the user having to (Rick's backlog,
-2026-10-04). Once a day, in the background:
+"""Keeps the model pickers current without the user having to. Once a day,
+in the background:
 
-Since 2026-11-04 it no longer adds or hides anything by itself: what it
+It never adds or hides anything by itself: what it
 finds is saved as suggestions (state "available" and "gone"), and the
 manager's weekly audit proposes them (audit.model_proposals) when the
 Weekly review checklist says so. A Yes on the proposal calls add_available

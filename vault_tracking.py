@@ -90,8 +90,7 @@ def _format_cell(value: str | None, unit: str | None, note: str | None) -> str:
     # than stripping it away, so _parse_cell can tell "no value, this is all
     # free text" apart from "a value happens to be a multi-word phrase" on
     # read. Without this, a pure-text note like "Sand dunes, 15kg backpack..."
-    # silently mis-parsed as value="Sand", unit="dunes, 15kg backpack..." —
-    # found 2026-09-15 checking the existing 'hike' entry, not new here.
+    # silently mis-parses as value="Sand", unit="dunes, 15kg backpack...".
     if not value:
         return f"— {note}" if note else ""
     s = value

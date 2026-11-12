@@ -1,4 +1,4 @@
-"""Version history for an agent's pages (The user, 2026-10-12).
+"""Version history for an agent's pages.
 
 Two kinds of page:
 - "phone": page.json plus the html files its html blocks use (custom_pages.py).

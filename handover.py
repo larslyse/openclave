@@ -1,6 +1,6 @@
 """Hand a conversation over to another agent, with its related files.
 
-The owner (2026-09-29): a handover is the conversation itself plus any files that
+A handover is the conversation itself plus any files that
 belong to it, e.g. Rick's purchase log going to Stash. The conversation moves
 as it is (vault.move_conversation keeps its history, photos and archives and
 records where it came from in Prior-agents); the ticked files move to the same

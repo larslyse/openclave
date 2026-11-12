@@ -2,9 +2,9 @@
 never restarted, so the running process still serves the old code while
 static files (read fresh from disk) are already new.
 
-Happened 2026-09-23: Codex sessions changed main.py and friends until 19:34,
-but openclave.service had been up since 06:31 — the dashboard showed new
-buttons whose backend routes 404'd, and nobody noticed for a day.
+Without it this goes unnoticed: after a coding session changes main.py and
+friends without a restart, the dashboard shows new buttons whose backend
+routes 404.
 
 Fingerprints the top-level, routes/ and providers/ *.py files at import (== process start) and
 compares against a fresh fingerprint on demand. Static files are excluded on

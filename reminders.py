@@ -1,11 +1,11 @@
-"""Scheduled reminders: the first agent "action" (Rick's backlog, 2026-09-25).
+"""Scheduled reminders: an agent "action".
 
 An agent schedules a message for the user (schedule_reminder tool). When it's due,
 the service posts it into that agent's "Reminders" conversation and pushes it
 to the user's devices (web_push.py). Two kinds:
   - fixed (default): the text written when it was scheduled. Nothing runs at
     send time.
-  - compose (added 2026-10-04): the stored text is an instruction ("check
+  - compose: the stored text is an instruction ("check
     tomorrow's rain forecast; tell the user whether to water the tomatoes"). When
     it's due, the agent runs once in its Reminders conversation, looking
     things up only, and its reply is what the user gets. Look-up only is enforced

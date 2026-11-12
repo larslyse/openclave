@@ -53,7 +53,7 @@ class WorkspaceFilesTests(unittest.TestCase):
                 vault.workspace_file("spice", bad)
 
     def test_symlink_cannot_escape_the_folder(self):
-        """Phone Files button (2026-10-12): no reads or writes outside
+        """Phone Files button: no reads or writes outside
         the agent's folder, also through a symlink inside it."""
         outside = self.dir.parent / "Rocky" / "mission.md"
         before = outside.read_text()

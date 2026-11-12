@@ -101,8 +101,8 @@ def agent_domains(agent_id: str) -> list[str]:
 def concept_file() -> Path:
     """Shared, non-agent-specific: what OpenClave is and why. Lives one level
     above Agents/ since it describes the whole project, not one agent.
-    Renamed from concept.md -> openclave.md 2026-09-14; this must track that
-    filename or every agent silently loses its shared context."""
+    This must track the file's real name (openclave.md) or every agent
+    silently loses its shared context."""
     return vault.CONFIG.shared_concept_file
 
 

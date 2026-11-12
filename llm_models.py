@@ -81,7 +81,7 @@ CATALOG: list[ModelOption] = [
         id="claude-opus-5", released="2026-07", speed="slow", provider="anthropic", display_name="Claude Opus 5", tier="heavy coding",
         supports_vision=True, api_input_usd=5, api_output_usd=25,
     ),
-    # Verified 2026-10-02 (Rick's backlog): id, $4/$20, 1M context and vision
+    # Verified 2026-10-02: id, $4/$20, 1M context and vision
     # from Anthropic's model reference; live "reply OK" 2.2s over the API.
     # Thinking can't be disabled and forced tool_choice is rejected; this
     # client sends neither. Successor to Opus 5 at a lower price.
@@ -121,7 +121,7 @@ CATALOG: list[ModelOption] = [
         api_input_usd=.2, api_output_usd=1.2,
     ),
     # Found by the Control Panel's new-model check (model_discovery.py) and added
-    # 2026-09-24 after a live test: both work over the Codex route at the same
+    # after a live test: both work over the Codex route at the same
     # speed as Terra (5.2-5.8s for a trivial reply). Descriptions and image
     # support from `codex debug models`; API prices not published there.
     ModelOption(
@@ -213,7 +213,7 @@ def api_prices(model: ModelOption) -> tuple[float | None, float | None]:
     return LIST_PRICES.get(model.api_model_id or model.id, (None, None))
 
 
-# Cost tiers for the model pickers (2026-10-12), by API output price
+# Cost tiers for the model pickers, by API output price
 # per 1M tokens: low <= $4, mid > $4 and <= $20, high > $20. Colours are
 # green/amber/violet, never red (red reads as danger); the $ label carries
 # the tier for colourblind viewers.
@@ -236,7 +236,7 @@ def group(model: ModelOption) -> str:
     return f"{model.route} · {model.speed}"
 
 
-# ── the model picker's columns (2026-11-04) ─────────────────────────────
+# ── the model picker's columns ──────────────────────────────────────────
 VENDORS = {"xai": "xAI", "anthropic": "Anthropic", "claude-cli": "Anthropic", "codex-cli": "OpenAI"}
 NAME_MAX = 16
 OLD_AFTER_MONTHS = 6

@@ -1,4 +1,4 @@
-"""Scoped write access to the main vault, per agent (2026-11-05).
+"""Scoped write access to the main vault, per agent.
 
 Agents write only in their own folder. The owner can give one agent a few
 vault folders beyond that (Control Panel → Edit → "Vault folders it may

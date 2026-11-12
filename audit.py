@@ -1,4 +1,4 @@
-"""The manager's weekly audit (2026-11-03).
+"""The manager's weekly audit.
 
 Runs right after the weekly cleanup (cleanup.run_weekly). The cleanup's
 rules are plain file checks; the audit is the manager itself, run once in its

@@ -20,9 +20,9 @@ from vault_conversations import _CONVERSATION_ID_RE, new_conversation_id
 # everything else.
 #
 # Structured as one JSON file per item (same shape as chat_jobs.py's request
-# records) rather than markdown checkbox lines, per Backlog.md item #5: a
-# checkbox has no durable id, no room for a result, and "resolve item X" had
-# to mean substring-matching checklist text. This gives every item an id,
+# records) rather than markdown checkbox lines: a checkbox has no durable
+# id, no room for a result, and "resolve item X" would mean
+# substring-matching checklist text. This gives every item an id,
 # status, and an optional result the flagging agent can retrieve —
 # update_maintainer_inbox_item is the maintainer's tool to acknowledge/resolve;
 # check_maintainer_request is any agent's tool to poll the status/result of

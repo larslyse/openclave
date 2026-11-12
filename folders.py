@@ -1,4 +1,4 @@
-"""Chat folders (2026-11-03): plain buckets for an agent's chats.
+"""Chat folders: plain buckets for an agent's chats.
 
 A chat is in a folder when its front matter says ``Folder: <name>``. The
 agent's ``folders.json`` keeps the folder names in order, so an empty folder

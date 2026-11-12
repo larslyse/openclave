@@ -1,4 +1,4 @@
-"""Optional token login for network access (2026-11-05).
+"""Optional token login for network access.
 
 Off unless [network] access_token (or OPENCLAVE_ACCESS_TOKEN) is set. Then
 every request needs the token once: /login asks for it and sets a long-lived

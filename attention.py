@@ -1,7 +1,7 @@
 """What needs the user's attention, per agent — deterministic, no LLM.
 
-From the 2026-09-27 evaluation: agents only act when asked, so plans went
-stale and nothing said what needed a look. This checks each agent's own files
+Agents only act when asked, so without this their plans go stale and
+nothing says what needs a look. This checks each agent's own files
 (cheap file reads, safe to run on every request) and returns at most a few
 short findings per agent:
 
@@ -15,7 +15,7 @@ short findings per agent:
   they are upkeep for the agent, not something the user must do: they show in the
   Control Panel and the agent's own prompt asks it to catch up (upkeep_line),
   but they don't set the amber "needs you" dot or the digest. With them in,
-  the dot was on 7 of 10 tiles (2026-10-04), which made it meaningless.
+  the dot ends up on most tiles (7 of 10 in practice) and means nothing.
 
 The digest (optional, Control Panel → Settings) pushes one line per agent
 that has something, weekly or daily, at a set time in the configured timezone. It only

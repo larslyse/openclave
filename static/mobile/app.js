@@ -1,7 +1,7 @@
 const app = document.querySelector('#app');
 const LAST_ROUTE = 'openclave.mobile.last-route';
-// Embedded in the desktop agent page's Dash/Tools tab (dashboard_shell.js,
-// 2026-10-14/16): only the agent's page or tools, no top bar or
+// Embedded in the desktop agent page's Dash/Tools tab (dashboard_shell.js):
+// only the agent's page or tools, no top bar or
 // chat/files buttons (desktop has its own), and it never stays on another screen.
 const EMBED = /[?&]embed=page(&|$)/.test(globalThis.location?.search || '');
 if (EMBED) document.documentElement.classList.add('embed');
@@ -48,7 +48,7 @@ const escapeHtml = value => {
 };
 const byId = id => agents.find(agent => agent.id === id);
 
-// Open instantly (Rick's backlog, 2026-10-05): the agent list and each
+// Open instantly: the agent list and each
 // agent's conversation list are kept on the phone and drawn straight away,
 // then replaced in place by the server's. "new" markers only show once the
 // server's copy is in (agentsFresh / fromCache), and queued requests always
@@ -104,9 +104,9 @@ function routeParts() { return location.hash.replace(/^#\/?/, '').split('/').fil
 
 // `agent` (an agent's own screens): its avatar before the name, and left of
 // it the button to the agent's feature page (Reba's sliders, ...); on that
-// page the button is lit and leads back to the chats (2026-10-05).
+// page the button is lit and leads back to the chats.
 // `subtitle` (chat screens): the conversation's name on a second line under
-// the agent's, so the owner sees which chat they're in (Rick's backlog, 2026-10-14).
+// the agent's, so the owner sees which chat they're in.
 function shell(title, backHash, body, right = '<span></span>', agent = null, subtitle = null) {
   const onFeature = Boolean(agent) && routeParts()[2] === 'console';
   const feature = agent ? `<button type="button" class="feature-btn${onFeature ? ' active' : ''}" id="feature-btn" aria-label="${onFeature ? 'Back to chats' : `${escapeHtml(agent.name)}'s page`}" aria-pressed="${onFeature}"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><rect x="3" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="3" width="7.5" height="7.5" rx="1.5"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.5"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.5"/></svg></button>` : '';
@@ -123,7 +123,7 @@ function shell(title, backHash, body, right = '<span></span>', agent = null, sub
 
 // Short badge for the topbar — current model, tap to change. Falls back to
 // an empty slot when the agent's model isn't known yet (still loading).
-// Compact model label (2026-10-12): "Opus 5.5 · 16s", not "Claude
+// Compact model label: "Opus 5.5 · 16s", not "Claude
 // Opus 5.5 (subscription)". The seconds are that model's measured average
 // reply time (/api/model-response-times), kept on the phone between visits.
 const TIMES_CACHE = 'openclave.mobile.cache.times';
@@ -156,8 +156,7 @@ function wireModelBadge(agent) {
 
 // Quick jump lands in the agent's latest chat with that agent's conversation
 // list right under it in history, so Back, our swipe and Safari's own edge
-// swipe all open that list instead of returning to the previous agent
-// (Rick's backlog, 2026-10-02).
+// swipe all open that list instead of returning to the previous agent.
 async function jumpToLatestConversation(agentId) {
   const listHash = `#/agents/${agentId}/conversations`;
   let target = listHash;
@@ -173,8 +172,8 @@ async function jumpToLatestConversation(agentId) {
 // Back and the swipe land on that list (Quick jump, a newly created agent,
 // Autojump). The list is drawn for a moment first: iOS's swipe-back shows a
 // screenshot of the entry below, taken when we leave it, and replaceState
-// alone kept the previous agent's picture there, so the swipe showed the old
-// agent before the list appeared (2026-10-04).
+// alone keeps the previous agent's picture there, so the swipe would show the
+// old agent before the list appears.
 async function openOverList(agentId, target) {
   const listHash = `#/agents/${agentId}/conversations`;
   history.replaceState(null, '', listHash);
@@ -185,11 +184,9 @@ async function openOverList(agentId, target) {
   render();
 }
 
-// "Quick jump" button, full width under the message box (see renderChat). It
-// used to float above Send and got hit by accident, so it was removed on
-// 2026-09-25; the owner asked for it back under the message box instead. Tap and
-// hold both open the quick-switch menu above the button (2026-09-28:
-// tap used to go to the overview). Hold: drag onto another agent and release
+// "Quick jump" button, full width under the message box (see renderChat), not
+// floating above Send, where it gets hit by accident. Tap and hold both open
+// the quick-switch menu above the button. Hold: drag onto another agent and release
 // to jump straight into their latest conversation. Tap, or a hold released
 // on no agent: the menu stays open; tap an agent to jump, tap elsewhere or
 // the button again to close. Pointer capture keeps drag tracking alive once
@@ -221,7 +218,7 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
     // Right side of the screen, but names left-aligned inside the menu.
     // Above the whole composer, so it never covers the text box or Send, and
     // it follows the composer while open (a status line or a growing text
-    // box pushes it up; the menu used to stay put and cover it).
+    // box pushes it up; a menu that stayed put would cover it).
     const anchor = btn.closest('.composer, .list-footer') || btn;
     const place = () => { if (menuEl) menuEl.style.bottom = `${window.innerHeight - anchor.getBoundingClientRect().top + 8}px`; };
     place();
@@ -252,7 +249,7 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
   function drawItems() {
     // Same priority as the overview (unread replies, then most recent), but
     // upside down: the menu opens above the button, so the most likely pick
-    // sits at the bottom, nearest the thumb (2026-10-04).
+    // sits at the bottom, nearest the thumb.
     const seen = loadSeen() || {};
     const others = agents.filter(a => a.id !== currentId).sort((a, b) =>
       (hasUnread(b, seen) - hasUnread(a, seen)) || ((b.last_activity_ms ?? -1) - (a.last_activity_ms ?? -1))).reverse();
@@ -327,8 +324,8 @@ function wireSwitchButton(currentId, pick = jumpToLatestConversation) {
 }
 
 // Swipe right across a chat -> this agent's conversation list, same as the
-// Back button (was: all agents; changed 2026-10-02 because after a Quick jump
-// The owner expects the jumped-to agent's list). Only on the message area, never
+// Back button (after a Quick jump the owner expects the jumped-to agent's
+// list, not all agents). Only on the message area, never
 // the composer, so dragging a text cursor can't trigger it. The chat follows
 // the finger for feedback and snaps back unless the swipe is long, fast and
 // mostly horizontal.
@@ -369,7 +366,7 @@ function wireSwipeBack(agentId) {
   area.addEventListener('touchcancel', () => { tracking = false; reset(); });
 }
 
-// Cost tier (llm_models.cost_tier, 2026-10-12): a dot in the tier's
+// Cost tier (llm_models.cost_tier): a dot in the tier's
 // colour plus $/$$/$$$, so it reads without colour too.
 const costDot = m => m?.cost_color
   ? `<span class="cost-dot" style="background:${escapeHtml(m.cost_color)}" aria-hidden="true"></span>`
@@ -403,8 +400,8 @@ async function renderModelPicker(agent, token) {
   }));
 }
 
-// New agent from the phone, same as Control Panel → New agent (Rick's
-// backlog, 2026-10-02): name, purpose, model. The agent then runs its setup
+// New agent from the phone, same as Control Panel → New agent:
+// name, purpose, model. The agent then runs its setup
 // interview (mission, persona, tools, avatar) in its Onboarding chat, driven
 // by its system prompt, so the phone gets every onboarding option desktop has.
 // The manager has no default personality or job: the user picks or describes
@@ -457,7 +454,7 @@ async function renderCreateAgent(token, focus = null) {
       : `<div class="template-add"><input value="${escapeHtml(t.name)}" maxlength="24" aria-label="Name"><button type="button">Add</button></div>`}
     <p class="form-error"></p></div>`;
   const categories = [...new Set(templates.map(t => t.category))];
-  // Past about ROSTER_WARN agents, lanes overlap and routing gets harder (Rick's backlog).
+  // Past about ROSTER_WARN agents, lanes overlap and routing gets harder.
   const ROSTER_WARN = 10;
   const rosterWarn = agents.length >= ROSTER_WARN
     ? `<p class="warn roster-warn">You already have ${agents.length} agents. Beyond about ${ROSTER_WARN}, their domains start to overlap and it gets harder to know who handles what. Consider extending or merging an existing agent instead.</p>` : '';
@@ -521,7 +518,7 @@ async function renderCreateAgent(token, focus = null) {
       const created = await api('/api/agents', {method: 'POST', body: JSON.stringify(body)});
       setAgents(await api('/api/agents'));
       // Open the onboarding chat the server already started with the agent's
-      // first question (opening /new made a second interview, Ray 2026-10-04).
+      // first question (opening /new would start a second interview).
       opened(created);
     } catch (e) {
       error.textContent = e.message;
@@ -574,7 +571,7 @@ function seedSeen() {
 
 // An agent is "new" when its latest conversation is: the same rule as the
 // conversation list, so the agent list, Quick jump and the chats agree, and
-// the light stays until that conversation is opened (2026-10-04).
+// the light stays until that conversation is opened.
 function hasUnread(agent, seen) {
   if (!agentsFresh) return false;  // drawn from the phone's copy: wait for the server
   if (agent.last_conversation_id) {
@@ -669,7 +666,7 @@ function renderAgents(token, fresh = false) {
     const box = token === renderToken && document.querySelector('#clave-rows');
     if (box) box.innerHTML = claveRows();
   }).catch(() => {});
-  // Control Panel button, top left of the overview (2026-10-04): the
+  // Control Panel button, top left of the overview: the
   // same /control/ page as desktop, which has a phone layout.
   document.querySelector('.topbar-left').insertAdjacentHTML('beforeend',
     '<a class="icon-btn control-btn" href="/control/?from=mobile" aria-label="Control Panel" title="Control Panel"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/></svg></a>');
@@ -754,8 +751,7 @@ function drawPageChanged(agent, changed, body, token) {
   };
 }
 
-// The maintainer's weekly cleanup (cleanup.py) lives on their page (2026-10-14;
-// it started in the Control Panel): the same Archive / Delete / Rename / Keep
+// The maintainer's weekly cleanup (cleanup.py) lives on their page: the same Archive / Delete / Rename / Keep
 // buttons, editable names and restore. Nothing changes until a button here.
 const CLEANUP_AGENT = 'maintainer';
 const CLEANUP_KIND = {archive: 'Archive', delete: 'Delete', rename: 'Rename'};
@@ -789,7 +785,7 @@ async function drawCleanup(body, token) {
         <p class="cleanup-error" role="status"></p></div>`).join('') || nothingYet(data.rules)}</div>
       <details class="cleanup-archived"><summary>Archived conversations (${data.archived.length})</summary>${data.archived.map(c => `<div class="cleanup-archived-row"><span><b>${escapeHtml(c.agent_name)}</b> ${escapeHtml(c.title)} <span class="muted">${escapeHtml(c.date)}</span></span><button type="button" class="link-btn" data-restore="${escapeHtml(c.agent_id)}/${escapeHtml(c.id)}">Restore</button></div>`).join('') || '<p class="muted">None.</p>'}</details>`;
     // Read a suggested chat in place before Archive/Delete/Rename: the
-    // report and any half-typed name stay as they are (backlog 2026-10-20).
+    // report and any half-typed name stay as they are.
     box.querySelectorAll('[data-peek]').forEach(btn => btn.onclick = async () => {
       const panel = btn.nextElementSibling, open = btn.getAttribute('aria-expanded') === 'true';
       btn.setAttribute('aria-expanded', String(!open));
@@ -944,7 +940,7 @@ async function drawConsoleBody(agent, token) {
   drawPageChanged(agent, changed, body, token);
 }
 
-// Tools (2026-10-16): tick this agent's optional tools on/off, the same
+// Tools: tick this agent's optional tools on/off, the same
 // list and API as the Control Panel. Every tick saves at once and applies to
 // the agent's next message. Desktop shows this screen in its Tools panel.
 let toolCatalog = null;
@@ -1139,7 +1135,7 @@ async function renderRecaps(agent, token) {
   if (data.recaps.some(r => r.pending)) setTimeout(() => { if (token === renderToken) renderRecaps(agent, ++renderToken); }, 5000);
 }
 
-// Files (2026-10-12): this agent's own folder only, like the desktop
+// Files: this agent's own folder only, like the desktop
 // Files tab and through the same /<agent>/files API, which checks every path
 // against the folder and refuses a save if the file changed meanwhile.
 const CONFIRM_SAVE = new Set(['mission.md', 'persona.md']);
@@ -1163,7 +1159,7 @@ async function renderFileEditor(agent, path, token) {
   try { file = await api(`/${agent.id}/files/content?path=${encodeURIComponent(path)}`); }
   catch (error) { if (token === renderToken) state(path, error.message, false); return; }
   if (token !== renderToken) return;
-  // Markdown files open formatted (Rick's backlog); Edit shows the text.
+  // Markdown files open formatted; Edit shows the text.
   const isMarkdown = /\.md$/i.test(path);
   shell(path.split('/').pop(), back, `<section class="content file-editor"><p class="intro">${escapeHtml(path)}</p>
     <div class="md-view file-view" hidden></div>
@@ -1474,7 +1470,7 @@ function drawConversations(agent, token, conversations, fromCache) {
     shell(agent.name, '#/agents', `<section class="content"><div class="new-row"><button class="primary" id="new-chat">New chat</button><button type="button" class="primary" id="new-folder">New topic</button></div>${conversations.length ? '<input type="search" class="search-input" id="convo-search" placeholder="Search conversations" aria-label="Search conversations" autocomplete="off">' : ''}<div class="list" id="search-results" hidden></div><div class="list" id="convo-list">${rows || '<div class="center-state">No conversations yet.</div>'}</div></section>
       <div class="list-footer"><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button><button type="button" class="switch-btn home-btn" data-home aria-label="All agents">All agents</button></div>`, modelBadge(agent), agent);
     wireModelBadge(agent);
-    // Quick jump here too (Rick's backlog, 2026-10-04): same menu, unread
+    // Quick jump here too: same menu, unread
     // markers and order as in chat, but an agent opens its conversation list.
     // Replacing this list keeps Back and the edge swipe going where ‹ goes.
     wireSwitchButton(agent.id, id => location.replace(`#/agents/${id}/conversations`));
@@ -1543,8 +1539,8 @@ function markdown(text) {
 }
 
 // The chat itself is the shared implementation in /static/chat_core.js, the
-// same code the desktop agent pages run (2026-09-27: desktop and
-// mobile chat must stay in sync). This only adds the mobile frame around it:
+// same code the desktop agent pages run (desktop and mobile chat must stay
+// in sync). This only adds the mobile frame around it:
 // top bar with model badge, swipe right for the conversation list, Quick jump.
 const CONCLAVE_ICON = '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3 19c0-3 2.7-5 6-5s6 2 6 5"/><path d="M15 14.5c2.8-.4 5.5 1.2 6 4"/></svg>';
 let currentChat = null;
@@ -1572,8 +1568,8 @@ async function renderChat(agent, conversationId, token) {
     store: chatStore,
     pendingKey: PENDING_KEY,
     // "All agents" (back to the agent list) just left of Quick jump on the same
-    // row; compact, so Quick jump stays a long bar (2026-10-04).
-    // Quick jump is the core way to multitask (2026-10-12): a big
+    // row; compact, so Quick jump stays a long bar.
+    // Quick jump is the core way to multitask: a big
     // orange bar taking the rest of the row; All agents shrinks to an icon.
     subHtml: `<button type="button" class="switch-btn home-btn" data-home aria-label="All agents" title="All agents">${CONCLAVE_ICON}</button><button type="button" class="switch-btn quick-jump" id="switch-btn" aria-label="Quick jump: tap or hold to switch agent">Quick jump</button>`,
     isCurrent: () => token === renderToken,
@@ -1600,7 +1596,7 @@ async function renderChat(agent, conversationId, token) {
 // One row per clave's group chat, under "everyone" (claves.py). Clicks are
 // handled on the list (data-clave-room), so redrawing the rows needs no rebinding.
 // Then the owner's own channels (channels.py) and a row to add one.
-// Clave switcher on the home list (2026-11-05), the phone twin of the
+// Clave switcher on the home list, the phone twin of the
 // desktop chips next to the Claves button: picks the active clave
 // (service_settings.active_clave) and shows only its agents. With claves
 // off or none set up it is a single "Claves" button that says where to set

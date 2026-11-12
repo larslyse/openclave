@@ -1,9 +1,9 @@
 """OpenClave — single FastAPI app serving every agent.
 
 One agent = one entry in agents.AGENTS, not one service. Routes for each agent
-are generated from the same router factory (build_agent_router) rather than
-hand-written per agent — this is what replaced the reba-service/fresh-service
-copy-paste split from 2026-09-04.
+are generated from the same router factory (routes/agent_api.py's
+build_agent_router) rather than hand-written per agent. Shared routes live in
+the routes/ package; this module wires them together.
 """
 import os
 
@@ -145,9 +145,9 @@ def stop_scheduler():
     scheduler.stop()
 
 
-# Backlog.md item #3: agent-editable dashboard.html used to be served directly
-# on this app's own origin, so any agent's dashboard JS could call any other
-# agent's API (including R2's Home-Assistant action tools) as if it were the owner.
+# Agent-editable dashboard.html served directly on this app's own origin
+# would let any agent's dashboard JS call any other agent's API (including
+# R2's Home-Assistant action tools) as if it were the owner.
 # The real containment is the sandboxed iframe in static/dashboard_shell.js —
 # an opaque-origin iframe with no allow-same-origin cannot make the browser
 # send/read a same-origin request at all, so it has no path to the network

@@ -150,7 +150,7 @@ class WebSearchSwitchTests(unittest.TestCase):
 
 
 class CodexLogTests(unittest.TestCase):
-    """Lines shaped like a real Codex 0.156 session log (2026-09-25)."""
+    """Lines shaped like a real Codex 0.156 session log."""
     TOKEN = json.dumps({"type": "event_msg", "payload": {"type": "token_count", "info": {"total_token_usage": {
         "input_tokens": 13489, "cached_input_tokens": 11008, "output_tokens": 78, "reasoning_output_tokens": 0, "total_tokens": 13567}}}})
     WEB = json.dumps({"type": "response_item", "payload": {"type": "custom_tool_call", "name": "exec", "input": "const r = await tools.web__run({op: 'search'})"}})

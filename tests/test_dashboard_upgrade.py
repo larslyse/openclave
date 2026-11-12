@@ -1,4 +1,4 @@
-"""Upgrading stock agent page copies (agent_factory.upgrade_stock_dashboards, 2026-11-05)."""
+"""Upgrading stock agent page copies (agent_factory.upgrade_stock_dashboards)."""
 import tempfile
 import unittest
 from pathlib import Path

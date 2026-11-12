@@ -1,4 +1,4 @@
-"""Model picker cost tiers (2026-10-12): by API output price per 1M
+"""Model picker cost tiers: by API output price per 1M
 tokens, low <= $4, mid > $4 and <= $20, high > $20; CLI models use the same
 model's API list price."""
 import unittest

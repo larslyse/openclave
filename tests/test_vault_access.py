@@ -1,4 +1,4 @@
-"""Scoped vault write access (vault_access.py, 2026-11-05). Temp vault only."""
+"""Scoped vault write access (vault_access.py). Temp vault only."""
 import json
 import tempfile
 import unittest

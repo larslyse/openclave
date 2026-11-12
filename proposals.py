@@ -1,4 +1,4 @@
-"""The manager's proposals: what it wants to do, for the owner to approve (2026-11-03).
+"""The manager's proposals: what it wants to do, for the owner to approve.
 
 The manager (agents.manager_id) may suggest anything that would help. It
 never acts on its own judgment outside its own folder: it files a proposal
@@ -13,7 +13,7 @@ manager's page. Three kinds:
     stale"), delivered like message_agent from the manager.
   - task: anything else the manager wants to do itself; on Yes it gets a
     message in its Audit conversation to go ahead.
-  - model (2026-11-04): add a new model to the pickers, or remove an old one.
+  - model: add a new model to the pickers, or remove an old one.
     Filed by the audit itself (audit.model_proposals), not by the manager's
     tool; Yes calls model_updater.add_available / hide.
 

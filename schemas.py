@@ -251,7 +251,7 @@ class ModelOption(BaseModel):
     cost_tier: str | None = None  # "low" | "mid" | "high" (llm_models.cost_tier); None = price unknown
     cost_label: str = ""  # "$" / "$$" / "$$$"
     cost_color: str = ""
-    # The model picker's columns (2026-11-04, static/model_picker.js).
+    # The model picker's columns (static/model_picker.js).
     vendor: str = ""          # Anthropic / OpenAI / xAI
     short_name: str = ""      # at most llm_models.NAME_MAX characters, no vendor word
     released: str | None = None   # "YYYY-MM"

@@ -1,4 +1,4 @@
-"""Ready-made agents (BACKLOG T3): templates a user installs instead of
+"""Ready-made agents: templates a user installs instead of
 starting from a blank agent.
 
 A template is a folder with ``agent.json`` (name, colour, tagline, any

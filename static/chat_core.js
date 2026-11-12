@@ -1,6 +1,6 @@
 // OpenClave — the one chat implementation, shared by mobile (/mobile/) and the
-// desktop agent pages (dashboard_common.js). 2026-09-27: "desktop and
-// mobile chat must be in sync! very important". Each UI keeps its own layout
+// desktop agent pages (dashboard_common.js): desktop and mobile chat must
+// behave the same. Each UI keeps its own layout
 // and CSS; everything a chat *does* lives here, so a feature can't land in one
 // UI and not the other:
 //   - conversation display (summary, bubbles, attachments, reply time)
@@ -62,7 +62,7 @@
     };
   }
 
-  // Cache-first open (Rick's backlog, 2026-10-05): the last few
+  // Cache-first open: the last few
   // conversations' saved turns are kept on the device and drawn at once,
   // then replaced by the server's copy. Only turns the server returned are
   // stored, never queued or pending messages, and the copy stays small.
@@ -91,7 +91,7 @@
 
   // Attachments: photos go to the model as images; PDFs and text files are
   // read by the server and added as text (vault.attachment_text), so every
-  // agent takes them whatever its model (2026-10-04).
+  // agent takes them whatever its model.
   const DOC_TYPES = {pdf: 'application/pdf', txt: 'text/plain', md: 'text/markdown', markdown: 'text/markdown', csv: 'text/csv', json: 'application/json'};
   const ATTACH_ACCEPT = 'image/*,' + Object.keys(DOC_TYPES).map(e => '.' + e).join(',') + ',' + [...new Set(Object.values(DOC_TYPES))].join(',');
   function attachmentType(file) {
@@ -163,9 +163,9 @@
   }
 
   // Small grey line under each reply: which model answered and how long it
-  // took, e.g. "GPT-6 Sol · 18s" (evaluation 2026-09-27: makes slow models
+  // took, e.g. "GPT-6 Sol · 18s" (makes slow models
   // visible when choosing). Older replies have no model recorded.
-  // Quick replies (backlog 2026-10-19): when a reply ends its question with
+  // Quick replies: when a reply ends its question with
   // lettered options, one per line ("A) text", "**B.** text", "- C: text"),
   // they become buttons under the last reply. Only explicit A, B, C... lists
   // starting at A count, so open questions never get invented choices; the
@@ -224,14 +224,13 @@
   // One interface, two implementations: createLocalAudio uses this page's own
   // mic and speaker; createBridgeAudio (desktop iframe) asks the trusted shell
   // to do it, because a sandboxed iframe can't open the mic ("SecurityError:
-  // Invalid security origin", tested 2026-09-27).
+  // Invalid security origin", tested).
   //   unlock(), startRecording(), stopRecording() -> Blob, cancelRecording(),
   //   startAuto({onUtterance(blob) -> Promise, onStatus(text)}), stopAuto(),
   //   play(base64, mime) -> Promise (resolves when playback ends or fails)
 
-  // Levels follow the room: fixed START 8 / SILENCE 5 never saw "silence"
-  // over a fan or a TV, so Auto only sent at the 45 s cap and felt broken
-  // (backlog 2026-10). The floor is the quiet level measured while idle.
+  // Levels follow the room: fixed START 8 / SILENCE 5 never see "silence"
+  // over a fan or a TV, so Auto would only send at the 45 s cap. The floor is the quiet level measured while idle.
   const VAD = {
     START: 8, SILENCE: 5,       // minimum RMS of time-domain samples, 0-128 scale
     START_X: 2.5, SILENCE_X: 1.6, // ... or this many times the room's floor
@@ -305,7 +304,7 @@
         recorder = null; recordStream = null;
       },
       // Hands-free: volume-based voice activity detection. Thresholds are a
-      // first pass (2026-09-21), not tuned on a real phone/room.
+      // first pass, not tuned on a real phone/room.
       async startAuto({onUtterance, onStatus = () => {}}) {
         const stream = await getMicStream();
         const ctx = new (window.AudioContext || window.webkitAudioContext)();
@@ -522,8 +521,8 @@
     const review = o.canTalk ? `<button type="button" class="lang-btn review-btn${reviewOn ? ' on' : ''}" aria-pressed="${reviewOn}" title="Check: put what you said in the text box to fix before sending (not in Auto)">✎</button>` : '';
     const sub = lang + review + (o.subHtml || '');
     // The sub row (EN/NO, and on mobile Quick jump) runs the full width under
-    // the text box and buttons, so Quick jump can be a long bar (the owner asked
-    // for it longer; squeezed under the text box it was ~100px on a phone).
+    // the text box and buttons, so Quick jump can be a long bar (squeezed
+    // under the text box it would be ~100px on a phone).
     return `<div class="attach-preview"></div>${o.canTalk ? '<div class="auto-status"></div>' : ''}<div class="composer-row">${attach}${mic}<div class="input-col"><textarea aria-label="Message" rows="1" placeholder="Message ${escapeHtml(o.agent.name)}…"></textarea></div><button type="submit" class="send">Send</button></div>${sub ? `<div class="input-sub">${sub}</div>` : ''}`;
   }
 
@@ -544,6 +543,7 @@
     let conversationId = o.conversationId || null;
     let destroyed = false;
     let workTimer = null, phaseTimer = null, pollTimer = null;
+    let streamed = {id: null, text: ''};  // the running request's text so far (startWorkTimer)
     const alive = () => !destroyed && (!o.isCurrent || o.isCurrent());
 
     form.innerHTML = composerHtml({...o, canTalk, store});
@@ -727,11 +727,15 @@
         if (!text || text === shown || !bubble.isConnected) return;
         const atBottom = nearBottom(scroller);
         shown = text;
+        if (request.requestId) streamed = {id: request.requestId, text};
         streamEl.innerHTML = md(text);
         streamEl.hidden = false;
         bubble.classList.add('streaming');
         if (atBottom) scrollToBottom(scroller);
       };
+      // monitor() rebuilds this bubble every poll: put back what was already
+      // streamed at once, or the text blanks until the next phase reply.
+      if (request.requestId && streamed.id === request.requestId) showText(streamed.text);
       const stopBtn = bubble.querySelector('.stop-btn');
       if (stopBtn) stopBtn.onclick = () => { stopBtn.disabled = true; cancelRequest(request); };
       const label = bubble.querySelector('.pending-label') || bubble;
@@ -1067,7 +1071,7 @@
       // was switched off before the transcript came back.
       async function sendVoiceTurn(blob, {given = null, review = false, auto = false} = {}) {
         if ((!blob && !given) || !alive()) return;
-        // The text box stays usable during a voice turn (2026-09-27): typed
+        // The text box stays usable during a voice turn: typed
         // messages are held until the reply text is back (see flushHeld);
         // sending them straight away could take the agent's lock first (the
         // voice reply then fails as busy) or start a second conversation.
@@ -1216,7 +1220,7 @@
     // Message actions: right-click (mouse) or long-press (touch) on a bubble
     // opens Copy / Send to another agent (o.onForward decides how to get
     // there: mobile route, desktop agent page). Selecting part of a message
-    // must keep working (2026-10-12): with a selection inside the
+    // must keep working: with a selection inside the
     // bubble, right-click leaves the browser's own menu alone; on touch the
     // phone's own selection and its Copy callout run, and our menu sits
     // under the bubble with "Copy selection" first so it never covers it.
@@ -1362,7 +1366,7 @@
       if (atBottom) scrollToBottom(scroller);
     }
 
-    // ── Autojump (opt-in per device, Rick's backlog 2026-10-02) ───────────
+    // ── Autojump (opt-in per device) ──────────────────────────────────────
     // When another agent's reply is ready, open it. It only switches by
     // itself when the owner is waiting here: they have sent something in this chat
     // since opening it, the text box is empty and not focused, nothing is
@@ -1504,7 +1508,7 @@
   }
 
   // ── Handover: a conversation and its files to another agent ────────────
-  // One dialog for both UIs (2026-09-29), opened by `/handover <agent>`
+  // One dialog for both UIs, opened by `/handover <agent>`
   // in the chat or a conversation's Hand over button. It picks the agent and
   // the files to send (those the chat mentions are ticked); o.run(targetId,
   // files) does the move: mobile calls the API, the desktop page asks its
@@ -1575,7 +1579,7 @@
     });
   }
 
-  // ── Conversations menu (Rick's backlog 2026-10-05): a "Conversations ▾"
+  // ── Conversations menu: a "Conversations ▾"
   // button that lists an agent's chats (titles and order as the conversation
   // list, a 'draft' tag, the open one marked). Picking one calls onPick; the
   // caller remounts its chat, and drafts are kept per conversation, so

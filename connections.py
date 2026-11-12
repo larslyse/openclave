@@ -1,10 +1,9 @@
 """Which agent needs which outside connection, and which models can provide it.
 
 The one place that answers "which models can this agent use its connections
-on?" (2026-09-28: "this is stuff that I can't go around and
-remember"). Everything else reads from here:
+on?", so nobody has to remember it. Everything else reads from here:
   - the model pickers tag the models that support the agent's connections,
-    e.g. "HA supported" (positive only, 2026-09-28: no "no ..." noise)
+    e.g. "HA supported" (positive only: no "no ..." noise)
   - the agent's own prompt says when a connection is unavailable, so it
     tells the owner they forgot and which models to use
   - attention.py flags an agent already on a model without it
