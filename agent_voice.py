@@ -1,5 +1,5 @@
-"""Each agent's own voice for voice mode (2026-10-12: "it should be a
-part of onboarding to have custom voice on each agent", Fish Audio for now).
+"""Each agent's own voice for voice mode, picked as part of onboarding
+(Fish Audio).
 
 The agent finds candidates in Fish Audio's public voice library (find_voice),
 The owner listens to the sample links and picks one, and the agent saves it

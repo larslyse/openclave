@@ -23,7 +23,7 @@ from vault_paths import _write_bytes_unlocked, _write_text_unlocked, conversatio
 
 _ATTACHMENT_ID_RE = re.compile(r"^[A-Za-z0-9]{8,64}$")
 IMAGE_MEDIA_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif"}
-# Documents (2026-10-04: every agent must take attachments). Their text
+# Documents: every agent takes attachments, whatever its model. Their text
 # is extracted and added to the message (attachment_text), so they work on
 # every model; images go to the model as images.
 DOCUMENT_MEDIA_TYPES = {"application/pdf", "text/plain", "text/markdown", "text/csv", "application/json"}

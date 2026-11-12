@@ -1,4 +1,4 @@
-"""Claves (2026-11-04): named groups of agents, each with its own group chat.
+"""Claves: named groups of agents, each with its own group chat.
 
 A clave is a membership list, not a folder of agents: agents stay in
 ``agents_root``. An agent is in one clave; to have "the same" agent in another
@@ -345,7 +345,7 @@ def clave_context(clave_id: str) -> str:
     return f"This is the {clave['name']} clave's group chat (members: {names}).{lead}"
 
 
-# ── The clave's backlog and its lead (2026-11-05) ────────────────────────
+# ── The clave's backlog and its lead ─────────────────────────────────────
 # Each clave folder has backlog.md: shared work for its members. Any member
 # (and the manager, who is in every clave) can read it and add items; only
 # the lead or the manager ticks them off. The lead is told it owns the

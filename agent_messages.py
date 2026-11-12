@@ -1,4 +1,4 @@
-"""Agents messaging each other (owner request, 2026-10-31).
+"""Agents messaging each other.
 
 An agent sends another agent a message with the message_agent tool. It lands
 in the recipient's own conversation for that sender, titled "From <sender>"

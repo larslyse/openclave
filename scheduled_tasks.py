@@ -1,4 +1,4 @@
-"""Scheduled tasks: agents wake up on set days and do a job (BACKLOG T1).
+"""Scheduled tasks: agents wake up on set days and do a job.
 
 A task belongs to one agent. It has a title, instructions, the weekdays and
 local time it runs, and optionally a short list of Home Assistant actions it

@@ -31,8 +31,8 @@ _QMD_REFRESH_MIN_INTERVAL_S = 30
 def _qmd_refresh_index(timeout: int = 15) -> None:
     """Best-effort file-index refresh (not embeddings — those are slow on this
     CPU-only box and only matter for the unused hybrid 'qmd query' path).
-    Found the index 10 days stale on 2026-09-14, with search_vault blind to
-    that entire session's new content as a result. Measured cost for this
+    Without it the index goes stale for days, and search_vault is blind to
+    everything written since. Measured cost for this
     vault's size: ~0.4s for 265 files — cheap enough to run before every
     search rather than needing a separate cron/scheduling mechanism, so
     retrieval is self-healing instead of depending on remembering to run
@@ -42,7 +42,7 @@ def _qmd_refresh_index(timeout: int = 15) -> None:
 
     Throttled to once per _QMD_REFRESH_MIN_INTERVAL_S: the staleness this
     guards against is hours/days of inactivity, not the seconds between
-    consecutive messages in one conversation — profiled 2026-09-18 as a real,
+    consecutive messages in one conversation — profiled as a real,
     unconditional per-message cost with no benefit at that frequency. Still
     refreshes on the first message after any real idle gap."""
     if not vault.qmd_available():
@@ -251,7 +251,7 @@ def _hit_file(block: str) -> str:
 def search_vault(query: str, max_hits: int = SEARCH_MAX_HITS) -> str:
     """The search_vault tool. qmd's keyword search needs every word to match
     and does not translate, so "travel insurance" missed a note called
-    Forsikringsoversikt (2026-10-27). Alternatives split on "|" (e.g. the
+    Forsikringsoversikt. Alternatives split on "|" (e.g. the
     same words in another language) run as separate searches; a multi-word
     alternative with no hits is retried word by word. Results are merged
     round-robin, one block per file, conversation logs last. Hits that

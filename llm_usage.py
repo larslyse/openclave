@@ -151,8 +151,9 @@ def codex_usage_from_log(text: str) -> dict | None:
 
 
 def _log_codex_usage(agent_id: str, model_id: str, codex_home: Path) -> None:
-    """The Codex route never logged usage, so Token usage looked empty with
-    every agent on Codex (evaluation 2026-09-27). Never raises."""
+    """Usage for the Codex route, read from its session logs: the CLI reports
+    none otherwise, and Token usage would look empty for every agent on
+    Codex. Never raises."""
     try:
         for session in codex_home.glob("sessions/**/*.jsonl"):
             usage = codex_usage_from_log(session.read_text(encoding="utf-8"))

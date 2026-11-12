@@ -327,9 +327,9 @@ def _snippet(text: str | None, limit: int = 140) -> str:
 
 
 def _push_reply(agent_id: str, record: dict, reply: str | None) -> None:
-    """Web Push when a reply is ready (Rick's backlog, 2026-10-02): until now
-    only the open chat noticed a finished reply, so a notification arrived
-    when the user opened that agent, not when it finished. Skipped when a visible
+    """Web Push when a reply is ready: without it only the open chat notices
+    a finished reply, so the user hears of it when they open that agent,
+    not when it finishes. Skipped when a visible
     page is watching this request. Sent off-thread; never raises."""
     seen = _WATCHED.pop(record["request_id"], None)
     if seen is not None and time.monotonic() - seen < WATCH_WINDOW_S:

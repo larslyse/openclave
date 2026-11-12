@@ -1,4 +1,4 @@
-"""Group chat channels the owner makes (2026-11-05).
+"""Group chat channels the owner makes.
 
 Beside "# everyone" (every agent) and one room per clave (claves.py), the
 owner can add channels with a name and the agents in them, e.g. "#garage"

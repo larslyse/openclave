@@ -64,8 +64,8 @@ def build_agent_router(agent_id: str) -> APIRouter:
         @router.post("/voice/transcribe", response_model=VoiceTranscribeResponse)
         def voice_transcribe(req: VoiceTranscribeRequest):
             _check_language(req.language)
-            # Split from the reply step (2026-09-21, the owner: wants to see what
-            # he said without waiting on the full reply+speech round trip).
+            # Split from the reply step so the owner sees what they said
+            # without waiting on the full reply+speech round trip.
             # No agent_execution lock — stateless, doesn't touch conversation
             # history or call an LLM, so it can't collide with a reply call.
             ext = mimetypes.guess_extension(req.media_type) or ".webm"

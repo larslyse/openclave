@@ -18,7 +18,7 @@ def build_context(message: str) -> str:
     auto_lookup setting (service_settings.py). Conversation logs and archived
     design notes are always skipped (_EXCLUDED_PATHS): the message has usually
     just been saved to a conversation, so the search would find the chat itself
-    (seen 2026-09-24 — the only hit for a Reba message was that same message)."""
+    (often the only hit for a message is that same message)."""
     mode = service_settings.load()["auto_lookup"]
     if mode == "off":
         return "(automatic lookup is off — use search_vault if you need context)"
@@ -32,7 +32,7 @@ def build_context(message: str) -> str:
 
 
 # Never auto-injected: conversation logs (the chat would find itself) and
-# archived OpenClave design notes (stale architecture, archived 2026-09-25).
+# archived OpenClave design notes (stale architecture).
 # Both stay reachable through the agent's own search_vault tool.
 _EXCLUDED_PATHS = ("/conversations/", "/openclave/build-docs/archive/")
 

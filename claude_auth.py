@@ -1,4 +1,4 @@
-"""Claude CLI sign-in (Rick's backlog, 2026-10-14).
+"""Claude CLI sign-in.
 
 The claude-cli route runs on the user's Claude subscription login
 (~/.claude/.credentials.json). When that login expires every claude-cli

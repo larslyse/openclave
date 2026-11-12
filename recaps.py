@@ -1,4 +1,4 @@
-"""Recaps: what an archived conversation was about, at a glance (2026-11-03).
+"""Recaps: what an archived conversation was about, at a glance.
 
 Archiving a conversation (by hand, or from the manager's weekly cleanup) moves
 it to conversations/archived/ and, in the background, a fast model writes a

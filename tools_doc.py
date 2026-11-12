@@ -53,7 +53,7 @@ Updated: {UPDATED_PLACEHOLDER}
 
 {len(tools)} tools, {total:,} characters of definitions in total (roughly {total // 4:,} tokens). Each agent gets the **core** tools plus the **optional** ones chosen for it (Control Panel → Agents → Tools); an agent with no saved choice gets all optional tools. "Size" is the full definition as sent: description plus parameter descriptions. Sorted largest first.
 
-Generated automatically from `openclave-service/llm_client.py` (`TOOLS`) each time the OpenClave service starts (`tools_doc.py`). Edits made here are overwritten; change the tool definitions in code instead.
+Generated automatically from `llm_tool_defs.py` (`TOOLS`) each time the OpenClave service starts (`tools_doc.py`). Edits made here are overwritten; change the tool definitions in code instead.
 
 ## Summary
 

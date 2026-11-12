@@ -64,8 +64,8 @@ def tools_for(agent_id: str) -> list[dict]:
 
 # Soft, not enforced: openclave.md already tells agents to keep mission/
 # foundations/feedback "short enough to skim in a minute" and prune rather than
-# let it grow — but until now nothing actually checked that, so it depended
-# entirely on the model remembering. This surfaces a warning in the tool's
+# let it grow, but nothing else checks that, so it would depend entirely on
+# the model remembering. This surfaces a warning in the tool's
 # own return value (which the model sees immediately) instead of silently
 # trusting good behavior. Roughly Hermes Agent's always-loaded-memory cap
 # (3,575 chars) as a reference point for "should still be skimmable."
@@ -83,7 +83,7 @@ def _size_note(path: Path) -> str:
 
 
 # Tools run during the current call, per agent (chat_service's check that a
-# reply saying "Added" was backed by a tool, Rick's backlog 2026-10-13).
+# reply saying "Added" is backed by a tool).
 _TOOLS_RUN: dict[str, list[str]] = {}
 READ_ONLY_TOOLS = frozenset({
     "search_vault", "read_vault_file", "list_memories", "read_memory", "get_measurements",

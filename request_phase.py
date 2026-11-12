@@ -4,8 +4,7 @@ only: not persisted, doesn't survive a restart, and needs no locking since
 each agent processes at most one request at a time (chat_service's
 agent_execution gate already guarantees that).
 
-Also the reply text so far while an API route streams it (the owner's backlog,
-2026-10-13): the same poll shows it growing in the pending bubble. The CLI
+Also the reply text so far while an API route streams it: the same poll shows it growing in the pending bubble. The CLI
 routes don't stream, so there it stays empty. Cleared with the phase.
 """
 _PHASE: dict[str, str] = {}

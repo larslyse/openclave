@@ -1,4 +1,4 @@
-"""Short, clear names for new conversations (Rick's backlog, 2026-10-13).
+"""Short, clear names for new conversations.
 
 A conversation starts out named after the first line of its first message
 (vault.append_turn). After its first exchange, a fast model names it in the
@@ -89,7 +89,7 @@ def _generate(user_text: str, reply_text: str) -> tuple[str, dict]:
         model=MODEL_ID,
         max_tokens=60,
         # Haiku 5.5 otherwise sometimes thinks through the whole budget and
-        # returns no text (seen 2026-10-13: 5 of 9 calls on some chats).
+        # returns no text (5 of 9 calls on some chats).
         thinking={"type": "disabled"},
         system=PROMPT,
         messages=[{"role": "user", "content": (

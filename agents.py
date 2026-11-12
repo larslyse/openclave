@@ -49,7 +49,7 @@ def _agent_config(data: dict, folder: str) -> AgentConfig:
     for label, value in (("cli_tools", cli_tools), ("roles", roles), ("former_names", former_names)):
         if not isinstance(value, list) or not all(isinstance(v, str) and v for v in value):
             raise ValueError(f"{label} must be a list of non-empty strings")
-    # Every install has exactly one manager (Build Docs, 2026-11-03): the agent
+    # Every install has exactly one manager: the agent
     # that keeps OpenClave tidy, runs the weekly audit and is the one way back
     # from agent workspaces into the main vault. "maintainer" is its older name
     # and is still read; both names are set, so either check works.

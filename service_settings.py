@@ -23,9 +23,9 @@ AUTO_LOOKUP_MODES = ("off", "keywords", "full")
 # retry once on this model and say so in the reply. "" = off.
 # Digest push of attention.py's findings: "off", "daily" or "weekly"
 # (Mondays), at digest_time in the configured timezone. Off by default: it's a notification
-# The owner opts into (2026-09-27).
+# the owner opts into.
 DIGEST_MODES = ("off", "daily", "weekly")
-# Weekly review (2026-11-04): what the Monday cleanup (cleanup.py) and the
+# Weekly review: what the Monday cleanup (cleanup.py) and the
 # manager's audit (audit.py) do, ticked in the Control Panel. Every item only
 # suggests; nothing changes until the owner says yes. (key, label, part)
 WEEKLY_REVIEW = (

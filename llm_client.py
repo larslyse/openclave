@@ -7,8 +7,10 @@ backlog, mission, persona, notes, dashboard, tracking; reads whole-vault, matchi
 the read-anywhere permission model) and executes up to a few rounds of tool use.
 
 Provider is per-agent, chosen via llm_models (backed by the dashboard's model
-selector) — xAI (Grok) and Anthropic (Claude) are both wired; whichever the
-selection resolves to at call time decides the client and request shape.
+selector): the API routes (xAI, Anthropic) and the CLI routes (claude-cli,
+codex-cli) each live in providers/; whichever the selection resolves to at
+call time decides the client and request shape. The tool definitions are in
+llm_tool_defs.py and run in llm_tools.py; this module re-exports them.
 """
 import base64
 import contextlib
@@ -25,13 +27,14 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # anthropic/openai are deliberately NOT imported here — see _chat_anthropic,
-# _chat_xai, and _summarize_transcript, which import them lazily. Measured
+# _chat_xai (providers/) and _summarize_transcript (llm_compaction.py), which
+# import them lazily. Measured
 # live: importing both costs 1-2.5s. mcp_vault_server.py imports this module
 # just for _run_tool, and is re-spawned fresh on every claude-cli/codex-cli
 # chat message (most agents) — those subprocesses never call either provider
-# client, so a top-level import here meant paying that cost on every single
-# message for no reason. This was the single largest lever found while
-# profiling response latency (2026-09-18).
+# client, so a top-level import here would mean paying that cost on every
+# single message for no reason. It is the single largest lever found when
+# profiling response latency.
 
 import claude_auth
 import config

@@ -1,4 +1,4 @@
-"""Purge a conversation (2026-11-05): keep the chat and its name, drop the
+"""Purge a conversation: keep the chat and its name, drop the
 transcript, keep only a short summary when there's durable context in it.
 
   preview  -> a suggested summary ("" when nothing is worth keeping) plus

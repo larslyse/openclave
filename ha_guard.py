@@ -1,4 +1,4 @@
-"""What R2 may do in Home Assistant without asking (The user, 2026-10-04: option b).
+"""What R2 may do in Home Assistant without asking.
 
 Enforced in code for the HA admin tools (mcp_ha_server.py), on every route:
   - reads: always
@@ -15,7 +15,7 @@ it. A refused call is also kept as pending and a yes approves it once.
 Guards against mistakes, not a hostile model: it can't stop a model that
 goes around the tools.
 
-Approval ids (2026-11-05): every refused call becomes a request with a short
+Approval ids: every refused call becomes a request with a short
 id (e.g. AXFG), its exact action, the conversation it was asked in and a
 status. "approve AXFG" approves that one call, from any chat, once, for
 REQUEST_TTL_S. A plain yes only approves requests asked in the same
@@ -42,12 +42,12 @@ REQUESTS_KEPT = 50
 ID_LETTERS = "ABCDEFGHJKLMNPQRSTUVWXYZ"  # no I or O
 APPROVE_ID = re.compile(r"\b(?:approve[sd]?|godkjenn(?:er)?|godkjent)\s+([A-Za-z]{4})\b", re.IGNORECASE)
 APPROVED_TTL_S = 15 * 60
-# The owner's yes approves R2's changes in the turn that answers it (2026-10-04):
+# The owner's yes approves R2's changes in the turn that answers it:
 # R2 usually asks *before* trying, so a yes that only matched an earlier
-# refused call counted for nothing and every action cost two or three yeses.
-# Was 5 calls: a described batch (entity renames + a dashboard) ran out
-# halfway and left HA half-migrated, twice on 2026-10-13 (R2's flag). A yes
-# now covers the turn; the cap only stops a loop.
+# refused call would count for nothing and every action would cost two or
+# three yeses. A yes covers the turn rather than a few calls: a described
+# batch (entity renames + a dashboard) can run out of a small call budget
+# halfway and leave HA half-migrated. The cap only stops a loop.
 YES_WINDOW_S = 10 * 60
 YES_WINDOW_CALLS = 40
 _lock = threading.Lock()
@@ -65,8 +65,8 @@ EVERYDAY_HOMEASSISTANT = {"turn_on", "turn_off", "toggle", "update_entity", "che
 # POSTs that only read.
 READ_POSTS = {"/api/template", "/api/config/core/check_config"}
 # A WebSocket command reads unless one of its parts is a change verb. An
-# allow-list of read words kept missing real reads ("lovelace/config",
-# "zha/network/settings") and trapped R2 in yes-loops on 2026-10-04.
+# allow-list of read words misses real reads ("lovelace/config",
+# "zha/network/settings") and traps R2 in yes-loops.
 _WS_WRITE = re.compile(r"(^|[/_])(create|update|remove|delete|save|set|add|reload|restart|install|uninstall|enable|"
                        r"disable|rename|migrate|reconfigure|start|stop|permit|execute|fire|clear|reset|write|import|"
                        r"move|assign|unassign|reorder|purge|ignore|generate|process|run|expose|trigger|toggle|turn|"
@@ -149,7 +149,7 @@ def preapproved(call: dict, allowed: str | None) -> bool:
 def call_key(call: dict) -> str:
     """What a yes approves: the action and its target, not every detail of
     the payload. R2 rebuilds e.g. a dashboard save after the user says yes, and an
-    exact-payload match refused it as a new change (2026-10-04)."""
+    exact-payload match would refuse it as a new change."""
     if call.get("api") == "ws":
         msg = call.get("message") or {}
         target = {k: v for k, v in msg.items() if isinstance(v, (str, int, float, bool)) and len(str(v)) < 200}

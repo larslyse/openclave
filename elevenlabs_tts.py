@@ -1,8 +1,7 @@
 """ElevenLabs text-to-speech — a per-agent alternative to the local Kokoro
 path (voice_engine.py) for agents where character accuracy matters more than
-staying fully local/free. First use: Rick's actual requested voice (voice_id
-supplied by 2026-09-21) — Kokoro's small stock voice bank has nothing
-close to it. See Build Docs/Archive/voice.md's provider comparison.
+staying fully local/free. Used for a requested voice (Rick's) that Kokoro's small stock voice bank
+has nothing close to. See Build Docs/Archive/voice.md's provider comparison.
 """
 import os
 
