@@ -3,6 +3,14 @@ except for the configured maintainer project backlog.
 
 Write-scoping is enforced here at the code level (not by convention) — same
 logic as before, now parameterized by agent_id instead of duplicated per agent.
+
+This module is the public facade: the code lives in the vault_* modules and is
+re-exported here, so callers keep using vault.<name> and tests keep patching
+vault.<name>. The roots, qmd settings, CONFIG and the qmd refresh timestamp
+are defined only here; tests and other modules reassign them on vault, so the
+vault_* modules read them (and the functions tests patch) as vault.<name> at
+call time. The standard-library imports below are kept as part of the module's
+surface (tests use vault.os, for example).
 """
 import json
 import hashlib
@@ -110,6 +118,3 @@ from vault_search import (  # noqa: F401
 from vault_main import (  # noqa: F401
     MainVaultError, _CHANGELOG_RE, _main_vault_lock, main_vault_target, write_main_vault_note,
 )
-# @@END-REEXPORTS@@
-
-
