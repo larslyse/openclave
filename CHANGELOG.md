@@ -16,6 +16,10 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
   token, confidential folders, `~/.ssh` and other credential folders. See
   README, Privacy.
 
+### Fixed
+
+- A reply being written no longer blanks for a moment every two seconds.
+
 ### Changed
 
 - One scheduler runs all background jobs, instead of a thread per feature.
