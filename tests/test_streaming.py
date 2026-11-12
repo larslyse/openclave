@@ -1,4 +1,4 @@
-"""Streaming on the API routes (Rick's backlog, 2026-10-13): the reply text
+"""Streaming on the API routes: the reply text
 shows up in request_phase as it arrives, tool calls still work when they
 come in pieces, and Stop ends an API reply at its next chunk."""
 import os

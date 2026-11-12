@@ -1,5 +1,5 @@
 """Recaps for archived chats, the manager role, its proposals and weekly
-audit (2026-11-03). Synthetic vault in a temp dir; no model calls."""
+audit. Synthetic vault in a temp dir; no model calls."""
 import dataclasses
 import json
 import os

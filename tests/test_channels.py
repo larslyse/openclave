@@ -1,4 +1,4 @@
-"""Group chat channels the owner makes (channels.py, 2026-11-05). Temp state, no model calls."""
+"""Group chat channels the owner makes (channels.py). Temp state, no model calls."""
 import tempfile
 import unittest
 from pathlib import Path

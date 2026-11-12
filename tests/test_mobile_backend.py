@@ -339,9 +339,9 @@ class MobileBackendTests(unittest.TestCase):
 
     def test_provider_timeout_is_recorded_not_raised_bare(self):
         # A raw exception from llm_client.chat (e.g. subprocess.TimeoutExpired
-        # from the claude-cli/codex-cli paths) used to propagate past both
-        # callers' error handling instead of the "(...error: ...)" string
-        # convention they check for — an unhandled 500 on the desktop /chat
+        # from the claude-cli/codex-cli paths) must become the "(...error: ...)"
+        # string both callers check for, not escape their error handling — an
+        # unhandled 500 on the desktop /chat
         # route, and here, an untyped failure reason in the job record.
         with patch.object(chat_jobs, "_EXECUTOR", ImmediateExecutor()), \
              patch.object(chat_service.retrieval, "build_context", return_value="none"), \

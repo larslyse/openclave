@@ -1,5 +1,5 @@
-"""What voice mode reads aloud (2026-10-12/13: agents read asterisks
-and other markdown out loud). The shown reply keeps its markdown."""
+"""What voice mode reads aloud: plain text, not asterisks and other
+markdown. The shown reply keeps its markdown."""
 import unittest
 
 from chat_service import _speakable_text as speak
@@ -34,7 +34,7 @@ if __name__ == "__main__":
 
 class UnbackedClaimTests(unittest.TestCase):
     """A reply saying "Added" with no writing tool behind it gets one more
-    round (voice-mode Rick, 2026-10-12/13: four lost backlog items)."""
+    round (otherwise backlog items get lost while the reply says they were added)."""
 
     def run_checked(self, replies, tools_per_call, model_id="claude-sonnet-5"):
         from unittest.mock import patch

@@ -126,7 +126,7 @@ class CliDiagnosticTests(unittest.TestCase):
 
     def test_claude_cli_route_uses_the_catalog_speed_not_the_api_id(self):
         # claude-opus-5-5-cli runs as "claude-opus-5-5" (a fast API entry); the
-        # 10-minute limit must still apply (R2's HA build stopped at 5, 2026-10-17).
+        # 10-minute limit must still apply (a long HA build needs more than 5).
         with patch.object(claude_cli, "_chat_claude_cli", return_value="ok") as run:
             llm_client.chat("r2", "system", [], model_id="claude-opus-5-5-cli")
         self.assertEqual(run.call_args.args[1], "claude-opus-5-5")

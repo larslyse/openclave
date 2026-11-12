@@ -46,7 +46,7 @@ class FallbackTests(unittest.TestCase):
     def test_skips_text_only_fallback_when_message_has_an_image(self):
         service_settings.update({"fallback_model": "claude-sonnet-4-6"})
         image_history = [{"role": "user", "content": [{"type": "text", "text": "look"}]}]
-        # Every catalog model reads images since 2026-10-04; the rule still
+        # Every catalog model reads images; the rule still
         # matters for any text-only model added later.
         text_only = chat_service.llm_models.ModelOption(id="claude-sonnet-4-6", provider="claude-cli", display_name="T", tier="t")
         with patch("llm_client.chat") as chat, patch.object(chat_service.llm_models, "get", return_value=text_only):

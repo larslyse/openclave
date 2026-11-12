@@ -1,4 +1,4 @@
-"""Chat folders (folders.py, 2026-11-03) and scripts/merge_agent.py.
+"""Chat folders (folders.py) and scripts/merge_agent.py.
 Synthetic vault in a temp dir; no model calls."""
 import dataclasses
 import importlib.util

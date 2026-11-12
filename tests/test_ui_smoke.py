@@ -1,10 +1,10 @@
 """UI smoke test in real headless Chromium against a throwaway server
 (tests/ui_server.py: temp vault copy, fake model). Checks the layout rules
-The owner has asked for, which unit tests can't see:
+the owner relies on, which unit tests can't see:
 
   - mobile: Quick jump sits under the message box, Send isn't covered, and
     the hold menu opens above the composer, on the right of the screen, with
-    the agent names left-aligned (asked for twice, 2026-09-27)
+    the agent names left-aligned
   - mobile and desktop: a message sends and the reply shows "model · time"
   - desktop: the agent page's chat (sandboxed iframe) loads with no errors
 
@@ -115,15 +115,15 @@ class UiSmokeTest(unittest.TestCase):
             await br.goto(f"{self.base}/mobile/#/agents", wait=3)
             await br.goto(f"{self.base}/mobile/#/agents/spice/new", wait=5)
             # Another agent replies while the owner sits in this chat: Quick jump must
-            # still show it as new and at the bottom (2026-10-05: the menu used
-            # the agent list fetched when the chat opened, so it never did).
+            # still show it as new and at the bottom (a menu built from the agent list
+            # fetched when the chat opened never would).
             await br.eval("fetch('/stash/chat-requests',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({request_id:'order-smoke',conversation_id:null,message:'hi',attachments:[]})}); return 1;")
             await asyncio.sleep(3)
             box = lambda sel: br.eval(f"const r=document.querySelector({sel!r}).getBoundingClientRect(); return {{x:r.x,y:r.y,w:r.width,h:r.height}};")
             ta, qj, send = await box(".composer textarea"), await box("#switch-btn"), await box(".composer .send")
             self.assertGreaterEqual(qj["y"], ta["y"] + ta["h"] - 1, "Quick jump is under the message box")
             self.assertGreater(qj["w"], 200, "Quick jump is a long bar")
-            # Much bigger and orange, the core multitasking button (2026-10-12).
+            # Much bigger and orange, the core multitasking button.
             self.assertGreaterEqual(qj["h"], 44, "Quick jump is big")
             self.assertEqual(await br.eval("return getComputedStyle(document.querySelector('#switch-btn')).backgroundColor;"), "rgb(249, 115, 22)", "orange")
             home = await box(".composer [data-home]")
@@ -132,13 +132,13 @@ class UiSmokeTest(unittest.TestCase):
             self.assertLessEqual(send["x"] + send["w"], 390, "Send is on screen")
             top = await br.eval(f"const e=document.elementFromPoint({send['x'] + send['w'] / 2}, {send['y'] + send['h'] / 2}); return e.closest('.send') ? 'send' : e.className;")
             self.assertEqual(top, "send", "nothing covers Send")
-            # Notifications: icon only, in the top bar left of the model picker (2026-09-29).
+            # Notifications: icon only, in the top bar left of the model picker.
             bell, badge = await box(".topbar .notify-btn"), await box(".topbar .model-badge")
             self.assertLessEqual(bell["x"] + bell["w"], badge["x"], "bell is left of the model picker")
             self.assertLess(bell["w"], 50, "bell is icon only")
 
             # Agent screens: avatar next to the name, and left of it the
-            # button to the agent's own page (2026-10-05).
+            # button to the agent's own page.
             title, feature = await box(".topbar h1 .title-text"), await box("#feature-btn")
             pic = await box(".topbar h1 .avatar img")
             self.assertLessEqual(feature["x"] + feature["w"], pic["x"], "feature button is left of the avatar")
@@ -250,7 +250,7 @@ class UiSmokeTest(unittest.TestCase):
             await asyncio.sleep(2)
             lit = await br.eval("return [...document.querySelectorAll('.conversation-item')].filter(c=>c.querySelector('.new-tag')).map(c=>c.querySelector('[data-conversation]').dataset.conversation);")
             self.assertEqual(len(lit), 1, "and the conversation it's in")
-            # A long title shrinks with "…"; the tag stays on screen (2026-10-13).
+            # A long title shrinks with "…"; the tag stays on screen.
             await br.eval(f"return fetch('/stash/conversations/{lit[0]}',{{method:'PATCH',headers:{{'Content-Type':'application/json'}},body:JSON.stringify({{title:'A very long conversation title that runs far past the edge of a phone screen'}})}}).then(r=>r.status);")
             await br.eval("location.reload(); return 1;")
             await asyncio.sleep(3)
@@ -455,7 +455,7 @@ class UiSmokeTest(unittest.TestCase):
         try:
             await br.goto(f"{self.base}/", wait=3)
             # Conversations menu right of each tile's name on the main dashboard
-            # (2026-10-05): switch the tile's chat, mouse and keyboard, drafts kept.
+            # switches the tile's chat, mouse and keyboard, drafts kept.
             for rid, text in (("convo-a", "alpha message"), ("convo-b", "bravo message")):
                 await br.eval("return fetch('/rick/chat-requests',{method:'POST',headers:{'Content-Type':'application/json'},"
                               f"body:JSON.stringify({{request_id:'{rid}',conversation_id:null,message:'{text}',attachments:[]}})}}).then(r=>r.status);")
@@ -508,7 +508,7 @@ class UiSmokeTest(unittest.TestCase):
         finally:
             await br.stop()
 
-    # Partial copy (2026-10-12): selecting part of a message and copying
+    # Partial copy: selecting part of a message and copying
     # it must work; the message menu must not steal the selection.
     SELECT_JS = ("const b=[...document.querySelectorAll('%s')].find(e=>e.textContent.includes(%r)); const w=document.createTreeWalker(b,NodeFilter.SHOW_TEXT);"
                  "let n; while((n=w.nextNode()) && !n.data.includes(%r)); const i=n.data.indexOf(%r), r=document.createRange(); r.setStart(n,i); r.setEnd(n,i+%d);"
@@ -637,7 +637,7 @@ class UiSmokeTest(unittest.TestCase):
         finally:
             await br.stop()
 
-    # Cost tiers in every model picker (2026-10-12): a dot in the tier
+    # Cost tiers in every model picker: a dot in the tier
     # colour (green/amber/violet, never red) plus $/$$/$$$.
     TIER_RGB = {"rgb(34, 197, 94)": "$", "rgb(245, 158, 11)": "$$", "rgb(168, 85, 247)": "$$$"}
     DOT_JS = "const d=%s; return d && d.classList.contains('cost-dot') ? getComputedStyle(d).backgroundColor : null;"
@@ -675,7 +675,7 @@ class UiSmokeTest(unittest.TestCase):
         await br.start(390, 844)
         try:
             await br.goto(f"{self.base}/mobile/#/agents/spice/model", wait=4)
-            # The model table (2026-11-04): API models show $/$$/$$$ in the tier colour, CLI ones "sub".
+            # The model table: API models show $/$$/$$$ in the tier colour, CLI ones "sub".
             rows = await br.eval("return [...document.querySelectorAll('.mp-row')].map(r=>({route: r.querySelector('.mp-col-route').textContent, color: getComputedStyle(r.querySelector('.mp-col-price span')).color, label: r.querySelector('.mp-col-price').textContent}));")
             self.assertGreater(len(rows), 3)
             for row in rows:
@@ -692,7 +692,7 @@ class UiSmokeTest(unittest.TestCase):
             await br.stop()
 
     # Stash's page: one text box + Add appends "- [ ] <text>" to his buying
-    # list (2026-10-12), no chat round-trip.
+    # list, no chat round-trip.
     async def _page_form(self):
         stash = self.tmp / ".openclave" / "agents" / "Stash"
         (stash / "buying.md").write_text("# Buying\n\n| Item | Status |\n|---|---|\n| LED strip | Wanted |\n")
@@ -731,7 +731,7 @@ class UiSmokeTest(unittest.TestCase):
             (stash / "page.json").unlink(missing_ok=True)
             await br.stop()
 
-    # Open instantly (Rick's backlog, 2026-10-05): with the server slow, the
+    # Open instantly: with the server slow, the
     # agent list, a conversation list and a chat seen before show at once
     # from the phone's copy, then update in place.
     SLOW_FETCH = ("const real = window.fetch; window.fetch = (url, ...rest) => {"
@@ -786,7 +786,7 @@ class UiSmokeTest(unittest.TestCase):
             await br.eval("localStorage.removeItem('__slow'); return 1;")
             await br.stop()
 
-    # Streaming (Rick's backlog, 2026-10-13): on the API routes the pending
+    # Streaming: on the API routes the pending
     # bubble shows the reply as it's written, then the finished reply.
     async def _streaming(self):
         br = Browser()
@@ -820,8 +820,7 @@ class UiSmokeTest(unittest.TestCase):
         finally:
             await br.stop()
 
-    # Weekly cleanup (Rick's backlog, 2026-10-13; moved from the Control Panel
-    # to Rick's phone page 2026-10-14): nothing changes until a button is pressed.
+    # Weekly cleanup, on Rick's phone page: nothing changes until a button is pressed.
     async def _cleanup(self):
         greg = self.tmp / ".openclave" / "agents" / "Greg" / "conversations"
         greg.mkdir(parents=True, exist_ok=True)
@@ -852,7 +851,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertEqual(await br.eval("return document.documentElement.scrollWidth;"), 390, "fits a phone")
             buttons = await br.eval(f"const b={card % 'Old plant chat'}.querySelector('[data-apply]').getBoundingClientRect(); return {{h:b.height,w:b.width}};")
             self.assertGreaterEqual(buttons["h"], 40, "thumb-sized buttons")
-            # Read the chat in place before deciding (2026-11-05).
+            # Read the chat in place before deciding.
             await br.eval(f"{card % 'Old plant chat'}.querySelector('[data-peek]').click(); return 1;")
             await asyncio.sleep(1)
             peek = await br.eval(f"return {card % 'Old plant chat'}.querySelector('.cleanup-transcript').innerText;")
@@ -880,7 +879,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertFalse(await br.eval("return !!document.querySelector('#cleanup');"))
             await br.goto(f"{self.base}/control/", wait=3)
             self.assertIn("/mobile/#/agents/rick/console", await br.eval("return document.querySelector('#weekly-review a').getAttribute('href');"))
-            # Weekly review checklist (2026-11-04): each tick saves at once.
+            # Weekly review checklist: each tick saves at once.
             self.assertGreaterEqual(await br.eval("return document.querySelectorAll('#weekly-review [data-review]').length;"), 9)
             await br.eval("const c=document.querySelector('[data-review=remove_old_models]'); c.click(); return 1;")
             await asyncio.sleep(1)
@@ -904,7 +903,7 @@ class UiSmokeTest(unittest.TestCase):
                 f.unlink()
             await br.stop()
 
-    # Compact model label (2026-10-12): short name plus average seconds.
+    # Compact model label: short name plus average seconds.
     async def _model_label(self):
         times = json.loads(urllib.request.urlopen(f"{self.base}/api/model-response-times").read())
         agents_ = json.loads(urllib.request.urlopen(f"{self.base}/api/agents").read())
@@ -924,7 +923,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertEqual(box["sw"], 390)
             await br.eval("document.querySelector('.topbar .model-badge').click(); return 1;")
             await asyncio.sleep(2)
-            # The model table (2026-11-04): short names, measured seconds in Latency.
+            # The model table: short names, measured seconds in Latency.
             rows = await br.eval("return [...document.querySelectorAll('.mp-row .mp-name')].map(r=>r.textContent);")
             self.assertTrue(rows and not any(r.startswith("Claude") or "subscription" in r for r in rows), rows)
             latency = await br.eval("return [...document.querySelectorAll('.mp-row td.mp-col-latency')].map(r=>r.textContent);")
@@ -934,8 +933,7 @@ class UiSmokeTest(unittest.TestCase):
         finally:
             await br.stop()
 
-    # The chat header names the conversation under the agent (Rick's backlog,
-    # 2026-10-14); a long name shrinks with "…" and the controls stay put.
+    # The chat header names the conversation under the agent; a long name shrinks with "…" and the controls stay put.
     async def _chat_title(self):
         fresh = self.tmp / ".openclave" / "agents" / "Fresh" / "conversations"
         fresh.mkdir(parents=True, exist_ok=True)
@@ -965,7 +963,7 @@ class UiSmokeTest(unittest.TestCase):
         finally:
             await br.stop()
 
-    # Desktop Dash tab (2026-10-14/16): right of Files, a tab like Chat
+    # Desktop Dash tab: right of Files, a tab like Chat
     # and Files that shows the agent's own page (the phone's) in the same left
     # pane, widened for it; Rick's has the weekly cleanup.
     async def _desktop_page(self):
@@ -1015,7 +1013,7 @@ class UiSmokeTest(unittest.TestCase):
     def test_desktop_page(self):
         self.run_async(self._desktop_page())
 
-    # Recaps on desktop (2026-11-03): a compact list in the sidebar (name, how
+    # Recaps on desktop: a compact list in the sidebar (name, how
     # it ended, date); a click shows the recap and the transcript in the chat
     # on the right. The tab row scrolls with ‹ › when the tabs don't fit.
     async def _desktop_recaps(self):
@@ -1057,7 +1055,7 @@ class UiSmokeTest(unittest.TestCase):
     def test_desktop_recaps(self):
         self.run_async(self._desktop_recaps())
 
-    # Chat folders (folders.py, 2026-11-03): chats grouped under plain folder
+    # Chat folders (folders.py): chats grouped under plain folder
     # headers; drag a chat onto a folder to move it. Phone: Folder button.
     async def _folders(self):
         root = self.tmp / ".openclave" / "agents" / "R2"
@@ -1132,7 +1130,7 @@ class UiSmokeTest(unittest.TestCase):
     def test_folders(self):
         self.run_async(self._folders())
 
-    # Home dashboard (2026-11-03): as wide as the Control Panel, three tiles a
+    # Home dashboard: as wide as the Control Panel, three tiles a
     # row; clicking an agent's round icon opens a quick edit (name, colour,
     # icon); the maintainer inbox lives in the Control Panel now.
     async def _quick_edit(self):
@@ -1167,7 +1165,7 @@ class UiSmokeTest(unittest.TestCase):
             self.assertEqual((now["name"], now["color"]), ("Artoo", "#123456"))
             self.assertEqual(await br.eval("return document.querySelector('.tile[data-agent-id=r2] .tile-name').textContent;"), "Artoo")
             self.assertFalse(await br.eval("return !!document.querySelector('.qe');"), "closes after saving")
-            # Change icon: a picture, Cartoon, tinted in the agent colour (2026-11-04).
+            # Change icon: a picture, Cartoon, tinted in the agent colour.
             await br.eval("document.querySelector('.tile[data-agent-id=r2] .tile-icon').click(); return 1;")
             await asyncio.sleep(0.4)
             await br.eval("document.querySelector('.qe .qe-icon').click(); return 1;")
@@ -1211,7 +1209,7 @@ class UiSmokeTest(unittest.TestCase):
             for path, body in ((f"/api/agents/r2/name", {"name": r2["name"], "tagline": r2["tagline"]}), (f"/api/agents/r2/color", {"color": r2["color"]})):
                 urllib.request.urlopen(urllib.request.Request(self.base + path, data=json.dumps(body).encode(), headers={"Content-Type": "application/json"}, method="POST"))
 
-    # Claves (claves.py, 2026-11-04): the overview turns them on, drag moves,
+    # Claves (claves.py): the overview turns them on, drag moves,
     # Ctrl-drag shares, every clave gets a channel in the group chat and a row
     # on the phone, and the phone has a per-agent checklist.
     async def _claves(self):
@@ -1296,7 +1294,7 @@ class UiSmokeTest(unittest.TestCase):
             await br.eval("document.querySelector('#cv-side [data-clave=rnd]').click(); return 1;")
             await asyncio.sleep(0.8)
             self.assertIn("RnD", await br.eval("return document.querySelector('#cv-head .cv-title').textContent;"))
-            # Own channels (2026-11-05): + Add channel, pick members, it opens.
+            # Own channels: + Add channel, pick members, it opens.
             self.assertIn("Agents – private chat", await br.eval("return document.querySelector('#cv-side').textContent;"))
             await br.eval("document.querySelector('#cv-side [data-channel-new]').click(); return 1;")
             await asyncio.sleep(0.5)
@@ -1337,7 +1335,7 @@ class UiSmokeTest(unittest.TestCase):
     def test_quick_edit(self):
         self.run_async(self._quick_edit())
 
-    # Tools (2026-10-16): a Tools button next to Files on the phone and a
+    # Tools: a Tools button next to Files on the phone and a
     # Tools tab right of Dash on desktop, both showing the same tick boxes;
     # every tick saves at once.
     async def _tools(self):
@@ -1396,7 +1394,7 @@ class UiSmokeTest(unittest.TestCase):
     def test_cache_first(self):
         self.run_async(self._cache_first())
 
-    # Reba's page (2026-10-12): her sliders log to tracking.md from a
+    # Reba's page: her sliders log to tracking.md from a
     # page.json "sliders" block, with the activity log under them; a page an
     # agent changes shows Keep / Revert until the owner decides.
     REBA_PAGE = {"title": "Reba", "blocks": [
@@ -1455,10 +1453,10 @@ class UiSmokeTest(unittest.TestCase):
     def test_reba_page(self):
         self.run_async(self._reba_page())
 
-    # Phone Files button (2026-10-12): right of Open chat on the agent's
+    # Phone Files button: right of Open chat on the agent's
     # page; lists only that agent's folder; edit, save, and a stale save or a
     # mission/persona save is guarded.
-    # Purge (2026-11-05): phone row action, dialog, purged banner with Undo.
+    # Purge: phone row action, dialog, purged banner with Undo.
     async def _purge(self):
         convos = self.tmp / ".openclave" / "agents" / "Stash" / "conversations"
         convos.mkdir(parents=True, exist_ok=True)

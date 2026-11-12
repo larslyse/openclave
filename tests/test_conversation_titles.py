@@ -1,4 +1,4 @@
-"""Auto-naming new conversations (Rick's backlog, 2026-10-13): after the first
+"""Auto-naming new conversations: after the first
 exchange, a short name replaces the starting title, never a name the owner gave."""
 import os
 import tempfile
@@ -129,7 +129,7 @@ if __name__ == "__main__":
 
 
 class RenameKeepsActivityTests(_GregVault):
-    """Renaming must not light the mobile "new" tag (Rick's backlog, 2026-10-14):
+    """Renaming must not light the mobile "new" tag:
     only an appended agent reply moves a conversation's activity time."""
 
     def activity(self, cid):

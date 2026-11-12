@@ -1,4 +1,4 @@
-"""Claves (claves.py, 2026-11-04): groups of agents with their own group chat.
+"""Claves (claves.py): groups of agents with their own group chat.
 Synthetic folders in a temp dir; no model calls."""
 import json
 import tempfile

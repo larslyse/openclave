@@ -1,4 +1,4 @@
-"""Weekly review (2026-11-04): the Control Panel checklist decides what the
+"""Weekly review: the Control Panel checklist decides what the
 cleanup and the manager's audit suggest; model changes are proposals the
 owner says yes to, never automatic."""
 import tempfile
