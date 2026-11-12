@@ -6,6 +6,10 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## [Unreleased]
 
+Nothing yet.
+
+## [0.1.1]
+
 ### Added
 
 - Control Panel → Background jobs: every background job (reminders, scheduled
@@ -66,5 +70,6 @@ The first public release.
   welcome card in the browser. `./install.sh --ask-all` (or
   `OPENCLAVE_ASK_ALL=1`) asks everything in the terminal as before.
 
-[Unreleased]: https://github.com/larslyse/openclave/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/larslyse/openclave/compare/v0.1.1...HEAD
+[0.1.1]: https://github.com/larslyse/openclave/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/larslyse/openclave/releases/tag/v0.1.0
