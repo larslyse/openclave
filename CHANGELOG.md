@@ -6,7 +6,17 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Control Panel → Background jobs: every background job (reminders, scheduled
+  tasks, weekly cleanup, model updates, update check and the rest) with its
+  last run and result, and a "Run now" button.
+
+### Changed
+
+- One scheduler runs all background jobs, instead of a thread per feature.
+- The code for chats, models and notes is split into smaller modules
+  (`routes/`, `providers/`, `vault_*.py`, `llm_*.py`). Nothing changes for users.
 
 ## [0.1.0]
 
