@@ -9,7 +9,7 @@
 // The only channel out is postMessage, and this script is the sole listener
 // on the other end — it enforces that every request the iframe sends starts
 // with this agent's own "/<agent_id>/" prefix before ever touching the real
-// network. That's the actual fix for Backlog.md item #3 (a bad or buggy
+// network. That's what contains agent-editable dashboards (a bad or buggy
 // dashboard could otherwise call any other agent's API, including R2's
 // Home-Assistant action tools, on this shared origin).
 //
@@ -18,7 +18,7 @@
 // against plain fetch('/<agent>/...') calls) keep working unmodified — they
 // don't need to know they're sandboxed. localStorage becomes in-memory only
 // (opaque origins have no real storage) — layout preferences some dashboards
-// save there (pane widths etc.) no longer persist across a reload; everything
+// save there (pane widths etc.) don't persist across a reload; everything
 // else is unaffected.
 (function () {
   const AGENT_ID = window.OPENCLAVE_AGENT_ID;
@@ -52,10 +52,10 @@
     return tag + html;
   }
 
-  // The iframe's localStorage is in-memory (opaque origin), which used to
-  // lose chat drafts, queued messages and layout on every reload. Now the
+  // The iframe's localStorage is in-memory (opaque origin), which would
+  // lose chat drafts, queued messages and layout on every reload. So the
   // shell keeps a copy in its own storage under a per-agent prefix, seeds the
-  // iframe with it and saves every change the iframe reports (2026-09-27).
+  // iframe with it and saves every change the iframe reports.
   // The iframe can only ever touch keys under its own prefix.
   const FRAME_PREFIX = `openclave.frame.${AGENT_ID}.`;
   // Same EN/NO and the same View-menu panes on every agent page.
@@ -162,7 +162,7 @@
   }
   window.OpenClaveNotifications?.onChange(sendNotifyState);
 
-  // Dash and Tools tabs (2026-10-14/16): the phone app's screens for
+  // Dash and Tools tabs: the phone app's screens for
   // this agent (its own page with every block, Reba's sliders, forms, Rick's
   // cleanup; its tool ticks) shown in the agent page's left pane, like Chat
   // and Files. The sandboxed frame can't load them, so it reports where its

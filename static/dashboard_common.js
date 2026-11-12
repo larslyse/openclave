@@ -1,9 +1,8 @@
-// OpenClave — shared per-agent dashboard behavior (Backlog.md item #6).
+// OpenClave — shared per-agent dashboard behavior.
 //
-// Extracted from 7 separately-maintained dashboard.html files that had
-// diverged into near-identical copies of the same chat/conversation/backlog/
-// kanban/usage code — a shared fix previously had to be re-applied by hand in
-// each one. Each dashboard.html now sets window.OPENCLAVE_AGENT_ID (and
+// One copy of the chat/conversation/backlog/kanban/usage code for every
+// agent's dashboard.html, so a fix lands once instead of being re-applied
+// by hand in each page. Each dashboard.html now sets window.OPENCLAVE_AGENT_ID (and
 // OPENCLAVE_AGENT_NAME for the composer placeholder / empty-state text)
 // before loading this file, keeps its own color variables and any custom
 // panels (e.g. Reba's tracking/trend charts), and calls initDashboardCommon()
@@ -183,7 +182,7 @@ function injectConversationSearch() {
 }
 
 // Row actions live behind one ⋯ button at the right of each conversation /
-// file row (they used to float over the title on hover and cover it). The
+// file row (floating over the title on hover, they would cover it). The
 // menu is position:fixed so the scrolling list can't clip it.
 const ROW_MENU_BUTTON = '<button class="convo-more" title="Actions" aria-haspopup="menu" aria-expanded="false">⋯</button>';
 let openRowMenu = null;
@@ -381,8 +380,8 @@ function convoRow(c) {
   });
   el.addEventListener('dragend', () => el.classList.remove('dragging'));
   el.querySelector('.convo-handover').onclick = async (e) => {
-    // Move and hand over are one flow (2026-11-05): pick the agent by its
-    // tab, as Move did, then tick any files to send along.
+    // Move and hand over are one flow: pick the agent by its
+    // tab, then tick any files to send along.
     e.stopPropagation();
     const target = await pickTargetAgent('this conversation', e.currentTarget, true);
     if (target) handoverConversation(c.id, target.id);
@@ -440,7 +439,7 @@ async function renameConversation(id, title) {
   loadConversations();
 }
 
-// One-click Auto-rename (Rick's backlog): the server names it from its first
+// One-click Auto-rename: the server names it from its first
 // exchange and keeps the file's time, so it doesn't turn up as new.
 async function autoRename(id, evt) {
   evt.stopPropagation();
@@ -466,8 +465,8 @@ window.addEventListener('message', event => {
   resolve(msg);
 });
 
-// Choosing where to move a conversation or file (2026-09-28: no more
-// typing the agent's name). The header's agent tabs light up and a hint bar
+// Choosing where to move a conversation or file, without typing the
+// agent's name. The header's agent tabs light up and a hint bar
 // says to click the one that should receive it; a click there picks it, Esc
 // or a click anywhere else cancels. Without tabs (they failed to load) a small
 // list opens next to the button instead. Resolves to {id, name} or null.
@@ -570,8 +569,7 @@ async function deleteConversation(id, evt) {
 }
 
 // ── Chat: the shared implementation in /static/chat_core.js, the same code
-// the mobile app runs (2026-09-27: desktop and mobile chat must stay in
-// sync). This page only supplies its elements and refresh hooks. The mic and
+// the mobile app runs (desktop and mobile chat must stay in sync). This page only supplies its elements and refresh hooks. The mic and
 // speaker go through the trusted shell (dashboard_shell.js), because this
 // sandboxed iframe can't open the microphone itself.
 let chat = null;
@@ -764,7 +762,7 @@ async function setKanbanStage(itemText, stage) {
   } catch (e) {}
 }
 
-// ── Image attachments (Backlog.md "paste images into chat") ──────────────
+// ── Image attachments (paste images into chat) ───────────────────────────
 // Injected into the DOM at runtime rather than requiring markup in every
 // agent's own dashboard.html — same reasoning as the rest of this shared
 // file: one fix/feature, not seven. Only injected when this agent's
@@ -791,7 +789,7 @@ async function refreshModelResponseTimes() {
 const modelSupports = new Map();
 const supportsSuffix = id => (modelSupports.get(id) || []).length ? ` — ${modelSupports.get(id).join(', ')} supported` : '';
 
-// Cost tier (llm_models.cost_tier, 2026-10-12): "$$" in each option and
+// Cost tier (llm_models.cost_tier): "$$" in each option and
 // a dot in the tier's colour left of the picker, following the chosen model.
 const modelCosts = new Map();
 const costSuffix = id => modelCosts.get(id)?.cost_label ? ` · ${modelCosts.get(id).cost_label}` : '';
@@ -957,7 +955,7 @@ async function loadRecaps() {
   }
 }
 
-// ── Dash and Tools tabs (2026-10-16): the phone app's screens for this
+// ── Dash and Tools tabs: the phone app's screens for this
 // agent (its own page, its tool ticks) in this same left pane, like Chat and
 // Files. This sandboxed frame can't load them, so the trusted shell
 // (dashboard_shell.js) lays the screen exactly over #embed-pane and follows
@@ -1156,8 +1154,8 @@ async function deleteFile(path, evt) {
   loadFiles();
 }
 
-// Markdown files open formatted (Rick's backlog: render mission, plan,
-// notes as markdown instead of raw text); Edit shows the text to change.
+// Markdown files (mission, plan, notes) open formatted instead of as raw
+// text; Edit shows the text to change.
 const isMarkdownPath = path => /\.md$/i.test(path);
 
 function setFileMode(mode) {
@@ -1335,7 +1333,7 @@ function initFilesTab() {
 }
 
 // ── Agent tabs (desktop): every agent as a browser-style tab in the header,
-// between the name and the model picker (2026-09-28). This agent's tab
+// between the name and the model picker. This agent's tab
 // is there too, highlighted, so the tabs never reshuffle when switching. A
 // tab is a plain link that navigates the real browser tab (target=_top; the
 // sandbox allows top navigation on a click). Drag a tab to rearrange; the
@@ -1449,7 +1447,7 @@ async function injectAgentTabs() {
 }
 
 // ── View menu (desktop): a "View" button left of the model picker with a
-// checkbox per pane, so the owner can hide the ones they don't need (2026-09-28).
+// checkbox per pane, so the owner can hide the ones they don't need.
 // Panes are found from the page's standard structure, since every agent's
 // dashboard.html is agent-editable: Chat (the conversation list,
 // .col-left), the right column's top section (Current Plan, or Reba's

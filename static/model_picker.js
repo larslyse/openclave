@@ -1,4 +1,4 @@
-// Model picker (2026-11-04): every model as a row, with columns
+// Model picker: every model as a row, with columns
 //   Vendor · Model · Route · Speed · Latency · Price · Released
 // and sortable by any of them (click a header; again to reverse). The sort
 // is remembered in this browser.

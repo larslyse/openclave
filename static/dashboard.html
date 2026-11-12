@@ -167,10 +167,10 @@
 
   .empty{ color: var(--text-muted); font-size: 14px; }
 
-  /* View switch (2026-10-31): tiles per agent, or a chat layout with
+  /* View switch: tiles per agent, or a chat layout with
      the agent list left and the group chat or a direct chat right. */
   /* Dashboard (a different place: an agent's full page) big on the left;
-     the two overview switches on the right (2026-11-04). */
+     the two overview switches on the right. */
   .view-row{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; margin-top:14px; }
   .open-dashboard{ background: var(--panel); color: var(--text); border:1px solid var(--panel-border); border-radius:12px; font:inherit; font-size:15px; font-weight:600; padding:10px 20px; cursor:pointer; }
   .open-dashboard:hover{ border-color: var(--text-muted); }
@@ -181,9 +181,9 @@
   .view-switch{ display:inline-flex; border:1px solid var(--panel-border); border-radius:8px; overflow:hidden; }
   .view-switch button{ background:none; border:0; color: var(--text-muted); font:inherit; font-size:13px; padding:6px 14px; cursor:pointer; }
   .view-switch button[aria-pressed="true"]{ background: var(--panel); color: var(--text); }
-  /* Claves (2026-11-04): a labelled box on the right holding Organize (the
-     overview) and the active-clave picker (2026-11-05). */
-  /* View and Claves sit in labelled boxes (2026-11-05). */
+  /* Claves: a labelled box on the right holding Organize (the
+     overview) and the active-clave picker. View and Claves sit in
+     labelled boxes. */
   .hbox{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:0; border:1px solid var(--panel-border); border-radius:12px; padding:4px 12px 10px; min-inline-size:0; }
   .hbox legend{ padding:0 6px; font-size:11px; text-transform:uppercase; letter-spacing:.06em; color: var(--text-muted); }
   .claves-btn{ background:none; border:1px solid var(--panel-border); border-radius:8px; color: var(--text-muted); font:inherit; font-size:13px; padding:6px 14px; cursor:pointer; }
@@ -291,7 +291,7 @@
   .room-pick span{ color: var(--text-muted); font-size:12px; }
   .room-pick.active, .room-pick:hover{ background: rgba(255,255,255,.07); }
 
-  /* Claves overview (claves.py, 2026-11-04): one card per clave, lead on top,
+  /* Claves overview (claves.py): one card per clave, lead on top,
      members below; drag to move, Ctrl/Alt-drag to also add, ⋯ for more. */
   .claves[hidden]{ display:none; }
   .cl-top{ display:flex; align-items:center; gap:14px; flex-wrap:wrap; margin-bottom:16px; }
@@ -798,7 +798,7 @@ async function startChatView() {
   openSpot(readJson(SPOT_KEY, null) || {room: true});
 }
 
-// ── Claves overview (claves.py, 2026-11-04) ──────────────────────────────
+// ── Claves overview (claves.py) ──────────────────────────────────────────
 // One card per clave: lead on top, members below, the manager in a strip above
 // them all (it is in every clave). An agent is in one clave: drag to move it;
 // hold Ctrl (or Alt) on drop to clone it there instead (same name, persona,
