@@ -205,5 +205,22 @@ class FirstRunTests(unittest.TestCase):
         self.assertIn("Monday", text)
 
 
+
+class HidePrivateFilesRowTests(unittest.TestCase):
+    def row(self, on, bwrap):
+        import dataclasses
+        with mock.patch.object(setup_check, "CONFIG", dataclasses.replace(setup_check.CONFIG, hide_private_files=on)), \
+             mock.patch.object(setup_check.shutil, "which", lambda name: "/usr/bin/bwrap" if bwrap and name == "bwrap" else None):
+            return next(x for x in setup_check.extras() if x["id"] == "hide_private_files")
+
+    def test_says_whether_it_is_on_and_whether_bwrap_is_there(self):
+        self.assertEqual((self.row(False, True)["ready"], self.row(False, True)["detail"]), (False, "off"))
+        self.assertIn("not installed", self.row(False, False)["detail"])
+        self.assertEqual((self.row(True, True)["ready"], self.row(True, True)["detail"]), (True, "on"))
+        on_missing = self.row(True, False)
+        self.assertFalse(on_missing["ready"])
+        self.assertIn("missing", on_missing["detail"])
+
+
 if __name__ == "__main__":
     unittest.main()
