@@ -843,7 +843,7 @@ async function drawCleanup(body, token) {
 // for other agents, tasks. Yes does it, No drops it (and it won't come back
 // soon), Discuss opens the Audit chat with a draft. A note can be edited
 // before Yes. Shown right under the cleanup on the manager's page.
-const PROPOSAL_KIND = {vault_note: 'To your vault', message_agent: 'Message', task: 'Task', model: 'Model'};
+const PROPOSAL_KIND = {vault_note: 'To your vault', message_agent: 'Message', task: 'Task', model: 'Model', skill_change: 'Skill'};
 async function drawProposals(agent, body, token) {
   const box = document.createElement('section');
   box.className = 'cleanup-box proposals-box';
@@ -853,7 +853,8 @@ async function drawProposals(agent, body, token) {
   if (cleanupBox) cleanupBox.after(box); else body.prepend(box);
   const post = (path, payload) => api(path, {method: 'POST', body: JSON.stringify(payload || {})});
   const target = p => p.kind === 'vault_note' ? `${p.mode === 'create' ? 'New note' : 'Add to'} <b>${escapeHtml(p.target)}</b>`
-    : p.kind === 'message_agent' ? `To <b>${escapeHtml(p.agent_name || p.agent)}</b>` : '';
+    : p.kind === 'message_agent' ? `To <b>${escapeHtml(p.agent_name || p.agent)}</b>`
+    : p.kind === 'skill_change' ? `Change shared skill <b>${escapeHtml(p.target)}</b>` : '';
   const draw = data => {
     if (token !== renderToken) return;
     const items = data.proposals;
@@ -864,7 +865,8 @@ async function drawProposals(agent, body, token) {
         <div class="page-card-title">${escapeHtml(p.title)}</div>
         ${p.why ? `<div class="page-card-meta">${escapeHtml(p.why)}</div>` : ''}
         ${target(p) ? `<div class="page-card-meta">${target(p)}</div>` : ''}
-        ${p.kind === 'model' ? `<div class="proposal-text">${markdown(p.content)}</div>` : `<details class="proposal-content"><summary>${p.kind === 'task' ? 'What exactly' : 'Show the text'}</summary>
+        ${p.kind === 'model' ? `<div class="proposal-text">${markdown(p.content)}</div>` : `<details class="proposal-content"><summary>${p.kind === 'task' ? 'What exactly' : p.kind === 'skill_change' ? 'Show the change' : 'Show the text'}</summary>
+          ${p.kind === 'skill_change' ? `<p class="muted">Replaces:</p><pre class="proposal-old">${escapeHtml(p.old_text || '')}</pre><p class="muted">With:</p>` : ''}
           ${p.kind === 'task' ? `<div class="proposal-text">${markdown(p.content)}</div>` : `<textarea class="page-form-input proposal-edit" rows="8" aria-label="Text">${escapeHtml(p.content)}</textarea><p class="muted">You can edit it before Yes.</p>`}
           ${p.source ? `<p class="muted">From ${escapeHtml(p.source)}</p>` : ''}</details>`}
         <div class="cleanup-actions"><button type="button" class="cleanup-apply" data-yes>Yes</button><button type="button" class="cleanup-keep" data-no>No</button><button type="button" class="cleanup-keep" data-discuss>Discuss</button></div>

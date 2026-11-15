@@ -34,7 +34,7 @@ from config import CONFIG
 from state_io import load_json, save_json
 
 STATE_FILE = CONFIG.state_path("manager_proposals.json")
-KINDS = ("vault_note", "message_agent", "task", "model")
+KINDS = ("vault_note", "message_agent", "task", "model", "skill_change")
 MODEL_ACTIONS = ("add", "hide")
 AUDIT_CONVERSATION = "audit"
 MAX_OPEN = 20
@@ -58,12 +58,13 @@ def _clean(text, limit: int) -> str:
 
 def add(kind: str, title: str, why: str, content: str, target: str | None = None,
         mode: str | None = None, agent: str | None = None, source: str | None = None,
-        model_action: str | None = None, model_id: str | None = None) -> dict:
+        model_action: str | None = None, model_id: str | None = None, old_text: str | None = None) -> dict:
     """File one proposal. Raises ValueError with a reason the manager can act on."""
     if kind not in KINDS:
         raise ValueError(f"kind must be one of {', '.join(KINDS)}")
+    raw_content = str(content or "")[:MAX_CONTENT]  # skill changes keep their exact whitespace
     title, why, content = _clean(title, 120), _clean(why, 600), _clean(content, MAX_CONTENT)
-    if not title or not content:
+    if not title or (not content and kind != "skill_change"):
         raise ValueError("a proposal needs a title and its content")
     item = {"id": uuid.uuid4().hex[:8], "kind": kind, "title": title, "why": why, "content": content,
             "created": datetime.now().strftime("%Y-%m-%d %H:%M"), "status": "open"}
@@ -87,6 +88,11 @@ def add(kind: str, title: str, why: str, content: str, target: str | None = None
         if recipient == agents.manager_id():
             raise ValueError("that's you")
         item.update(agent=recipient)
+    elif kind == "skill_change":
+        if not target or old_text is None:
+            raise ValueError("a skill change needs the skill and the text it replaces")
+        item.update(target=target, old_text=str(old_text)[:MAX_CONTENT], source=_clean(source, 300),
+                    agent=agent or None, content=raw_content)
     elif kind == "model":
         if model_action not in MODEL_ACTIONS or not model_id:
             raise ValueError("a model proposal needs model_action (add or hide) and model_id")
@@ -117,6 +123,16 @@ def tool_reply(manager: str, tool_input: dict) -> str:
         return f"refused: {exc}"
     return (f"Proposal {item['id']} filed. {CONFIG.owner_name or 'The user'} sees it on your page "
             "and answers Yes / No / Discuss; nothing happens until then.")
+
+
+def suggest_skill_change(skill: str, old_text: str, new_text: str, reason: str, who: str,
+                         evidence: str, detail: str, agent: str | None = None) -> dict:
+    """Any agent (or the MCP bridge) suggests an edit to a shared skill; the owner answers on the manager's page."""
+    import skills
+    detail = skills.check_suggestion(skill, old_text, new_text, evidence, detail)  # raises SkillError (ValueError)
+    title = f"Skill {skills.slug(skill)}: {_clean(reason, 80) or 'suggested change'}"
+    return add("skill_change", title, reason, new_text, target=skills.slug(skill), agent=agent,
+               source=f"{who} ({evidence.replace('_', ' ')}): {detail}", old_text=old_text)
 
 
 def _public(item: dict) -> dict:
@@ -173,8 +189,11 @@ def _tell_manager(text: str) -> None:
 def approve(item_id: str, content: str | None = None) -> dict:
     """The owner said yes (optionally after editing the content)."""
     item = _get_open(item_id)
-    content = _clean(content, MAX_CONTENT) if content is not None else item["content"]
-    if not content:
+    if item["kind"] == "skill_change":
+        content = str(content)[:MAX_CONTENT] if content is not None else item["content"]
+    else:
+        content = _clean(content, MAX_CONTENT) if content is not None else item["content"]
+    if not content and item["kind"] != "skill_change":
         raise ValueError("nothing to write")
     if item["kind"] == "vault_note":
         written = vault.write_main_vault_note(item["target"], content, item["mode"], item["title"])
@@ -186,6 +205,12 @@ def approve(item_id: str, content: str | None = None) -> dict:
             raise ValueError("there's no manager to send it from")
         agent_messages.send(manager, item["agent"], content)
         result = f"sent to {AGENTS[item['agent']].name if item['agent'] in AGENTS else item['agent']}"
+    elif item["kind"] == "skill_change":
+        import skills
+        new_text = content
+        who = (item.get("source") or "agent").split(" (")[0]
+        path = skills.apply_suggestion(item["target"], item["old_text"], new_text, who, item["title"])
+        result = f"updated {path.name} in skill {item['target']}"
     elif item["kind"] == "model":
         import model_updater
         if item["model_action"] == "add":

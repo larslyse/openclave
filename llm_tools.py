@@ -234,6 +234,24 @@ def _run_tool(agent_id: str, name: str, tool_input: dict) -> str:
             return f"skill saved: {s['name']} (in your folder, skills/{s['name']}/SKILL.md)"
         except skills.SkillError as exc:
             return f"refused: {exc}"
+    if name in ("add_skill_lesson", "suggest_skill_change"):
+        import skills
+        import proposals
+        from agents import AGENTS
+        who = AGENTS[agent_id].name if agent_id in AGENTS else agent_id
+        try:
+            if name == "add_skill_lesson":
+                line = skills.add_lesson(tool_input.get("skill", ""), tool_input.get("lesson", ""), who,
+                                         tool_input.get("evidence", ""), tool_input.get("detail", ""))
+                return f"lesson added to the shared skill: {line}"
+            item = proposals.suggest_skill_change(
+                tool_input.get("skill", ""), tool_input.get("old_text", ""), tool_input.get("new_text", ""),
+                tool_input.get("reason", ""), who, tool_input.get("evidence", ""), tool_input.get("detail", ""),
+                agent=agent_id)
+            return (f"Suggestion {item['id']} filed. The owner sees it as a Yes/No card on the manager's page; "
+                    "the skill doesn't change until then.")
+        except ValueError as exc:
+            return f"refused: {exc}"
     if name == "write_page":
         import custom_pages
         try:

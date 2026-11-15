@@ -33,6 +33,8 @@ GET /api/agents/{agent_id}/skills api_agent_skills
 GET /api/agents/{agent_id}/skills/{scope}/{name} api_skill_text
 POST /api/agents/{agent_id}/skills/{scope}/{name} api_skill_action
 DELETE /api/agents/{agent_id}/skills/{scope}/{name} api_skill_delete
+POST /api/skills/shared/{name}/lesson api_skill_lesson
+POST /api/skills/shared/{name}/suggest api_skill_suggest
 POST /api/skills/import api_skill_import
 GET /api/push/key api_push_key
 POST /api/push/subscribe api_push_subscribe
@@ -692,6 +694,8 @@ GET /api/agents/x/skills -> api_agent_skills
 GET /api/agents/x/skills/x/x -> api_skill_text
 POST /api/agents/x/skills/x/x -> api_skill_action
 DELETE /api/agents/x/skills/x/x -> api_skill_delete
+POST /api/skills/shared/x/lesson -> api_skill_lesson
+POST /api/skills/shared/x/suggest -> api_skill_suggest
 POST /api/skills/import -> api_skill_import
 GET /api/push/key -> api_push_key
 POST /api/push/subscribe -> api_push_subscribe

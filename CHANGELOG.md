@@ -6,7 +6,19 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- Agents can improve shared skills. `add_skill_lesson` writes one dated,
+  signed line under `## Lessons` at once (no links, capped at 30 lines, the
+  oldest drop off). `suggest_skill_change` files a "Skill" card on the
+  manager's page; the owner sees the old and new text, can edit it, and the
+  code applies it on Yes. Both need `evidence` (owner said / job failed /
+  job went well), refuse text about rules, prompts or secrets, and never
+  rename a skill or break its front matter. The previous version is kept in
+  `<skill>/.history/` and the change is committed when the vault is a Git
+  repository. Imported skills are left alone.
+- `POST /api/skills/shared/{name}/lesson` and `/suggest`, so tools outside
+  OpenClave (an MCP connector, for example) can do the same.
 
 ## [0.1.1]
 

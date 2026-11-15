@@ -21,6 +21,7 @@ CORE_TOOLS = (
     "get_foundations", "read_own_dashboard", "update_backlog", "update_plan_phase",
     "update_mission", "update_persona", "add_feedback", "flag_to_maintainer", "check_maintainer_request", "message_agent",
     "check_page", "write_page", "restore_page", "find_voice", "set_voice", "read_skill", "save_skill",
+    "add_skill_lesson", "suggest_skill_change",
 )
 OPTIONAL_TOOLS = (
     "write_note", "write_memory", "add_foundation", "log_measurement", "get_measurements",

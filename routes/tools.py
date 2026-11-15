@@ -130,6 +130,30 @@ def api_skill_delete(agent_id: str, scope: str, name: str):
     return {"deleted": f"{scope}/{name}"}
 
 
+@router.post("/api/skills/shared/{name}/lesson")
+def api_skill_lesson(name: str, req: dict):
+    """For harnesses outside OpenClave (e.g. an MCP connector): {lesson, who, evidence, detail}."""
+    try:
+        line = skills.add_lesson(name, str(req.get("lesson") or ""), str(req.get("who") or "external"),
+                                 str(req.get("evidence") or ""), str(req.get("detail") or ""))
+    except skills.SkillError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"added": line}
+
+
+@router.post("/api/skills/shared/{name}/suggest")
+def api_skill_suggest(name: str, req: dict):
+    """{old_text, new_text, reason, who, evidence, detail}: filed for the owner's Yes/No."""
+    import proposals
+    try:
+        item = proposals.suggest_skill_change(name, str(req.get("old_text") or ""), str(req.get("new_text") or ""),
+                                              str(req.get("reason") or ""), str(req.get("who") or "external"),
+                                              str(req.get("evidence") or ""), str(req.get("detail") or ""))
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
+    return {"filed": item["id"], "title": item["title"]}
+
+
 @router.post("/api/skills/import")
 def api_skill_import(req: dict):
     """{source | text, target: "shared" | agent id, name?, preview?, replace?}"""

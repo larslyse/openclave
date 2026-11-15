@@ -386,6 +386,7 @@ button { color:inherit; }
 .proposal-content summary { cursor:pointer; color:var(--muted); font-size:14px; }
 .proposal-edit { width:100%; font-family:inherit; font-size:14px; line-height:1.4; margin-top:6px; }
 .proposal-text { font-size:14px; }
+.proposal-old { white-space:pre-wrap; font-size:13px; line-height:1.4; margin:4px 0 6px; padding:6px 8px; border-radius:8px; background:var(--bg); border:1px solid var(--line); color:var(--muted); overflow-x:auto; }
 
 /* An archived chat opened from Recaps (chat_core recapHtml) */
 .recap-banner { border:1px solid var(--line); border-radius:12px; padding:10px 12px; margin-bottom:16px; }
