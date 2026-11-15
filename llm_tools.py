@@ -33,6 +33,8 @@ def tool_phase(name: str, arguments: dict | None = None) -> str:
         return "updating plans"
     if "make_pdf" in name:
         return "making a pdf"
+    if "save_image" in name:
+        return "saving an image"
     if any(key in name for key in ("search_vault", "read_vault_file", "read_note", "list_notes", "read_memory", "list_memories", "get_foundations", "get_measurements")):
         return "reading notes"
     if any(key in name for key in ("write_file", "file_change", "write_note", "write_vault_note", "write_memory", "log_measurement", "apply_patch")):
@@ -347,6 +349,9 @@ def _run_tool(agent_id: str, name: str, tool_input: dict) -> str:
         import vault_access
         return vault_access.write(agent_id, tool_input.get("path", ""), tool_input.get("content", ""),
                                   tool_input.get("mode", ""), tool_input.get("change_summary", ""))
+    if name == "save_image":
+        import vault_images
+        return vault_images.tool_reply(agent_id, tool_input)
     if name == "make_pdf":
         import pdf_export
         try:

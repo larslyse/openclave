@@ -19,6 +19,13 @@ numbered `MAJOR.MINOR.PATCH` (see "Releases" in [CONTRIBUTING.md](CONTRIBUTING.m
   repository. Imported skills are left alone.
 - `POST /api/skills/shared/{name}/lesson` and `/suggest`, so tools outside
   OpenClave (an MCP connector, for example) can do the same.
+- Optional tool `save_image`: an agent saves a product photo into the
+  `_assets` folder at or above a note in its vault folders and gets the
+  Obsidian embed. Takes the image link or a product page (its og:image or
+  structured product image). Public hosts only (checked on every redirect),
+  jpg/png/webp/gif/avif checked by their first bytes, 8 MB cap, identical
+  images reused. No folder is ever created, and sites with bot protection
+  are reported instead of retried.
 
 ## [0.1.1]
 

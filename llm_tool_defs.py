@@ -399,6 +399,28 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "save_image",
+            "description": (
+                "Save a product photo from the web into the vault, in the '_assets' folder at or above a note in "
+                "your vault folders, and get its Obsidian embed (![[name.jpg]]). url: the image, or a product "
+                "page (its main image is used). The note doesn't have to exist yet: save the images first, then "
+                "write the note with the embeds in place. Product shots from manufacturer or shop pages only, no "
+                "photos of people; put the source under the embed. Blocked sites: don't retry, try another page."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "url": {"type": "string", "description": "Image link, or the product page."},
+                    "note_path": {"type": "string", "description": "Vault-relative path of the note the image is for."},
+                    "name": {"type": "string", "description": "Optional short file name, e.g. 'wera-8100-sa6'."},
+                },
+                "required": ["url", "note_path"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "make_pdf",
             "description": (
                 "Make a print-ready A4 PDF of a note anywhere in the user's vault, saved next to the note with "

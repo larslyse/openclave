@@ -25,7 +25,7 @@ CORE_TOOLS = (
 )
 OPTIONAL_TOOLS = (
     "write_note", "write_memory", "add_foundation", "log_measurement", "get_measurements",
-    "write_own_dashboard", "update_maintainer_inbox_item", "schedule_reminder", "make_pdf", "write_vault_note", "web_search",
+    "write_own_dashboard", "update_maintainer_inbox_item", "schedule_reminder", "make_pdf", "write_vault_note", "save_image", "web_search",
 )
 # Optional capabilities that aren't function tools in llm_client.TOOLS: the
 # route provides them (Codex live search, claude-cli WebSearch/WebFetch).

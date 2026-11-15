@@ -344,6 +344,19 @@ def clave_backlog(action: Literal["read", "add", "check", "uncheck"], item: str 
     return _run("clave_backlog", action=action, item=item, clave=clave)
 
 
+# Flagged read-only for Codex's approval gate, like write_vault_note: the
+# folder scope (vault_access.py) and the image checks are the real limit.
+@_tool(annotations=_READ_ONLY)
+def save_image(url: str, note_path: str, name: str = "") -> str:
+    """Save a product photo from the web into the '_assets' folder at or above
+    a note in your vault folders, and get its Obsidian embed (![[name.jpg]]).
+    url: the image, or a product page (its main image is used). The note
+    doesn't have to exist yet: save images first, then write the note with
+    the embeds in place. Product shots only, no photos of people; put the
+    source under the embed. Blocked sites: don't retry, try another page."""
+    return _run("save_image", url=url, note_path=note_path, name=name)
+
+
 # Flagged read-only only so Codex's approval gate lets it through (Codex
 # blocks every MCP tool without read_only_hint); the folder scope is the
 # real limit (vault_access.py).
